@@ -3,6 +3,7 @@
 namespace Pixelated\Streamline;
 
 use Composer\InstalledVersions;
+use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Console\AboutCommand;
 use Illuminate\Support\Str;
@@ -12,7 +13,7 @@ use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
-class StreamlineServiceProvider extends PackageServiceProvider // implements DeferrableProvider
+class StreamlineServiceProvider extends PackageServiceProvider  implements DeferrableProvider
 {
     public function configurePackage(Package $package): void
     {
@@ -55,8 +56,8 @@ class StreamlineServiceProvider extends PackageServiceProvider // implements Def
         ));
     }
 
-//    public function provides(): array
-//    {
-//        return [AppUpdater::class];
-//    }
+    public function provides(): array
+    {
+        return [AppUpdater::class];
+    }
 }
