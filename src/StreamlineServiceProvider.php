@@ -6,31 +6,35 @@ use Composer\InstalledVersions;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Console\AboutCommand;
 use Illuminate\Support\Str;
-use Pixelated\Streamline\Commands\InstallCommand;
 use Pixelated\Streamline\Commands\ListCommand;
 use Pixelated\Streamline\Commands\UpdateCommand;
+use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
-class StreamlineServiceProvider extends PackageServiceProvider
+class StreamlineServiceProvider extends PackageServiceProvider // implements DeferrableProvider
 {
     public function configurePackage(Package $package): void
     {
-        /*
-         * This class is a Package Service Provider
-         *
-         * More info: https://github.com/spatie/laravel-package-tools
-         */
+        /* @see https://github.com/spatie/laravel-package-tools */
         $package
             ->name('streamline')
             ->hasConfigFile()
             ->hasViews()
             ->hasMigration('create_streamline_table')
-            ->hasCommands(InstallCommand::class, ListCommand::class, UpdateCommand::class);
+            ->runsMigrations()
+            ->hasCommands(UpdateCommand::class, ListCommand::class)
+            ->hasInstallCommand(fn(InstallCommand $command) => $command
+                ->publishConfigFile()
+                ->publishMigrations()
+                ->askToRunMigrations()
+                ->copyAndRegisterServiceProviderInApp()
+                ->askToStarRepoOnGitHub('pixelated-au/streamline'));
     }
 
     public function boot(): void
     {
+        parent::boot();
         $this->registerAppUpdater();
         AboutCommand::add('Streamline Updater', ['<fg=bright-magenta>Version</>' => $this->getVersionInfo()]);
     }
@@ -51,4 +55,8 @@ class StreamlineServiceProvider extends PackageServiceProvider
         ));
     }
 
+//    public function provides(): array
+//    {
+//        return [AppUpdater::class];
+//    }
 }
