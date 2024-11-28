@@ -2,30 +2,46 @@
 <phpunit
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.3/phpunit.xsd"
-    backupGlobals="false"
     bootstrap="vendor/autoload.php"
     colors="true"
-    processIsolation="false"
-    stopOnFailure="false"
     executionOrder="random"
-    failOnWarning="true"
-    failOnRisky="true"
     failOnEmptyTestSuite="true"
     beStrictAboutOutputDuringTests="true"
     cacheDirectory=".phpunit.cache"
-    backupStaticProperties="false"
 >
     <testsuites>
-        <testsuite name="VendorName Test Suite">
-            <directory>tests</directory>
+        <testsuite name="Arch">
+            <directory>./tests/Arch</directory>
+        </testsuite>
+        <testsuite name="Unit">
+            <directory>./tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>./tests/Feature</directory>
         </testsuite>
     </testsuites>
     <logging>
-        <junit outputFile="build/report.junit.xml"/>
+        <testdoxText outputFile="php://stdout"/>
     </logging>
     <source>
         <include>
-            <directory suffix=".php">./src</directory>
+            <directory>./src</directory>
         </include>
     </source>
+    <coverage>
+        <report>
+            <html outputDirectory="tests/code-coverage" highLowerBound="80"/>
+        </report>
+    </coverage>
+    <php>
+        <env name="RAY_ENABLED" value="(true)"/>
+        <env name="SEND_CACHE_TO_RAY" value="(false)"/>
+        <env name="SEND_DUMPS_TO_RAY" value="(true)"/>
+        <env name="SEND_JOBS_TO_RAY" value="(false)"/>
+        <env name="SEND_LOG_CALLS_TO_RAY" value="(false)"/>
+        <env name="SEND_QUERIES_TO_RAY" value="(false)"/>
+        <env name="SEND_REQUESTS_TO_RAY" value="(true)"/>
+        <env name="SEND_VIEWS_TO_RAY" value="(false)"/>
+        <env name="SEND_EXCEPTIONS_TO_RAY" value="(true)"/>
+    </php>
 </phpunit>
