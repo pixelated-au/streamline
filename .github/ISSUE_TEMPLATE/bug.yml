@@ -12,7 +12,7 @@ body:
       attributes:
           label: What happened?
           description: What did you expect to happen?
-          placeholder: I cannot currently do X thing because when I do, it breaks X thing.
+          placeholder: I cannot currently do Global thing because when I do, it breaks Global thing.
       validations:
           required: true
     - type: textarea
@@ -20,7 +20,7 @@ body:
       attributes:
           label: How to reproduce the bug
           description: How did this occur, please add any config values used and provide a set of reliable steps if possible.
-          placeholder: When I do X I see Y.
+          placeholder: When I do Global I see Y.
       validations:
           required: true
     - type: input

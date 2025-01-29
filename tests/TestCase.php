@@ -1,36 +1,36 @@
 <?php
 
-namespace VendorName\Skeleton\Tests;
+namespace Pixelated\Streamline\Tests;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
-use Orchestra\Testbench\TestCase as Orchestra;
-use VendorName\Skeleton\SkeletonServiceProvider;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
+use org\bovigo\vfs\vfsStreamDirectory;
+use PHPUnit\Framework\TestCase as BaseTestCase;
 
-class TestCase extends Orchestra
+class TestCase extends BaseTestCase
 {
+//    use InteractsWithContainer;
+//    use WithWorkbench;
+
+    protected vfsStreamDirectory $rootFs;
+    protected vfsStreamDirectory $deploymentDir;
+    protected string $rootPath;
+    protected string $deploymentPath;
+
     protected function setUp(): void
     {
         parent::setUp();
-
-        Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'VendorName\\Skeleton\\Database\\Factories\\'.class_basename($modelName).'Factory'
-        );
+        if (!file_exists('./workbench/.env')) {
+            symlink('.env', './workbench/.env');
+        }
     }
 
-    protected function getPackageProviders($app)
+    public function getEnvironmentSetUp($app): void
     {
-        return [
-            SkeletonServiceProvider::class,
-        ];
     }
 
-    public function getEnvironmentSetUp($app)
+    public function deploymentPath(): string
     {
-        config()->set('database.default', 'testing');
-
-        /*
-        $migration = include __DIR__.'/../database/migrations/create_skeleton_table.php.stub';
-        $migration->up();
-        */
+        return $this->deploymentPath;
     }
 }

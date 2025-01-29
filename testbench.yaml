@@ -1,0 +1,16 @@
+providers:
+  - Pixelated\Streamline\StreamlineServiceProvider
+  - Workbench\App\Providers\WorkbenchServiceProvider
+
+laravel: ./workbench
+
+workbench:
+  install: false
+  health: false
+  discovers:
+    web: false
+    api: false
+    commands: true
+    components: false
+    views: false
+  sync: []

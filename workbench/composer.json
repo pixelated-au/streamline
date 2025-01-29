@@ -1,0 +1,98 @@
+{
+    "name": "pixelated-au/streamline",
+    "description": "Self-update your Laravel deployment",
+    "keywords": [
+        "laravel",
+        "streamline"
+    ],
+    "homepage": "https://github.com/pixelated-au/streamline",
+    "license": "MIT",
+    "require": {
+        "php": "^8.3",
+        "ext-zip": "*",
+        "spatie/laravel-package-tools": "^1.16",
+        "symfony/console": "^7.2.1",
+        "symfony/process": "^7.2.0"
+    },
+    "require-dev": {
+        "composer/composer": "^2.8",
+        "laravel/framework": "^v11.38.2",
+        "laravel/pint": "^1.14",
+        "mikey179/vfsstream": "^1.6",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^8.1.1",
+        "orchestra/testbench": "^9.0.0",
+        "pestphp/pest": "^v3.5.0",
+        "pestphp/pest-plugin-laravel": "^3.0",
+        "php-mock/php-mock-mockery": "^1.4",
+        "roave/security-advisories": "dev-latest",
+        "spaze/phpstan-disallowed-calls": "^4.0",
+        "xepozz/internal-mocker": "^1.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Pixelated\\Streamline\\": "src/"
+        },
+        "psr-0": {
+            "StreamlineUpdater": "src/Global"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Pixelated\\Streamline\\Tests\\": "tests/",
+            "Workbench\\App\\": "workbench/app/",
+            "Workbench\\Database\\Factories\\": "workbench/database/factories/",
+            "Workbench\\Database\\Seeders\\": "workbench/database/seeders/"
+        }
+    },
+    "scripts": {
+        "pre-install-cmd": "run",
+        "post-autoload-dump": [
+            "@prepare",
+            "@composer run prepare"
+        ],
+        "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
+        "prepare": "@php vendor/bin/testbench package:discover --ansi",
+        "build": "@php vendor/bin/testbench workbench:build --ansi",
+        "start": [
+            "Composer\\Config::disableProcessTimeout",
+            "@composer run build",
+            "@php vendor/bin/testbench serve"
+        ],
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage",
+        "format": "vendor/bin/pint",
+        "serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@build",
+            "@php vendor/bin/testbench serve --ansi"
+        ],
+        "lint": [
+            "@php vendor/bin/pint --ansi",
+            "@php vendor/bin/phpstan analyse --verbose --ansi"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Pixelated\\Streamline\\StreamlineServiceProvider"
+            ],
+            "aliases": {
+                "archived-release-tools": "Pixelated\\Streamline\\Facades\\ArchivedReleaseTools",
+                "clean-up-assets": "Pixelated\\Streamline\\Facades\\CleanUpAssets",
+                "deployable-updater-stub-tools": "Pixelated\\Streamline\\Facades\\DeployableUpdaterStubTools",
+                "github-api": "Pixelated\\Streamline\\Facades\\GithubApi",
+                "hasher": "Pixelated\\Streamline\\Facades\\Hasher",
+                "zip": "Pixelated\\Streamline\\Facades\\Zip"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

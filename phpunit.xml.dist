@@ -10,14 +10,20 @@
     cacheDirectory=".phpunit.cache"
 >
     <testsuites>
-        <testsuite name="Arch">
-            <directory>./tests/Arch</directory>
+        <testsuite name="Feature">
+            <directory>./tests/Feature</directory>
+        </testsuite>
+        <testsuite name="UpdaterFeature">
+            <directory>./tests/Updater/Feature</directory>
         </testsuite>
         <testsuite name="Unit">
             <directory>./tests/Unit</directory>
         </testsuite>
-        <testsuite name="Feature">
-            <directory>./tests/Feature</directory>
+        <testsuite name="UpdaterUnit">
+            <directory>./tests/Updater/Unit</directory>
+        </testsuite>
+        <testsuite name="Arch">
+            <directory>./tests/Arch</directory>
         </testsuite>
     </testsuites>
     <logging>
@@ -27,6 +33,9 @@
         <include>
             <directory>./src</directory>
         </include>
+        <exclude>
+            <directory>./src/Testing</directory>
+        </exclude>
     </source>
     <coverage>
         <report>
@@ -34,6 +43,7 @@
         </report>
     </coverage>
     <php>
+        <const name="IS_TESTING" value="1"/>
         <env name="RAY_ENABLED" value="(true)"/>
         <env name="SEND_CACHE_TO_RAY" value="(false)"/>
         <env name="SEND_DUMPS_TO_RAY" value="(true)"/>

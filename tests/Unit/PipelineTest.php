@@ -1,0 +1,72 @@
+<?php
+
+use Pixelated\Streamline\Pipeline\Pipeline;
+use Pixelated\Streamline\Updater\UpdateBuilder;
+
+it('can process function pipes', closure: function () {
+    $this->expectOutputString('Test pipe');
+    /** @noinspection PhpUnhandledExceptionInspection */
+    $result = (new Pipeline(new UpdateBuilder()))
+        ->through([function () {
+            echo 'Test pipe';
+        }])
+        ->then(fn() => true);
+
+    $this->assertTrue($result);
+});
+
+it('can handle pipe exceptions properly', closure: function () {
+    $this->expectOutputString('Caught exception: Test exception');
+    /** @noinspection PhpUnhandledExceptionInspection */
+    $result = (new Pipeline(new UpdateBuilder()))
+        ->through([function () {
+            throw new RuntimeException('Test exception');
+        }])
+        ->catch(function (Throwable $e) {
+            echo 'Caught exception: ' . $e->getMessage();
+            return false;
+        })
+        ->then(function () {
+            return true;
+        });
+    $this->assertFalse($result);
+});
+
+it('will throw pipe exceptions properly', closure: function () {
+    $this->expectException(RuntimeException::class);
+    $this->expectExceptionMessage('Test throwing exception');
+    /** @noinspection PhpUnhandledExceptionInspection */
+    (new Pipeline(new UpdateBuilder()))
+        ->through([function () {
+            throw new RuntimeException('Test throwing exception');
+        }])
+        ->then(function () {
+            return true;
+        });
+});
+
+it('can handle "then" exceptions properly', closure: function () {
+    $this->expectOutputString('Caught exception: Test (then) exception');
+    /** @noinspection PhpUnhandledExceptionInspection */
+    $result = (new Pipeline(new UpdateBuilder()))
+        ->through([])
+        ->catch(function (Throwable $e) {
+            echo 'Caught exception: ' . $e->getMessage();
+            return false;
+        })
+        ->then(function () {
+            throw new RuntimeException('Test (then) exception');
+        });
+    $this->assertFalse($result);
+});
+
+it('will throw "then exceptions properly', closure: function () {
+    $this->expectException(RuntimeException::class);
+    $this->expectExceptionMessage('Test throwing (then) exception');
+    /** @noinspection PhpUnhandledExceptionInspection */
+    (new Pipeline(new UpdateBuilder()))
+        ->through([])
+        ->then(function () {
+            throw new RuntimeException('Test throwing (then) exception');
+        });
+});

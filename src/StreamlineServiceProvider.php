@@ -3,17 +3,24 @@
 namespace Pixelated\Streamline;
 
 use Composer\InstalledVersions;
+use Illuminate\Console\OutputStyle;
 use Illuminate\Contracts\Support\DeferrableProvider;
-use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Console\AboutCommand;
-use Illuminate\Support\Str;
+use Pixelated\Streamline\Actions\InstantiateStreamlineUpdater;
+use Pixelated\Streamline\Commands\CheckCommand;
+use Pixelated\Streamline\Commands\CleanAssetsDirectoryCommand;
 use Pixelated\Streamline\Commands\ListCommand;
 use Pixelated\Streamline\Commands\UpdateCommand;
+use Pixelated\Streamline\Macros\ConfigCommaToArrayMacro;
+use Pixelated\Streamline\Services\CleanUpAssets;
+use Pixelated\Streamline\Services\GitHubApi;
+use Pixelated\Streamline\Services\ZipArchive;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use StreamlineUpdater;
 
-class StreamlineServiceProvider extends PackageServiceProvider  implements DeferrableProvider
+class StreamlineServiceProvider extends PackageServiceProvider implements DeferrableProvider
 {
     public function configurePackage(Package $package): void
     {
@@ -21,43 +28,57 @@ class StreamlineServiceProvider extends PackageServiceProvider  implements Defer
         $package
             ->name('streamline')
             ->hasConfigFile()
-            ->hasViews()
-            ->hasMigration('create_streamline_table')
-            ->runsMigrations()
-            ->hasCommands(UpdateCommand::class, ListCommand::class)
-            ->hasInstallCommand(fn(InstallCommand $command) => $command
-                ->publishConfigFile()
-                ->publishMigrations()
-                ->askToRunMigrations()
-                ->copyAndRegisterServiceProviderInApp()
-                ->askToStarRepoOnGitHub('pixelated-au/streamline'));
+            ->hasCommands(
+                UpdateCommand::class,
+                ListCommand::class,
+                CheckCommand::class,
+                CleanAssetsDirectoryCommand::class
+            )
+            ->hasInstallCommand(fn(InstallCommand $command) => $command->publishConfigFile());
     }
 
-    public function boot(): void
+    public function registeringPackage(): void
     {
-        parent::boot();
-        $this->registerAppUpdater();
+        $this->app->when(InstantiateStreamlineUpdater::class)
+            ->needs('$updaterClassPathOrFileName')
+            ->give(StreamlineUpdater::class);
+
+        $this->app->resolving(OutputStyle::class, fn(OutputStyle $outputStyle) => $this->app
+            // Laravel resolves OutputStyle with make(). This means it won't be re-resolved which
+            // means it can't be reused later. This is why we bind() it to the app instance
+            ->bindIf(OutputStyle::class, fn() => $outputStyle)
+        );
+    }
+
+    /**
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     */
+    public function bootingPackage(): void
+    {
+        ConfigCommaToArrayMacro::register();
+
+        /** @var \Illuminate\Config\Repository $config */
+        $config = $this->app->make('config');
+        $config->set('logging.channels.streamline', $config->get('streamline.logging'));
+
         AboutCommand::add('Streamline Updater', ['<fg=bright-magenta>Version</>' => $this->getVersionInfo()]);
     }
 
     protected function getVersionInfo(): string
     {
         return '<fg=bright-magenta>' .
-            InstalledVersions::getPrettyVersion("pixelated-au/streamline") .
+            InstalledVersions::getPrettyVersion('pixelated-au/streamline') .
             '</>';
-    }
-
-    protected function registerAppUpdater(): void
-    {
-        $this->app->singleton(AppUpdater::class, fn(Application $app) => new AppUpdater(
-            $app['files'],
-            $app->basePath('stubs'),
-            static fn() => base64_encode(password_hash(Str::random(20), PASSWORD_BCRYPT))
-        ));
     }
 
     public function provides(): array
     {
-        return [AppUpdater::class];
+        // @codeCoverageIgnoreStart
+        return [
+            GitHubApi::class,
+            CleanUpAssets::class,
+            ZipArchive::class,
+        ];
+        // @codeCoverageIgnoreEnd
     }
 }
