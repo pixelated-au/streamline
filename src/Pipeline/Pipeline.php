@@ -19,7 +19,7 @@ class Pipeline
     }
 
     /**
-     * @param \Pixelated\Streamline\Pipeline\Pipe[] $pipes
+     * @param array{Closure|\Pixelated\Streamline\Pipeline\Pipe} $pipes
      */
     public function through(array $pipes): static
     {

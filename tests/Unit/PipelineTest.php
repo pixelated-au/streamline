@@ -5,7 +5,6 @@ use Pixelated\Streamline\Updater\UpdateBuilder;
 
 it('can process function pipes', closure: function () {
     $this->expectOutputString('Test pipe');
-    /** @noinspection PhpUnhandledExceptionInspection */
     $result = (new Pipeline(new UpdateBuilder()))
         ->through([function () {
             echo 'Test pipe';
@@ -17,7 +16,6 @@ it('can process function pipes', closure: function () {
 
 it('can handle pipe exceptions properly', closure: function () {
     $this->expectOutputString('Caught exception: Test exception');
-    /** @noinspection PhpUnhandledExceptionInspection */
     $result = (new Pipeline(new UpdateBuilder()))
         ->through([function () {
             throw new RuntimeException('Test exception');
@@ -35,7 +33,6 @@ it('can handle pipe exceptions properly', closure: function () {
 it('will throw pipe exceptions properly', closure: function () {
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage('Test throwing exception');
-    /** @noinspection PhpUnhandledExceptionInspection */
     (new Pipeline(new UpdateBuilder()))
         ->through([function () {
             throw new RuntimeException('Test throwing exception');
@@ -47,7 +44,6 @@ it('will throw pipe exceptions properly', closure: function () {
 
 it('can handle "then" exceptions properly', closure: function () {
     $this->expectOutputString('Caught exception: Test (then) exception');
-    /** @noinspection PhpUnhandledExceptionInspection */
     $result = (new Pipeline(new UpdateBuilder()))
         ->through([])
         ->catch(function (Throwable $e) {
@@ -63,7 +59,6 @@ it('can handle "then" exceptions properly', closure: function () {
 it('will throw "then exceptions properly', closure: function () {
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage('Test throwing (then) exception');
-    /** @noinspection PhpUnhandledExceptionInspection */
     (new Pipeline(new UpdateBuilder()))
         ->through([])
         ->then(function () {
