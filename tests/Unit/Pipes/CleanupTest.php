@@ -7,7 +7,7 @@ use Pixelated\Streamline\Pipes\Cleanup;
 it('should dispatch an Event with CommandClassCallback containing info and the directory path', function () {
     $mockBuilder = Mockery::mock(UpdateBuilderInterface::class);
     $tempDir = '/path/to/temp/dir';
-    $mockBuilder->shouldReceive('getWorkTempDir')->twice()->andReturn($tempDir);
+    $mockBuilder->shouldReceive('getWorkTempDir')->once()->andReturn($tempDir);
 
     Event::fake();
     File::shouldReceive('deleteDirectory')->once()->with($tempDir);

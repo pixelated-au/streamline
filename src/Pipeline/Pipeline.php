@@ -12,6 +12,7 @@ class Pipeline
     protected array $pipes = [];
     protected ?Closure $exceptionHandler = null;
     private Closure $destination;
+    private ?Closure $finallyHandler = null;
 
     public function __construct(protected UpdateBuilderInterface $builder)
     {
@@ -37,6 +38,16 @@ class Pipeline
     }
 
     /**
+     * @param Closure $finallyHandler
+     * @return $this
+     */
+    public function finally(Closure $finallyHandler): static
+    {
+        $this->finallyHandler = $finallyHandler;
+        return $this;
+    }
+
+    /**
      * @param Closure(): mixed $destination
      */
     public function then(Closure $destination): mixed
@@ -47,8 +58,16 @@ class Pipeline
             $this->prepareDestination($destination)
         );
 
-        // This will ultimately call the $destination closure with the result of the pipeline
-        return $pipeline($this->builder);
+        try {
+            // This will ultimately call the $destination closure with the result of the pipeline
+            $result = $pipeline($this->builder);
+        } finally {
+            if ($this->finallyHandler) {
+                ($this->finallyHandler)($this->builder);
+            }
+        }
+
+        return $result;
     }
 
     protected function carry(): Closure
@@ -61,14 +80,10 @@ class Pipeline
                     }
                     $result = $pipe($passable);
 
-                    // If $result is not an instance of UpdateBuilderInterface,
-                    // it means the pipe didn't return the builder, so we return
-                    // the 'destination' early
                     if (!$result instanceof UpdateBuilderInterface) {
                         return ($this->destination)($result);
                     }
 
-                    // Continue to the next item in the pipeline
                     return $stack($result);
                 } catch (Throwable $e) {
                     if ($this->exceptionHandler) {

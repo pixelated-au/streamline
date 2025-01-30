@@ -34,6 +34,7 @@ class UpdateCommand extends Command
                 $this->error($e->getMessage());
                 return self::FAILURE;
             })
+            ->finally(config('streamline.cleanup'))
             ->then(function () {
                 return self::SUCCESS;
             });

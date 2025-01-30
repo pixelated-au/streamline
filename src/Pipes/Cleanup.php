@@ -15,7 +15,7 @@ class Cleanup implements Pipe
         $tempDir = $builder->getWorkTempDir();
         Event::dispatch(new CommandClassCallback('info', "Deleting the temporary work directory: $tempDir"));
 
-        File::deleteDirectory($builder->getWorkTempDir());
+        File::deleteDirectory($tempDir);
 
         return $builder;
     }

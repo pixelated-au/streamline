@@ -2,8 +2,6 @@
 
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
-use Mockery\MockInterface;
-use Pixelated\Streamline\Actions\GetAvailableVersions;
 use Pixelated\Streamline\Tests\Feature\Traits\HttpMock;
 use Pixelated\Streamline\Tests\Feature\Traits\UpdateCommandCommon;
 
@@ -43,8 +41,7 @@ it('should run an update with a specific version', function () {
 });
 
 it('should run an update but notifies there are no new versions', function () {
-    $this->mockFile()
-        ->mockProcess()
+    $this->mockProcess()
         ->mockCache(['v2.0.0', 'v1.0.0'], 'v2.0.0');
     $this->mockGetWebArchive();
     Config::set('streamline.installed_version', 'v2.0.0');
@@ -55,8 +52,7 @@ it('should run an update but notifies there are no new versions', function () {
 });
 
 it('should run an update but cannot find any available versions and throw an error', function () {
-    $this->mockFile()
-        ->mockProcess()
+    $this->mockProcess()
         ->mockCache([]);
     $this->mockGetWebArchive()
         ->mockHttpReleases(Http::response([]));
@@ -67,8 +63,7 @@ it('should run an update but cannot find any available versions and throw an err
 });
 
 it('should run an update but cannot find the default next available version and throw an error', function () {
-    $this->mockFile()
-        ->mockProcess()
+    $this->mockProcess()
         ->mockCache(['v2.0.0', 'v1.0.0'], 'v3.2.3');
 
     $this->mockHttpReleases();
@@ -78,8 +73,7 @@ it('should run an update but cannot find the default next available version and 
 });
 
 it('should run an update but GitHub throws a connection error', function () {
-    $this->mockFile()
-        ->mockProcess()
+    $this->mockProcess()
         ->mockCache();
     Http::fake(['github.com/*' => Http::failedConnection()]);
 
@@ -89,8 +83,7 @@ it('should run an update but GitHub throws a connection error', function () {
 });
 
 it('should run an update requesting a version but it is older than the installed version and then throw an error', function () {
-    $this->mockFile()
-        ->mockProcess()
+    $this->mockProcess()
         ->mockCache(['v2.0.0', 'v1.0.0'])
         ->mockGetAvailableVersions();
     $this->mockHttpReleases();
@@ -101,8 +94,7 @@ it('should run an update requesting a version but it is older than the installed
 });
 
 it('should run an update requesting an invalid version and return an error', function () {
-    $this->mockFile()
-        ->mockProcess()
+    $this->mockProcess()
         ->mockCache();
     $this->mockHttpReleases();
 
@@ -112,8 +104,7 @@ it('should run an update requesting an invalid version and return an error', fun
 });
 
 it('should run a "forced" update requesting an invalid version and return an error', function () {
-    $this->mockFile()
-        ->mockProcess()
+    $this->mockProcess()
         ->mockCache();
     $this->mockHttpReleases();
 

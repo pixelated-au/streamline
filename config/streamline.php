@@ -1,5 +1,6 @@
 <?php
 
+use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 use Pixelated\Streamline\Pipes\GetNextAvailableReleaseVersion;
 use Pixelated\Streamline\Pipes\Cleanup;
 use Pixelated\Streamline\Pipes\DownloadRelease;
@@ -255,8 +256,8 @@ return [
     | Update Pipeline
     |--------------------------------------------------------------------------
     |
-    | These classes are used to define the pipeline for the updater script.
-    | Order is important.
+    | These classes (that extend Pixelated\Streamline\Pipeline\Pipe) are used
+    | to define the pipeline for the updater script. Order is relevant.
     |
     */
 
@@ -267,8 +268,22 @@ return [
         DownloadRelease::class,
         UnpackRelease::class,
         RunUpdate::class,
-        Cleanup::class,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pipeline Cleanup
+    |--------------------------------------------------------------------------
+    |
+    | Any classes (that extend Pixelated\Streamline\Pipeline\Pipe) in this
+    | array will be executed after all pipeline steps have completed.
+    | Even if an error occurs during the pipeline execution.
+    |
+    */
+
+    'cleanup' => static function(UpdateBuilderInterface $builder) {
+        app()->make(Cleanup::class)->__invoke($builder);
+    },
 
     /*
     |--------------------------------------------------------------------------
