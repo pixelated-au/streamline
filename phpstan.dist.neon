@@ -1,0 +1,29 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/nesbot/carbon/extension.neon
+#    - vendor/spaze/phpstan-disallowed-calls/extension.neon
+#    - vendor/spaze/phpstan-disallowed-calls/disallowed-dangerous-calls.neon
+#    - vendor/spaze/phpstan-disallowed-calls/disallowed-execution-calls.neon
+#    - vendor/spaze/phpstan-disallowed-calls/disallowed-loose-calls.neon
+#    - vendor/spaze/phpstan-disallowed-calls/disallowed-insecure-calls.neon
+
+parameters:
+    level: 6
+    paths:
+        - src
+        - config
+    customRulesetUsed: false
+    excludePaths:
+#        - src/Commands/UpdateCommand.php
+        - */workbench/*
+        - */tests/*
+    ignoreErrors:
+        -
+            message: "#^Call to an undefined method PHPUnit\\\\Framework\\\\TestCase::travel(To|Back)\\(\\)\\.$#"
+            path: tests/*
+        - '#^Call to method \w+\(\) on an unknown class Spatie\\(YiiRay|WordPressRay|CraftRay|RayBundle)\\Ray\.$#'
+        - '#^Call to an undefined static method [\w\\]\\Facades\[\w\\]\\:\\:.*\\(\\)$#'
+        - '#^Call to an undefined static method Illuminate\\\\Support\\\\Facades\\\\Storage\\:\\:fake\\(\\)\\.$#'
+
+#    scanFiles:
+#        - vendor/_laravel_idea/_ide_helper_facades.php

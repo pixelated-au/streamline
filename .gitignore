@@ -30,3 +30,4 @@ _ide_helper_models.php
 /php::memory/
 /tests/.pest/
 /workbench/storage/logs/
+/phpstan.neon
