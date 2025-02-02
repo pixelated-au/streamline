@@ -2,8 +2,6 @@
 
 namespace Pixelated\Streamline\Tests;
 
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\File;
 use org\bovigo\vfs\vfsStreamDirectory;
 use PHPUnit\Framework\TestCase as BaseTestCase;
 

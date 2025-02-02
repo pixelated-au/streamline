@@ -66,24 +66,25 @@ it('will throw "then" exceptions properly', closure: function () {
         });
 });
 
-
 it('will throw an exception but still run the finally function', closure: function () {
     $this->expectOutputString('Caught exception: Test finally exception');
 
     $finallyRun = false;
 
     $result = (new Pipeline(new UpdateBuilder()))
-        ->through([fn () => throw new RuntimeException('Test finally exception')])
+        ->through([fn() => throw new RuntimeException('Test finally exception')])
         ->catch(function (Throwable $e) {
-            echo 'Caught exception: '. $e->getMessage();
+            echo 'Caught exception: ' . $e->getMessage();
             return false;
         })
         ->finally(function () use (&$finallyRun) {
+            // This function should be called. First confirm that $finallyRun is false. Then set $finallyRun to true
+            // so that it can be confirmed that the finally function was called
             $this->assertFalse($finallyRun);
             $finallyRun = true;
         })
         ->then(function () {
-            // This should not be reached
+            $this->assertTrue(false, 'This should not be reached, therefore it should fail if called');
             return true;
         });
     $this->asserttrue($finallyRun);
