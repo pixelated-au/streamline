@@ -26,6 +26,7 @@
         "pestphp/pest": "^v3.5.0",
         "pestphp/pest-plugin-laravel": "^3.0",
         "php-mock/php-mock-mockery": "^1.4",
+        "phpstan/phpstan": "^2.1",
         "roave/security-advisories": "dev-latest",
         "spatie/laravel-ray": "^1.39",
         "spaze/phpstan-disallowed-calls": "^4.0",
