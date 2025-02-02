@@ -27,7 +27,7 @@ _ide_helper_models.php
 /tests/code-coverage/
 /.env
 /workbench/.env
-/php::memory/
 /tests/.pest/
 /workbench/storage/logs/
+/workbench/cache/
 /phpstan.neon
