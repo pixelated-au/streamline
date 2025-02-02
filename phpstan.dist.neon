@@ -14,7 +14,6 @@ parameters:
         - config
     customRulesetUsed: false
     excludePaths:
-#        - src/Commands/UpdateCommand.php
         - */workbench/*
         - */tests/*
     ignoreErrors:
