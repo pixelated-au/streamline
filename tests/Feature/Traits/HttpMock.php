@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Http;
 
 trait HttpMock
 {
-    const string RELEASES_URI = 'https://api.github.com/repos/*/releases';
+    const string RELEASES_URI = 'https://api.github.com/repos/*/releases*';
     const string WEB_URI = 'https://github.com/*/releases/download/*/*.zip';
 
     public function mockHttpReleases(Closure|PromiseInterface|null $response = null): self

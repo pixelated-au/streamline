@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Pixelated\Streamline\Facades\GitHubApi;
@@ -39,4 +40,63 @@ it('should finish the progress meter if it has started', function () {
     Http::assertSent(function ($request) {
         return $request->url() === 'https://api.github.com/repos/test/test';
     });
+});
+
+it('should paginate through multiple pages of data when the API returns more than 5 items', function () {
+    $baseUrl = 'https://api.github.com/repos/test/test';
+    $perPage = 5;
+
+    Config::set('streamline.github_api_pagination_limit', $perPage);
+
+    Http::fake([
+        'github.com/*' => Http::sequence()
+            ->push(body: mockApiBody(1), headers: ['Link' => "<$baseUrl?page=2&per_page=5>; rel=\"next\""])
+            ->push(body: mockApiBody(2), headers: ['Link' => "<$baseUrl?page=3&per_page=5>; rel=\"next\""])
+            ->push(body: mockApiBody(3, 3), headers: ['Link' => "<$baseUrl?page=2&per_page=5>; rel=\"prev\""])
+    ]);
+
+    Config::set('streamline.github_repo', 'test');
+
+    $result = GitHubApi::withApiUrl('test')->paginate();
+
+    expect($result)
+        ->toHaveCount(13)
+        ->and($result->slice(0, 5)->every(fn($item) => $item['id'] === 1))->toBeTrue()
+        ->and($result->slice(5, 5)->every(fn($item) => $item['id'] === 2))->toBeTrue()
+        ->and($result->slice(10)->every(fn($item) => $item['id'] === 3))->toBeTrue();
+
+    Http::assertSentCount(3);
+    Http::assertSentInOrder([
+        fn(Request $request) => $request->url() === "$baseUrl?page=1&per_page=$perPage",
+        fn(Request $request) => $request->url() === "$baseUrl?page=2&per_page=$perPage",
+        fn(Request $request) => $request->url() === "$baseUrl?page=3&per_page=$perPage",
+    ]);
+});
+
+function mockApiBody(int $id, int $count = 5): array
+{
+    return array_fill(0, $count, ['id' => $id]);
+}
+
+it('should add the auth token to the request when provided', function () {
+    Config::set('streamline.github_repo', 'test-repo');
+    Config::set('streamline.github_auth_token', 'test-token');
+
+    Http::fake();
+
+    GitHubApi::withApiUrl('test')->get();
+
+    Http::assertSent(fn(Request $request) => $request->hasHeader('Authorization') &&
+        $request->header('Authorization')[0] === 'Bearer test-token');
+});
+
+it('should not add the auth token to the request when not provided', function () {
+    Config::set('streamline.github_repo', 'test-repo');
+    Config::set('streamline.github_auth_token');
+
+    Http::fake();
+
+    GitHubApi::withApiUrl('test')->get();
+
+    Http::assertSent(fn(Request $request) => !$request->hasHeader('Authorization'));
 });

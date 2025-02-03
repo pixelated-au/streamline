@@ -18,8 +18,8 @@ class GetAvailableVersions
     {
         $versions = Facades\GitHubApi::withApiUrl(GitHubApi::GITHUB_RELEASES_PATH)
             ->withProgressCallback($this->meter)
-            ->get()
-            ->collect('*.tag_name');
+            ->paginate()
+            ->pluck('tag_name');
 
         Cache::forever(CacheKeysEnum::AVAILABLE_VERSIONS->value, $versions);
 

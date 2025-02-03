@@ -7,11 +7,12 @@ use Illuminate\Container\Attributes\Config;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Conditionable;
 use Pixelated\Streamline\Actions\ProgressMeter;
 use RuntimeException;
-
 
 class GitHubApi
 {
@@ -25,10 +26,13 @@ class GitHubApi
     private ?ProgressMeter $progressMeter = null;
     private ?string $downloadPath = null;
     private string $url;
+    private array $queryParams = [];
 
     public function __construct(
         #[Config('streamline.github_repo')]
-        private readonly string $githubRepo
+        private readonly string  $githubRepo,
+        #[Config('streamline.github_auth_token')]
+        private readonly ?string $authToken = null
     )
     {
     }
@@ -38,6 +42,10 @@ class GitHubApi
         $this->checkHasUrl();
         try {
             $requestClient = Http::withHeaders(self::REQUEST_USER_AGENT_HEADERS)
+                ->when(
+                    value: (bool)$this->authToken,
+                    callback: fn(PendingRequest $request) => $request->withToken($this->authToken)
+                )
                 ->when(
                     value: (bool)$this->progressMeter,
                     callback: function (PendingRequest $request) {
@@ -50,7 +58,7 @@ class GitHubApi
                     value: (bool)$this->downloadPath,
                     callback: fn(PendingRequest $request) => $request->sink($this->downloadPath)
                 )
-                ->get($this->url);
+                ->get($this->buildUrl());
             if ($this->progressMeter?->hasStarted) {
                 $this->progressMeter->finish();
             }
@@ -59,6 +67,29 @@ class GitHubApi
         } catch (ConnectionException $e) {
             throw new RuntimeException(message: 'Error: Failed to connect to GitHub API', previous: $e);
         }
+    }
+
+    public function paginate(): Collection
+    {
+        $this->checkHasUrl();
+        $allData = collect();
+        $page    = 1;
+        $perPage = config('streamline.github_api_pagination_limit');
+
+        do {
+            $this->withQueryParams(['page' => $page, 'per_page' => $perPage]);
+            $response = $this->get();
+            $data     = $response->collect();
+            $allData  = $allData->merge($data);
+
+            $page++;
+
+            // Check if there are more pages
+            $linkHeader  = $response->header('Link');
+            $hasNextPage = Str::contains($linkHeader, 'rel="next"');
+        } while ($hasNextPage);
+
+        return $allData;
     }
 
     private function checkHasUrl(): void
@@ -99,5 +130,20 @@ class GitHubApi
     protected function normalisePath(string $path): string
     {
         return ltrim($path, '/');
+    }
+
+    public function withQueryParams(array $params): static
+    {
+        $this->queryParams = array_merge($this->queryParams, $params);
+        return $this;
+    }
+
+    protected function buildUrl(): string
+    {
+        $url = $this->url;
+        if (!empty($this->queryParams)) {
+            $url .= '?' . http_build_query($this->queryParams);
+        }
+        return $url;
     }
 }

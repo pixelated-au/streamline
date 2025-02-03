@@ -54,6 +54,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | GitHub Auth Token
+    |--------------------------------------------------------------------------
+    |
+    | This is optional. If you want to download releases from private
+    | repositories, or are being rate limited, you need to generate a personal
+    | access token.
+    | See: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
+    |
+    */
+
+    'github_auth_token' => env('STREAMLINE_GITHUB_AUTH_TOKEN'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | GitHub API Pagination Limit
+    |--------------------------------------------------------------------------
+    |
+    | Max 100 - as specified by GitHub API. If you set it to 100, you may run
+    | into memory issues.
+    |
+    */
+
+    'github_api_pagination_limit' => env('STREAMLINE_GITHUB_API_PAGINATION_LIMIT', 30),
+
+    /*
+    |--------------------------------------------------------------------------
     | Release Archive File Name
     |--------------------------------------------------------------------------
     |
