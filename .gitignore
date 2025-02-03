@@ -29,5 +29,5 @@ _ide_helper_models.php
 /workbench/.env
 /tests/.pest/
 /workbench/storage/logs/
-/workbench/cache/
+/workbench/bootstrap/cache/
 /phpstan.neon
