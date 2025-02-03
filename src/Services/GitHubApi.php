@@ -27,14 +27,19 @@ class GitHubApi
     private ?string $downloadPath = null;
     private string $url;
     private array $queryParams = [];
+    private readonly string $githubRepo;
+    private readonly ?string $authToken;
 
     public function __construct(
-        #[Config('streamline.github_repo')]
-        private readonly string  $githubRepo,
-        #[Config('streamline.github_auth_token')]
-        private readonly ?string $authToken = null
+//        #[Config('streamline.github_repo')]
+//        private readonly string  $githubRepo,
+//        #[Config('streamline.github_auth_token')]
+//        private readonly ?string $authToken = null
     )
     {
+        //TODO restore this after upgrading to Laravel 11
+        $this->githubRepo = config('streamline.github_repo');
+        $this->authToken = config('streamline.github_auth_token');
     }
 
     public function get(): Response

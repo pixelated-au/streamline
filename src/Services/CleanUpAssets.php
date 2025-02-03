@@ -21,17 +21,23 @@ class CleanUpAssets
      * @var Collection<int, string|TGroupedFiles>
      */
     protected Collection $filesToDelete;
+    private readonly string $buildDir;
+    private int $numRevisions;
 
     public function __construct(
-        #[Config('streamline.laravel_build_dir_name')]
-        private readonly string $buildDir,
-        #[Config('streamline.laravel_asset_dir_name')]
-        private readonly string $assetDir,
-        #[Config('streamline.web_assets_build_num_revisions')]
-        private int             $numRevisions
+//        #[Config('streamline.laravel_build_dir_name')]
+//        private readonly string $buildDir,
+//        #[Config('streamline.laravel_asset_dir_name')]
+//        private readonly string $assetDir,
+//        #[Config('streamline.web_assets_build_num_revisions')]
+//        private int             $numRevisions
     )
     {
-        $this->filesToDelete = collect(Facades\Storage::files($this->buildDir . '/' . $this->assetDir));
+        //TODO restore these after upgrading to Laravel 11
+        $this->buildDir = config('streamline.laravel_build_dir_name');
+        $this->numRevisions = config('streamline.web_assets_build_num_revisions');
+        $assetDir = config('streamline.laravel_asset_dir_name');
+        $this->filesToDelete = collect(Facades\Storage::files($this->buildDir . '/' . $assetDir));
     }
 
     public function run(?int $numRevisions = null): void

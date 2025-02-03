@@ -12,13 +12,16 @@ use RuntimeException;
 
 class InstantiateStreamlineUpdater
 {
+    private readonly string $runnerClass;
+
     public function __construct(
         private readonly Wrappers\Process $process,
-//        private readonly string           $updaterClassPathOrFileName,
-        #[ConfigAttribute('streamline.runner_class')]
-        private readonly string           $runnerClass,
+//        #[ConfigAttribute('streamline.runner_class')]
+//        private readonly string           $runnerClass,
     )
     {
+        //TODO restore this after upgrading to Laravel 11
+        $this->runnerClass = Config::get('streamline.runner_class');
     }
 
     /**
