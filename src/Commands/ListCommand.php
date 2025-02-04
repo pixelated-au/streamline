@@ -9,7 +9,7 @@ class ListCommand extends Command
 {
     public $signature = 'streamline:list';
 
-    public $description = 'Retrieves the 30 most recent available updates from GitHub and stores them in the cache';
+    public $description = 'Retrieves the available updates from GitHub and stores them in the cache';
 
     public function handle(GetAvailableVersions $getAvailableVersions): int
     {
