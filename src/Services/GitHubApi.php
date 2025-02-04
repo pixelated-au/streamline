@@ -3,15 +3,14 @@
 namespace Pixelated\Streamline\Services;
 
 use GuzzleHttp\RequestOptions;
-use Illuminate\Container\Attributes\Config;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Conditionable;
 use Pixelated\Streamline\Actions\ProgressMeter;
+use Pixelated\Streamline\Enums\GitHubPaginationLinkHeaderTypeEnum as LinkHeader;
 use RuntimeException;
 
 class GitHubApi
@@ -27,6 +26,9 @@ class GitHubApi
     private ?string $downloadPath = null;
     private string $url;
     private array $queryParams = [];
+    private string $defaultProgressMessage = '';
+    private int $page = 0;
+    private ?int $totalPages = null;
     private readonly string $githubRepo;
     private readonly ?string $authToken;
 
@@ -39,13 +41,15 @@ class GitHubApi
     {
         //TODO restore this after upgrading to Laravel 11
         $this->githubRepo = config('streamline.github_repo');
-        $this->authToken = config('streamline.github_auth_token');
+        $this->authToken  = config('streamline.github_auth_token');
     }
 
     public function get(): Response
     {
         $this->checkHasUrl();
         try {
+            $this->setProgressMessage();
+
             $requestClient = Http::withHeaders(self::REQUEST_USER_AGENT_HEADERS)
                 ->when(
                     value: (bool)$this->authToken,
@@ -64,7 +68,8 @@ class GitHubApi
                     callback: fn(PendingRequest $request) => $request->sink($this->downloadPath)
                 )
                 ->get($this->buildUrl());
-            if ($this->progressMeter?->hasStarted) {
+
+            if ($this->progressMeter?->hasStarted()) {
                 $this->progressMeter->finish();
             }
 
@@ -77,22 +82,32 @@ class GitHubApi
     public function paginate(): Collection
     {
         $this->checkHasUrl();
-        $allData = collect();
-        $page    = 1;
-        $perPage = config('streamline.github_api_pagination_limit');
+        $allData          = collect();
+        $this->page       = 1;
+        $perPage          = config('streamline.github_api_pagination_limit');
+        $this->totalPages = null;
 
         do {
-            $this->withQueryParams(['page' => $page, 'per_page' => $perPage]);
+            $this->withQueryParams(['page' => $this->page, 'per_page' => $perPage]);
+
             $response = $this->get();
             $data     = $response->collect();
             $allData  = $allData->merge($data);
 
-            $page++;
+            $linkHeader = $response->header('Link');
+
+            // Extract total pages if not already set
+            if ($this->totalPages === null) {
+                $this->totalPages = $this->extractLinkPageNumber($linkHeader, LinkHeader::LAST);
+            }
 
             // Check if there are more pages
-            $linkHeader  = $response->header('Link');
-            $hasNextPage = Str::contains($linkHeader, 'rel="next"');
+            $nextPage    = $this->extractLinkPageNumber($linkHeader, LinkHeader::NEXT);
+            $hasNextPage = $nextPage !== null && $nextPage > $this->page;
+            $this->page++;
         } while ($hasNextPage);
+
+        $this->page = 0;
 
         return $allData;
     }
@@ -150,5 +165,52 @@ class GitHubApi
             $url .= '?' . http_build_query($this->queryParams);
         }
         return $url;
+    }
+
+    public function progressMessage(string $message): static
+    {
+        $this->defaultProgressMessage = $message;
+        return $this;
+    }
+
+    /**
+     * @see https://docs.github.com/en/rest/using-the-rest-api/using-pagination-in-the-rest-api
+     */
+    private function extractLinkPageNumber(?string $linkHeader, LinkHeader $type): ?int
+    {
+        if (!$linkHeader) {
+            return null;
+        }
+
+        // This regex extracts the page number from the GitHub API Link header
+        // Explanation:
+        // <.*                  : Matches the opening angle bracket and any characters
+        // (?:&|\?).            : Matches either '&', '?'
+        // page=(\d+)           : Matches 'page=' followed by one or more digits (captured)
+        // .*>                  : Matches any remaining characters until the closing angle bracket
+        // ; rel="$type->value" : Matches the rel attribute with the specified link type
+        if (preg_match("/<.*(?:&|\?)page=(\\d+).*>; rel=\"$type->value\"/", $linkHeader, $matches)) {
+            return (int)$matches[1];
+        }
+
+        return null;
+    }
+
+    /**
+     * @return void
+     */
+    public function setProgressMessage(): void
+    {
+        if (!$this->progressMeter) {
+            return;
+        }
+        $message = $this->defaultProgressMessage;
+        if ($this->page > 0) {
+            $message .= " - Page $this->page";
+        }
+        if ($this->totalPages !== null && $this->totalPages > 0) {
+            $message .= " of $this->totalPages";
+        }
+        $this->progressMeter->setMessage($message);
     }
 }

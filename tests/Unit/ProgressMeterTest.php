@@ -88,3 +88,27 @@ it('cannot run the progress meter as OutputStyle has not been defined', function
     $meter = new ProgressMeter(null, 0);
     $meter(100, 20);
 });
+
+it(
+    'should set message successfully when progress bar has started and is initialized',
+    /**
+     * @throws \JsonException
+     */
+    function () {
+        $resource = fopen('php://memory', 'a+b');
+        $output   = new OutputStyle(
+            new StringInput(''),
+            new StreamOutput($resource)
+        );
+
+        $meter = new ProgressMeter($output, 0);
+        $meter->setMessage('Test Message');
+        $meter(0, 20);
+
+
+        rewind($resource);
+        $output = stream_get_contents($resource);
+
+        expect($output)->toMatchSnapshot()
+            ->and($output)->toContain('Test Message');
+    });

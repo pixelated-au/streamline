@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Config;
 use Pixelated\Streamline\Actions\InstantiateStreamlineUpdater;
 use Pixelated\Streamline\Wrappers\Process;
 
@@ -13,8 +14,12 @@ it('should throw a RuntimeException when given a non-existent class name', funct
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage("Error instantiating updater class '$nonExistentClassName': Class \"$nonExistentClassName\" does not exist");
 
+    //TODO remove this after upgrading to Laravel 11
+    Config::set('streamline.runner_class', $nonExistentClassName);
     try {
-        (new InstantiateStreamlineUpdater($process, $nonExistentClassName))
+        //TODO restore this after upgrading to Laravel 11
+//        (new InstantiateStreamlineUpdater($process, $nonExistentClassName))
+        (new InstantiateStreamlineUpdater($process))
             ->execute('1.0.0', fn () => null);
     } finally {
         File::delete($classPath);

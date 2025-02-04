@@ -18,6 +18,7 @@ class GetAvailableVersions
     {
         $versions = Facades\GitHubApi::withApiUrl(GitHubApi::GITHUB_RELEASES_PATH)
             ->withProgressCallback($this->meter)
+            ->progressMessage('Retrieving versions...')
             ->paginate()
             ->pluck('tag_name');
 

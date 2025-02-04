@@ -10,7 +10,8 @@ use Symfony\Component\Console\Helper\ProgressBar;
 class ProgressMeter
 {
     private ProgressBar $progressBar;
-    public bool $hasStarted = false;
+    protected bool $hasStarted = false;
+    protected string $message = '';
 
     public readonly Closure $progressCallback;
 
@@ -19,6 +20,7 @@ class ProgressMeter
         if (!$output || !app()->runningInConsole()) {
             return;
         }
+        ProgressBar::setFormatDefinition('custom', ' %current%/%max% [%bar%] %percent:3s%% - %message%');
         $this->initCallback();
     }
 
@@ -31,6 +33,11 @@ class ProgressMeter
         $this->progressCallback->call($this, $downloadTotal, $downloadedBytes);
     }
 
+    public function setMessage(string $message): void
+    {
+        $this->message = $message;
+    }
+
     protected function initCallback(?Closure $callback = null): void
     {
         $this->progressCallback = $callback ?: function (int $downloadTotal, int $downloadedBytes) {
@@ -39,6 +46,9 @@ class ProgressMeter
             }
 
             if (isset($this->progressBar)) {
+                if ($this->message) {
+                    $this->progressBar->setMessage($this->message);
+                }
                 $downloadTotal
                     ? $this->progressBar->setProgress((int)round($downloadedBytes / $downloadTotal * 100))
                     : $this->progressBar->advance();
@@ -52,13 +62,23 @@ class ProgressMeter
         if (!is_null($this->minSecondsBetweenRedraws)) {
             $this->progressBar->minSecondsBetweenRedraws($this->minSecondsBetweenRedraws);
         }
+        if ($this->message) {
+            $this->progressBar->setFormat('custom');
+            $this->progressBar->setMessage($this->message);
+        }
         $this->progressBar->start();
         $this->hasStarted = true;
+    }
+
+    public function hasStarted()
+    {
+        return $this->hasStarted;
     }
 
     public function finish(): void
     {
         $this->progressBar->finish();
+        $this->output->newLine();
         $this->hasStarted = false;
     }
 }

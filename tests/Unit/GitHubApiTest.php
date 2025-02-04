@@ -26,22 +26,6 @@ it('does not have a progress callback when none is given to withProgressCallback
     });
 });
 
-it('should finish the progress meter if it has started', function () {
-    $progressMeter             = new ProgressMeterFake();
-    $progressMeter->hasStarted = true;
-
-    Http::fake(['https://api.github.com/repos/*' => Http::response('response')]);
-    Config::set('streamline.github_repo', 'test');
-
-    GitHubApi::withApiUrl('test')
-        ->withProgressCallback($progressMeter)
-        ->get();
-
-    Http::assertSent(function ($request) {
-        return $request->url() === 'https://api.github.com/repos/test/test';
-    });
-});
-
 it('should paginate through multiple pages of data when the API returns more than 5 items', function () {
     $baseUrl = 'https://api.github.com/repos/test/test';
     $perPage = 5;
@@ -57,7 +41,8 @@ it('should paginate through multiple pages of data when the API returns more tha
 
     Config::set('streamline.github_repo', 'test');
 
-    $result = GitHubApi::withApiUrl('test')->paginate();
+    $result = GitHubApi::withProgressCallback(new ProgressMeterFake())
+        ->withApiUrl('test')->paginate();
 
     expect($result)
         ->toHaveCount(13)
@@ -71,6 +56,30 @@ it('should paginate through multiple pages of data when the API returns more tha
         fn(Request $request) => $request->url() === "$baseUrl?page=2&per_page=$perPage",
         fn(Request $request) => $request->url() === "$baseUrl?page=3&per_page=$perPage",
     ]);
+});
+
+it('should find the last page when paginating through multiple pages of data', function () {
+    $baseUrl = 'https://api.github.com/repos/test/test';
+    $perPage = 5;
+
+    Config::set('streamline.github_api_pagination_limit', $perPage);
+
+    Http::fake([
+        'github.com/*' => Http::sequence()
+            ->push(body: mockApiBody(1), headers: ['Link' => "<$baseUrl?page=2&per_page=5>; rel=\"next\", <$baseUrl?page=75>; rel=\"last\""])
+            ->push(body: mockApiBody(2), headers: ['Link' => "<$baseUrl?page=3&per_page=5>; rel=\"next\", <$baseUrl?page=85>; rel=\"last\""])
+            ->push(body: mockApiBody(3), headers: ['Link' => "<$baseUrl?page=2&per_page=5>; rel=\"prev\""])
+    ]);
+
+    Config::set('streamline.github_repo', 'test');
+
+    $ghApi = GitHubApi::withProgressCallback(new ProgressMeterFake())
+        ->withApiUrl('test');
+    $ghApi->paginate();
+
+    $getTotalPages = Closure::bind(fn() => $this->totalPages, $ghApi, $ghApi);
+
+    $this->assertSame(75, $getTotalPages());
 });
 
 function mockApiBody(int $id, int $count = 5): array

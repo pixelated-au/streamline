@@ -25,6 +25,12 @@ class ProgressMeterFake extends ProgressMeter
         // Do nothing
     }
 
+    public function hasStarted(): bool
+    {
+        return true;
+    }
+
+
     public function finish(): void
     {
         // Do nothing
