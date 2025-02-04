@@ -3,14 +3,15 @@
 namespace Pixelated\Streamline\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Event;
-use Pixelated\Streamline\Events\CommandClassCallback;
+use Pixelated\Streamline\Commands\Traits\OutputSubProcessCalls;
 use Pixelated\Streamline\Pipeline\Pipeline;
 use Pixelated\Streamline\Updater\UpdateBuilder;
 use Throwable;
 
 class UpdateCommand extends Command
 {
+    use OutputSubProcessCalls;
+
     protected $signature = 'streamline:run-update
     {--install-version= : Specify version to install}
     {--force : Force update. Use for overriding the current version.}';
@@ -38,25 +39,5 @@ class UpdateCommand extends Command
             ->then(function () {
                 return self::SUCCESS;
             });
-    }
-
-    /**
-     * @noinspection PhpVoidFunctionResultUsedInspection
-     */
-    private function listenForSubProcessEvents(): void
-    {
-        // @codeCoverageIgnoreStart
-        Event::listen(
-            CommandClassCallback::class,
-            fn(CommandClassCallback $event) => match ($event->action) {
-                'comment' => $this->comment($event->value),
-                'info' => $this->info($event->value),
-                'warn' => $this->warn($event->value),
-                'error' => $this->error($event->value),
-                'call' => $this->call($event->value),
-                default => null,
-            }
-        );
-        // @codeCoverageIgnoreEnd
     }
 }
