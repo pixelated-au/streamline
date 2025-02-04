@@ -41,7 +41,6 @@ class UpdateCommand extends Command
     }
 
     /**
-     * @noinspection PhpMethodParametersCountMismatchInspection
      * @noinspection PhpVoidFunctionResultUsedInspection
      */
     private function listenForSubProcessEvents(): void
