@@ -2,31 +2,33 @@
 
 namespace Pixelated\Streamline\Services;
 
-use Illuminate\Container\Attributes\Config;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
+use Pixelated\Streamline\Events\CommandClassCallback;
 use RuntimeException;
 
 /**
+ * @template TGroupedFiles array<string, array{filename: string, mtime: int}>
+ * @description Groups filenames by their root name. Eg foo.adc4953.js will be grouped by "foo"
+ * @note Expects the filenames to be in the format [filename].[hash].[ext]
  */
 class CleanUpAssets
 {
     /**
-     * @template TGroupedFiles array<string, array{filename: string, mtime: int}>
-     * @description Groups filenames by their root name. Eg foo.adc4953.js will be grouped by "foo"
-     * @note Expects the filenames to be in the format [filename].[hash].[ext]
      * @var Collection<int, string|TGroupedFiles>
      */
     protected Collection $filesToDelete;
     private readonly string $buildDir;
     private int $numRevisions;
 
+    private Filesystem $filesystem;
+
     public function __construct(
-//        #[Config('streamline.laravel_build_dir_name')]
-//        private readonly string $buildDir,
 //        #[Config('streamline.laravel_asset_dir_name')]
 //        private readonly string $assetDir,
 //        #[Config('streamline.web_assets_build_num_revisions')]
@@ -34,10 +36,11 @@ class CleanUpAssets
     )
     {
         //TODO restore these after upgrading to Laravel 11
-        $this->buildDir = config('streamline.laravel_build_dir_name');
-        $this->numRevisions = config('streamline.web_assets_build_num_revisions');
-        $assetDir = config('streamline.laravel_asset_dir_name');
-        $this->filesToDelete = collect(Facades\Storage::files($this->buildDir . '/' . $assetDir));
+        $this->numRevisions  = config('streamline.web_assets_build_num_revisions');
+        $assetDir            = config('streamline.laravel_asset_dir_name');
+        $this->filesystem          = Facades\Storage::disk(config('streamline.laravel_public_disk_name'));
+        $buildDir            = config('streamline.laravel_build_dir_name');
+        $this->filesToDelete = collect($this->filesystem->files("$buildDir/$assetDir"));
     }
 
     public function run(?int $numRevisions = null): void
@@ -47,11 +50,11 @@ class CleanUpAssets
         }
 
         $assets = $this->filter();
-        Facades\Log::channel('streamline')->info('DELETING EXPIRED ASSETS: ' . $assets->implode(', '));
-        $result = Facades\Storage::delete($assets->toArray());
+        Event::dispatch(new CommandClassCallback('info', 'DELETING EXPIRED ASSETS: ' . ($assets->isEmpty() ? 'No matching assets found. Likely because none meet the minimum amount of revisions' : $assets->implode(', '))));
+        $result = $this->filesystem->delete($assets->toArray());
 
         if (!$result) {
-            throw new RuntimeException('Error: Failed to sync front-end build assets. Could not execute the cleanup command.');
+            throw new RuntimeException('Error: Failed to clean out redundant front-end build assets. Could not execute the cleanup command.');
         }
     }
 
@@ -60,15 +63,17 @@ class CleanUpAssets
      */
     protected function filter(): Collection
     {
+        // Keep only files that end with .js, .css or .map
         return $this->filesToDelete
-            // Keep only files that end with .js, .css or .map
+            // Filter out files whose extension does not match any of the allowed ones
             ->filter(fn(string $file) => Str::endsWith(
                 haystack: $file,
                 needles: Arr::map(
                     array: Facades\Config::commaToArray('streamline.web_assets_filterable_file_types'),
                     callback: static fn(string $ext) => Str::of($ext)
+                        // Prefix each extension with a dot if it doesn't already have one
                         ->when(
-                            value: fn(Stringable $ext) => $ext->charAt(0) !== '.',
+                            value: fn(Stringable $ext) => !$ext->startsWith('.'),
                             callback: fn(Stringable $ext) => $ext->prepend('.')
                         )
                 )
@@ -79,17 +84,22 @@ class CleanUpAssets
                 function (string $file) {
                     $baseName = preg_replace('/\.[^.]+\.[^.]+$/', '', $file);
                     return [$baseName => [
-                        'filename' => $this->buildDir ? "$this->buildDir/$file" : $file,
-                        'mtime'    => Facades\Storage::lastModified($file),
+                        'filename' => $file,
+                        'mtime'    => $this->filesystem->lastModified($file),
                     ]];
                 }
             )
-            // sort the collection by mtime
             ->map(fn(Collection $group) => $group
                 ->sortBy(fn(array $meta) => $meta['mtime']))
+            ->tap(function (Collection $group) {
+            })
             // remove Global number of revisions from the collection
             ->map(fn(Collection $meta, string $baseName) => $meta
-                ->take($meta->count() - $this->numRevisions)
+                ->when(
+                    $meta->count() > $this->numRevisions,
+                    fn(Collection $meta) => $meta->take($meta->count() - $this->numRevisions),
+                    fn() => collect(),
+                )
                 ->map(fn(array $meta) => $meta['filename'])
             )
             ->flatten();
