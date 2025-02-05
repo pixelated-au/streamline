@@ -5,14 +5,6 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
 use Pixelated\Streamline\Facades\CleanUpAssets;
 
-afterEach(function () {
-    try {
-        Storage::delete(Storage::allFiles());
-    } catch (Exception) {
-    }
-});
-
-
 it('can clean up assets with multiple revisions', function () {
     Storage::fake();
 
@@ -145,6 +137,7 @@ it('overrides the number of revisions in config allowing only 1', function () {
     Storage::assertMissing('style.111aaa.css');
     Storage::assertMissing('style.333ccc.css');
 });
+
 it('overrides the number of revisions in config allowing only 3', function () {
     Storage::fake();
 
@@ -177,11 +170,46 @@ it('overrides the number of revisions in config allowing only 3', function () {
     Storage::assertMissing('style.111aaa.css');
 });
 
-/**
- * @param array<string, int> $files
- */
+it('files are not deleted if there are less files available than the number of revisions', function () {
+    Storage::fake();
+
+    storeFiles([
+        'app.123abc_keep.js'    => 2,
+        'app.456def_keep.js'    => 4,
+        'app.789ghi_keep.js'    => 3,
+        'app.101jkl_keep.js'    => 1,
+        'style.111aaa_keep.css' => 5,
+        'style.222bbb_keep.css' => 4,
+        'style.333ccc_keep.css' => 3,
+        'style.444ddd_keep.css' => 2,
+        'style.555eee.css'      => 1, // this one should be deleted
+    ]);
+
+    Config::set('streamline.build_dir', Storage::getConfig()['root']);
+    Config::set('streamline.laravel_build_dir_name', '');
+    Config::set('streamline.laravel_asset_dir_name', '');
+    Config::set('streamline.laravel_public_disk_name', '');
+    Config::set('streamline.web_assets_build_num_revisions', 4);
+
+    CleanUpAssets::run();
+
+    Storage::assertExists('style.111aaa_keep.css');
+    Storage::assertExists('style.222bbb_keep.css');
+    Storage::assertExists('style.444ddd_keep.css');
+    Storage::assertExists('style.333ccc_keep.css');
+
+    Storage::assertExists('app.123abc_keep.js');
+    Storage::assertExists('app.456def_keep.js');
+    Storage::assertExists('app.789ghi_keep.js');
+    Storage::assertExists('app.101jkl_keep.js');
+
+    Storage::assertMissing('style.555eee.css');
+});
+
+/** @param array<string, int> $files */
 function storeFiles(array $files): void
 {
+    Storage::fake();
     foreach ($files as $file => $offset) {
         test()->travelTo(now()->subYear()->addDays($offset));
         Storage::put($file, 'content');
@@ -189,5 +217,3 @@ function storeFiles(array $files): void
         test()->travelBack();
     }
 }
-
-// TODO NEW TEST TO ENSURE THAT AT A MINIMUM, A SINGLE VERSION OF EACH ASSET IS KEPT UNDER THE REVISION LIMIT
