@@ -1,9 +1,9 @@
 <?php
 
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
-use Pixelated\Streamline\Pipes\GetNextAvailableReleaseVersion;
 use Pixelated\Streamline\Pipes\Cleanup;
 use Pixelated\Streamline\Pipes\DownloadRelease;
+use Pixelated\Streamline\Pipes\GetNextAvailableReleaseVersion;
 use Pixelated\Streamline\Pipes\MakeTempDir;
 use Pixelated\Streamline\Pipes\RunUpdate;
 use Pixelated\Streamline\Pipes\UnpackRelease;
@@ -114,18 +114,6 @@ return [
     */
 
     'backup_dir' => env('STREAMLINE_BACKUP_DIR', base_path('../streamline_backups')),
-    /*
-    |--------------------------------------------------------------------------
-    | Deployment Path For The Updater Script
-    |--------------------------------------------------------------------------
-    |
-    | During each update, a script will be deployed to a publicly accessible
-    | directory. Typically, this is under the public path from where supporting
-    | assets are served from such as images, JS and CSS files
-    |
-    */
-
-    //    'updater_deploy_to_path' => dirname(public_path()),
 
     /*
     |--------------------------------------------------------------------------
@@ -143,6 +131,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Web Asset Public Disk Name
+    |--------------------------------------------------------------------------
+    |
+    | This is the root disk name where the web assets (js, css, images) will be
+    | stored. Typically, it's [APP_ROOT]/public.
+    |
+    */
+
+    'laravel_public_disk_name' => env('STREAMLINE_WEB_ASSET_PUBLIC_DISK_NAME', 'public'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Deployment Build Directory
     |--------------------------------------------------------------------------
     |
@@ -152,7 +152,7 @@ return [
     |
     */
 
-    'laravel_build_dir_name' => 'build',
+    'laravel_build_dir_name' => env('STREAMLINE_WEB_ASSET_BUILD_DIR_NAME', 'build'),
 
     /*
     |--------------------------------------------------------------------------
@@ -307,7 +307,7 @@ return [
     |
     */
 
-    'cleanup' => static function(UpdateBuilderInterface $builder) {
+    'cleanup' => static function (UpdateBuilderInterface $builder) {
         app()->make(Cleanup::class)->__invoke($builder);
     },
 
