@@ -28,6 +28,8 @@ _ide_helper_models.php
 /.env
 /workbench/.env
 /tests/.pest/
+/workbench/storage/app/
 /workbench/storage/logs/
+/workbench/storage/framework/
 /workbench/bootstrap/cache/
 /phpstan.neon
