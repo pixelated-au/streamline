@@ -4,11 +4,13 @@ namespace Pixelated\Streamline\Commands;
 
 use Illuminate\Console\Command;
 use Pixelated\Streamline\Actions\CheckAvailableVersions;
+use Pixelated\Streamline\Commands\Traits\GitHubApi;
 use Pixelated\Streamline\Commands\Traits\OutputSubProcessCalls;
 use RuntimeException;
 
 class CheckCommand extends Command
 {
+    use GitHubApi;
     use OutputSubProcessCalls;
 
     public $signature = 'streamline:check
@@ -16,18 +18,14 @@ class CheckCommand extends Command
 
     public $description = 'Check for an available update';
 
-    public function __construct(private readonly CheckAvailableVersions $availableVersions)
-    {
-        parent::__construct();
-    }
 
-
-    public function handle(): int
+    public function handle(CheckAvailableVersions $availableVersions): int
     {
+        $this->setGitHubAuthToken();
         $this->listenForSubProcessEvents();
 
         try {
-            $nextVersion = $this->availableVersions->execute($this->option('force'));
+            $nextVersion = $availableVersions->execute($this->option('force'));
             $this->info('Next available version: ' . $nextVersion);
         } catch (RuntimeException $e) {
             $this->error($e->getMessage());

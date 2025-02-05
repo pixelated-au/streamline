@@ -3,6 +3,7 @@
 namespace Pixelated\Streamline\Commands;
 
 use Illuminate\Console\Command;
+use Pixelated\Streamline\Commands\Traits\GitHubApi;
 use Pixelated\Streamline\Commands\Traits\OutputSubProcessCalls;
 use Pixelated\Streamline\Pipeline\Pipeline;
 use Pixelated\Streamline\Updater\UpdateBuilder;
@@ -11,6 +12,7 @@ use Throwable;
 class UpdateCommand extends Command
 {
     use OutputSubProcessCalls;
+    use GitHubApi;
 
     protected $signature = 'streamline:run-update
     {--install-version= : Specify version to install}
