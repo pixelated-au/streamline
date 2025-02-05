@@ -23,9 +23,7 @@ class CleanUpAssets
      * @var Collection<int, string|TGroupedFiles>
      */
     protected Collection $filesToDelete;
-    private readonly string $buildDir;
     private int $numRevisions;
-
     private Filesystem $filesystem;
 
     public function __construct(
@@ -38,7 +36,7 @@ class CleanUpAssets
         //TODO restore these after upgrading to Laravel 11
         $this->numRevisions  = config('streamline.web_assets_build_num_revisions');
         $assetDir            = config('streamline.laravel_asset_dir_name');
-        $this->filesystem          = Facades\Storage::disk(config('streamline.laravel_public_disk_name'));
+        $this->filesystem    = Facades\Storage::disk(config('streamline.laravel_public_disk_name'));
         $buildDir            = config('streamline.laravel_build_dir_name');
         $this->filesToDelete = collect($this->filesystem->files("$buildDir/$assetDir"));
     }
