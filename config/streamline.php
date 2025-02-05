@@ -213,9 +213,11 @@ return [
     | The list has been intentionally kept minimal. If you need to extend it,
     | define the extensions in the .env file.
     |
+    | NOTE: the json extension is needed if you have a json manifest file.
+    |
     */
 
-    'web_assets_filterable_file_types' => env('STREAMLINE_WEB_ASSET_FILE_TYPES', ['js', 'css', 'svg', 'png', 'jpg', 'jpeg', 'gif', 'avif', 'webp', 'pdf', 'woff', 'woff2', 'ttf', 'eot']),
+    'web_assets_filterable_file_types' => env('STREAMLINE_WEB_ASSET_FILE_TYPES', ['json', 'js', 'css', 'svg', 'png', 'jpg', 'jpeg', 'gif', 'avif', 'webp', 'pdf', 'woff', 'woff2', 'ttf', 'eot']),
 
     /*
     |--------------------------------------------------------------------------
