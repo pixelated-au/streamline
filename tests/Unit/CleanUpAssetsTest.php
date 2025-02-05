@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
 use Pixelated\Streamline\Facades\CleanUpAssets;
@@ -30,6 +31,8 @@ it('can clean up assets with multiple revisions', function () {
     Config::set('streamline.laravel_build_dir_name', '');
     Config::set('streamline.laravel_asset_dir_name', '');
     Config::set('streamline.web_assets_build_num_revisions', 2);
+    Config::set('streamline.laravel_public_disk_name', '');
+
     CleanUpAssets::run();
 
     Storage::assertExists('app.456def_keep.js');
@@ -50,6 +53,7 @@ it('handles empty asset directory', function () {
     Config::set('streamline.laravel_build_dir_name', '');
     Config::set('streamline.laravel_asset_dir_name', '');
     Config::set('streamline.web_assets_build_num_revisions', 2);
+    Config::set('streamline.laravel_public_disk_name', '');
 
     Storage::assertDirectoryEmpty(Storage::getConfig()['root']);
 
@@ -76,6 +80,7 @@ it('ignores files with non-matching extensions', function () {
     Config::set('streamline.laravel_build_dir_name', '');
     Config::set('streamline.laravel_asset_dir_name', '');
     Config::set('streamline.web_assets_build_num_revisions', 2);
+    Config::set('streamline.laravel_public_disk_name', '');
 
     CleanUpAssets::run();
 
@@ -93,17 +98,19 @@ it('ignores files with non-matching extensions', function () {
 });
 
 it('throws exception when storage operation fails', function () {
-    Storage::shouldReceive('delete')
-        ->andReturn(false);
+    Config::set('streamline.laravel_public_disk_name', 'public');
 
-    Storage::shouldReceive('files')
-        ->andReturn(['app.123abc.js', 'style.111aaa.css']);
+    Storage::purge('public');
+    $mock = Mockery::mock(Filesystem::class);
+    $mock->shouldReceive('delete')->andReturnFalse();
+    $mock->shouldReceive('files')->andReturn(['app.123abc.js', 'style.111aaa.css']);
+    $mock->shouldReceive('lastModified')->andReturn('12345678');
+    $mock->shouldReceive('allFiles')->andReturn([]);
 
-    Storage::shouldReceive('lastModified')
-        ->andReturn('12345678');
+    Storage::set('public', $mock);
 
     expect(static fn() => CleanUpAssets::run())
-        ->toThrow(RuntimeException::class, 'Error: Failed to sync front-end build assets. Could not execute the cleanup command.');
+        ->toThrow(RuntimeException::class, 'Error: Failed to clean out redundant front-end build assets. Could not execute the cleanup command.');
 });
 
 it('overrides the number of revisions in config allowing only 1', function () {
@@ -124,6 +131,8 @@ it('overrides the number of revisions in config allowing only 1', function () {
     Config::set('streamline.laravel_build_dir_name', '');
     Config::set('streamline.laravel_asset_dir_name', '');
     Config::set('streamline.web_assets_build_num_revisions', 2);
+    Config::set('streamline.laravel_public_disk_name', '');
+
     CleanUpAssets::run(1);
 
     Storage::assertExists('app.456def_keep.js');
@@ -153,7 +162,8 @@ it('overrides the number of revisions in config allowing only 3', function () {
     Config::set('streamline.build_dir', Storage::getConfig()['root']);
     Config::set('streamline.laravel_build_dir_name', '');
     Config::set('streamline.laravel_asset_dir_name', '');
-    Config::set('streamline.web_assets_build_num_revisions', 2);
+    Config::set('streamline.laravel_public_disk_name', '');
+
     CleanUpAssets::run(3);
 
     Storage::assertExists('app.456def_keep.js');
@@ -179,3 +189,5 @@ function storeFiles(array $files): void
         test()->travelBack();
     }
 }
+
+// TODO NEW TEST TO ENSURE THAT AT A MINIMUM, A SINGLE VERSION OF EACH ASSET IS KEPT UNDER THE REVISION LIMIT
