@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Pixelated\Streamline\Services\ZipArchive;
-use Pixelated\Streamline\Updater\RunUpdate;
+use Pixelated\Streamline\Updater\RunCompleteGitHubVersionRelease;
 
 class StreamlineUpdater
 {
@@ -91,7 +91,7 @@ class StreamlineUpdater
 
     public function run(): void
     {
-        $updater = new RunUpdate(
+        $updater = new RunCompleteGitHubVersionRelease(
             zip: new ZipArchive(),
             downloadedArchivePath: $this->sourceDir,
             tempDirName: $this->tempDir,

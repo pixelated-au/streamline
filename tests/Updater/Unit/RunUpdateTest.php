@@ -3,7 +3,7 @@
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\visitor\vfsStreamStructureVisitor;
 use Pixelated\Streamline\Testing\Mocks\ZipArchiveFake;
-use Pixelated\Streamline\Updater\RunUpdate;
+use Pixelated\Streamline\Updater\RunCompleteGitHubVersionRelease;
 
 beforeEach(function () {
     $this->ns            = 'Pixelated\\Streamline\\Updater';
@@ -367,7 +367,7 @@ it('fails to delete a missing directory', function () {
  *     doOutput?: bool,
  * } $options
  */
-function runUpdateClassFactory(array $options = []): RunUpdate
+function runUpdateClassFactory(array $options = []): RunCompleteGitHubVersionRelease
 {
     $options = array_merge(
         [
@@ -389,7 +389,7 @@ function runUpdateClassFactory(array $options = []): RunUpdate
         ],
         $options);
 
-    return new RunUpdate(
+    return new RunCompleteGitHubVersionRelease(
         zip: $options['zip'],
         downloadedArchivePath: $options['downloadedArchivePath'],
         tempDirName: $options['tempDirName'],

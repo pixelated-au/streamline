@@ -1,6 +1,6 @@
 <?php
 
-use Pixelated\Streamline\Updater\RunUpdate;
+use Pixelated\Streamline\Updater\RunCompleteGitHubVersionRelease;
 beforeEach(function () {
     $this->ns = 'Pixelated\\Streamline\\Updater';
 
@@ -40,7 +40,7 @@ it('can run an update using actual filesystem actions and deletes the backup dir
     ];
     $this->expectOutputString(implode("\n", $output));
 
-    $updater = new RunUpdate(
+    $updater = new RunCompleteGitHubVersionRelease(
         zip: $zip,
         downloadedArchivePath: working_path('archive.zip'),
         tempDirName: 'temp',

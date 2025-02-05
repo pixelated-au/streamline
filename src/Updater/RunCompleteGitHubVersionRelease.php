@@ -9,8 +9,7 @@ use RecursiveIteratorIterator;
 use RuntimeException;
 use ZipArchive;
 
-readonly class RunUpdate
-// TODO RENAME THIS TO BE RunCompleteGitHubVersionRelease
+readonly class RunCompleteGitHubVersionRelease
 {
     private string $resolvedTempDir;
 
