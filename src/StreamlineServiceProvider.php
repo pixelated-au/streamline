@@ -6,7 +6,6 @@ use Composer\InstalledVersions;
 use Illuminate\Console\OutputStyle;
 use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Foundation\Console\AboutCommand;
-use Pixelated\Streamline\Actions\InstantiateStreamlineUpdater;
 use Pixelated\Streamline\Commands\CheckCommand;
 use Pixelated\Streamline\Commands\CleanAssetsDirectoryCommand;
 use Pixelated\Streamline\Commands\ListCommand;
@@ -18,7 +17,6 @@ use Pixelated\Streamline\Services\ZipArchive;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use StreamlineUpdater;
 
 class StreamlineServiceProvider extends PackageServiceProvider implements DeferrableProvider
 {
@@ -39,10 +37,6 @@ class StreamlineServiceProvider extends PackageServiceProvider implements Deferr
 
     public function registeringPackage(): void
     {
-        $this->app->when(InstantiateStreamlineUpdater::class)
-            ->needs('$updaterClassPathOrFileName')
-            ->give(StreamlineUpdater::class);
-
         $this->app->resolving(OutputStyle::class, fn(OutputStyle $outputStyle) => $this->app
             // Laravel resolves OutputStyle with make(). This means it won't be re-resolved which
             // means it can't be reused later. This is why we bind() it to the app instance
