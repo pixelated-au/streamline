@@ -71,6 +71,15 @@ it('can initialise the RunUpdate class', function () {
     (new StreamlineUpdater())->run();
 })->throwsNoExceptions();
 
+it('should add an error message to envIssues when JSON parsing fails twice', function () {
+    setEnv(
+        ['PROTECTED_PATHS' => 'invalid json']
+    );
+    $this->expectException(InvalidArgumentException::class);
+    $this->expectExceptionMessageMatches('/Environment variable PROTECTED_PATHS=invalid json cannot be converted to an array. Pass in a JSON compatible array string!/');
+    (new StreamlineUpdater())->run();
+});
+
 /**
  * @param array{
  *     TEMP_DIR?: string,
