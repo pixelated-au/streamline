@@ -3,43 +3,31 @@
 namespace Pixelated\Streamline\Updater;
 
 use FilesystemIterator;
-use InvalidArgumentException;
 use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 use RuntimeException;
-use ZipArchive;
 
 readonly class RunCompleteGitHubVersionRelease
 {
-    private string $resolvedTempDir;
-
     public function __construct(
-        private ZipArchive $zip,
-        private string     $downloadedArchivePath,
-        private string     $tempDirName,
-        private string     $laravelBasePath,
-        private string     $publicDirName,
-        private string     $frontendBuildDir,
-        private string     $installingVersion,
-        private int        $maxFileSize,
-        private array      $allowedExtensions,
-        private array      $protectedPaths,
-        private int        $dirPermission,
-        private int        $filePermission,
-        private string     $backupDirPath,
-        private bool       $doRetainOldReleaseDir = true,
-        private bool       $doOutput = false,
+        private string $tempDirName,
+        private string $laravelBasePath,
+        private string $publicDirName,
+        private string $frontendBuildDir,
+        private string $installingVersion,
+        private array  $protectedPaths,
+        private int    $dirPermission,
+        private int    $filePermission,
+        private string $oldReleaseArchivePath,
+        private bool   $doRetainOldReleaseDir = true,
+        private bool   $doOutput = false,
     )
     {
-        $this->resolvedTempDir = "$this->laravelBasePath/$this->tempDirName";
     }
 
     public function run(): void
     {
         $this->output('Starting update');
         $this->copyFrontEndAssetsFromOldToNewRelease();
-        $this->unpackNewRelease();
-        $this->cleanOutInvalidFilesInNewRelease("$this->resolvedTempDir/$this->publicDirName/$this->frontendBuildDir");
         $this->moveNewReleaseIntoDeployment();
         $this->terminateOldReleaseDir();
         $this->setEnvVersionNumber();
@@ -47,56 +35,14 @@ readonly class RunCompleteGitHubVersionRelease
         $this->output('Update completed');
     }
 
-    protected function unpackNewRelease(): void
-    {
-        $this->output('Unpacking archive');
-
-        if ($this->zip->open($this->downloadedArchivePath) === true) {
-            $this->zip->extractTo($this->resolvedTempDir);
-            $this->zip->close();
-        } else {
-            throw new RuntimeException("Error: Failed to unpack $this->downloadedArchivePath");
-        }
-    }
-
-    public function cleanOutInvalidFilesInNewRelease(string $assetsDir): void
-    {
-        $this->output('Cleaning out invalid files');
-        $this->recursivelyRemoveInvalidFiles($assetsDir);
-    }
-
-    protected function recursivelyRemoveInvalidFiles(string $assetsDir): void
-    {
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($assetsDir, FilesystemIterator::SKIP_DOTS)
-        );
-        $iterator->rewind();
-        /** @var \SplFileInfo $item */
-        foreach ($iterator as $key => $item) {
-            $extension = strtolower($item->getExtension() ?? '');
-
-            if (!in_array($extension, array_map(static fn($item) => strtolower($item), $this->allowedExtensions), true)) {
-                $this->output("Removing file with disallowed extension: $key");
-                unlink($key);
-                continue;
-            }
-
-            if ($item->getSize() > $this->maxFileSize) {
-                $this->output("Removing file exceeding size limit: $key");
-                unlink($key);
-            }
-        }
-    }
-
     protected function copyFrontEndAssetsFromOldToNewRelease(): void
     {
         $this->output('Copying frontend assets');
-        $oldBuildDir = "$this->laravelBasePath/$this->publicDirName/$this->frontendBuildDir";
-        $newBuildDir = "$this->resolvedTempDir/$this->publicDirName/$this->frontendBuildDir";
+        $existingReleaseBuildDir = "$this->publicDirName/$this->frontendBuildDir";
+        $incomingReleaseBuildDir = $this->tempDirName . '/' . basename($this->publicDirName) . '/' . $this->frontendBuildDir;
+        $this->validateDirectoriesExist($existingReleaseBuildDir, $incomingReleaseBuildDir);
 
-        $this->validateDirectoriesExist($oldBuildDir, $newBuildDir);
-
-        $this->recursiveCopyOldBuildFilesToNewDir($oldBuildDir, $newBuildDir);
+        $this->recursiveCopyOldBuildFilesToNewDir($existingReleaseBuildDir, $incomingReleaseBuildDir);
     }
 
     protected function recursiveCopyOldBuildFilesToNewDir(string $source, string $destination): void
@@ -120,27 +66,26 @@ readonly class RunCompleteGitHubVersionRelease
 
     protected function moveNewReleaseIntoDeployment(): void
     {
-        $this->output('Creating backup of release directory');
+        $this->output("Deleting contents of $this->laravelBasePath to prepare for new release");
+        $this->deleteDirectory($this->laravelBasePath, true);
 
-        $this->moveDirectory($this->laravelBasePath, $this->backupDirPath, true);
-
-        $this->output('Moving downloaded files');
-        $this->moveDirectory("$this->backupDirPath/$this->tempDirName", $this->laravelBasePath);
+        $this->output("Moving downloaded files from $this->tempDirName to $this->laravelBasePath");
+        $this->moveDirectory($this->tempDirName, $this->laravelBasePath);
     }
 
     protected function terminateOldReleaseDir(): void
     {
+        $filename = pathinfo($this->oldReleaseArchivePath)['basename'];
         if ($this->doRetainOldReleaseDir) {
-            $this->output('Retaining old release directory. Make sure you clean it up manually.');
+            $this->output("Retaining old release backup ($filename). Make sure you clean it up manually.");
             return;
         }
 
-        $this->output('Deleting old release directory');
+        $this->output("Deleting old release backup: $filename");
+        unlink($this->oldReleaseArchivePath);
 
-        $this->deleteDirectory($this->backupDirPath);
-
-        if (file_exists($this->backupDirPath)) {
-            $this->output("WARNING! Could not delete the old release directory: $this->backupDirPath. Continuing with the update...");
+        if (file_exists($this->oldReleaseArchivePath)) {
+            $this->output("WARNING! Could not delete the old release: $this->oldReleaseArchivePath. Continuing with the update...");
         }
     }
 
@@ -153,14 +98,14 @@ readonly class RunCompleteGitHubVersionRelease
         if (!copy($realSourcePath, $realDestPath)) {
             throw new RuntimeException("Error: Failed to copy file: $realSourcePath to $realDestPath");
         }
-
+        $this->output("Chmod file: $realDestPath to $this->filePermission");
         chmod($realDestPath, $this->filePermission);
     }
 
     protected function setEnvVersionNumber(): void
     {
         $this->output("Setting version number in .env file to: $this->installingVersion");
-        $envFilePath = $this->laravelBasePath . '/.env';
+        $envFilePath = rtrim($this->laravelBasePath, '/') . '/.env';
 
         if (file_exists($envFilePath) === false) {
             throw new RuntimeException("Error: Environment file ($envFilePath) does not exist in the release directory");
@@ -245,16 +190,12 @@ readonly class RunCompleteGitHubVersionRelease
 
             $relativePath    = str_replace($source, '', $sourcePath);
             $destinationPath = rtrim($destination, '/') . '/' . ltrim($relativePath, '/');
-
             if ($fileInfo->isDir()) {
                 $this->moveDirectory($sourcePath, $destinationPath);
                 continue;
             }
-            if (in_array($fileInfo->getFilename(), $this->protectedPaths, true)) {
-                continue;
-            }
 
-            rename($sourcePath, $destinationPath);
+            rename($sourcePath, $this->laravelBasePath . $this->commonChildPath($sourcePath, $destinationPath));
         }
 
         if (!$isRoot) {
@@ -262,17 +203,15 @@ readonly class RunCompleteGitHubVersionRelease
         }
     }
 
-
     /**
      * Deletes a directory and its contents.
      * Code is based on Laravel's `Illuminate\Filesystem\Filesystem::deleteDirectory` method.
      */
     protected function deleteDirectory($directory, $preserve = false): bool
     {
-        if (!is_dir($directory)) {
-            throw new InvalidArgumentException("The $directory does not exist.");
+        if (!file_exists($directory)) {
+            return true; // Directory does not exist. No need to delete it.
         }
-
         $items = new FilesystemIterator($directory);
 
         /** @var \SplFileInfo $item */
@@ -282,6 +221,10 @@ readonly class RunCompleteGitHubVersionRelease
                 continue;
             }
 
+            $relativePath = $this->intersetPaths($this->laravelBasePath, $item->getPathname());
+            if (in_array($relativePath, $this->protectedPaths, true)) {
+                continue;
+            }
             $this->delete($item->getPathname());
         }
 
@@ -302,5 +245,35 @@ readonly class RunCompleteGitHubVersionRelease
         }
 
         return false;
+    }
+
+    /**
+     * Calculates the relative path between two paths. If using the params below, it will return public/index.html
+     * @param string $parentPath e.g., '/var/www/html'
+     * @param string $childPath e.g., '/var/www/html/public/index.html'
+     */
+    protected function intersetPaths(string $parentPath, string $childPath): string
+    {
+        return str_replace($parentPath, '', $childPath);
+    }
+
+    /**
+     * Calculates the common path between two paths. If using the params below, it will return 'public/index.html'
+     * @param string $path1 - e.g., '/var/www/html'
+     * @param string $path2 - e.g., '/var/www/test/public/index.html'
+     */
+    protected function commonChildPath(string $path1, string $path2): string
+    {
+        $path1 = array_reverse(explode('/', trim($path1, '/')));
+        $path2 = array_reverse(explode('/', trim($path2, '/')));
+
+        $commonPath = [];
+        foreach ($path1 as $index => $part) {
+            if (isset($path2[$index]) && $path2[$index] === $part) {
+                $commonPath[] = $part;
+            }
+        }
+
+        return trim(implode('/', array_reverse($commonPath)), '/');
     }
 }

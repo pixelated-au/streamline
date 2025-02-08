@@ -14,7 +14,7 @@ class UpdateBuilder implements UpdateBuilderInterface
 
     public function __construct()
     {
-        $this->workTempDir = storage_path(config('streamline.work_temp_dir'));
+        $this->workTempDir = base_path(config('streamline.work_temp_dir'));
     }
 
     public function setRequestedVersion(?string $version): UpdateBuilderInterface

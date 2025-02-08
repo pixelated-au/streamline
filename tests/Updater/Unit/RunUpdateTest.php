@@ -1,7 +1,6 @@
 <?php
 
 use org\bovigo\vfs\vfsStream;
-use org\bovigo\vfs\visitor\vfsStreamStructureVisitor;
 use Pixelated\Streamline\Testing\Mocks\ZipArchiveFake;
 use Pixelated\Streamline\Updater\RunCompleteGitHubVersionRelease;
 
@@ -13,7 +12,6 @@ beforeEach(function () {
     $this->rootFs->addChild($this->deploymentDir);
     $this->rootPath       = $this->rootFs->url();
     $this->deploymentPath = $this->deploymentDir->url();
-//    vfsStream::inspect(new \org\bovigo\vfs\visitor\vfsStreamPrintVisitor());
     vfsStream::copyFromFileSystem(workbench_path(), $this->deploymentDir);
 });
 
@@ -68,118 +66,6 @@ it('throws an exception when the destination directory is not writeable', functi
         runUpdateClassFactory(),
         "$this->rootPath/backup_dir/public/build/assets", "$this->deploymentPath/public/build/assets"
     );
-});
-
-it('throws an exception when the archive release cannot be found', function () {
-    $this->startOutputBuffer();
-
-    $this->expectExceptionMessage('Error: Failed to unpack ' . laravel_path('archive.zip'));
-    $this->expectException(RuntimeException::class);
-    $closure = fn() => $this->unpackNewRelease();
-
-    callPrivateFunction(
-        $closure,
-        runUpdateClassFactory(['zip' => new ZipArchive()]),
-    );
-});
-
-it('cleans out invalid file extensions', function () {
-    $this->startOutputBuffer();
-    /** @var \org\bovigo\vfs\vfsStreamDirectory $assetsDir */
-    $assetsDir = $this->deploymentDir->getChild('public/build/assets');
-    vfsStream::create([
-        'invalid1.txt' => 'Content invalid1.txt', // to be removed
-        'valid1.png'   => 'Content valid1.png',
-        'dir1'         =>
-            ['valid1.png'   => 'Content dir1/valid1.png',
-             'valid2.jpg'   => 'Content dir1/valid2.jpg',
-             'invalid2.txt' => 'Content dir1/invalid2.txt', // to be removed
-             'dir2'         =>
-                 ['valid1.png'   => 'Content dir1/dir2/valid1.png',
-                  'invalid3.txt' => 'Content dir1/dir2/invalid3.txt', // to be removed
-                  'valid2.jpg'   => 'Content dir1/dir2/valid2.jpg',
-                 ],
-            ],
-        'valid2.jpg'   => 'Content valid2.jpg',
-    ], $assetsDir);
-
-//    $this->app->setBasePath($this->deploymentPath);
-
-    $closure = fn(string $assetDir) => $this->recursivelyRemoveInvalidFiles($assetDir);
-    callPrivateFunction(
-        $closure,
-        runUpdateClassFactory(['allowedExtensions' => ['png', 'jpg']]),
-        "$this->deploymentPath/public/build/assets",
-    );
-
-    $expected = [
-        'assets' => [
-            'valid1.png' => 'Content valid1.png',
-            'dir1'       =>
-                ['valid1.png' => 'Content dir1/valid1.png',
-                 'valid2.jpg' => 'Content dir1/valid2.jpg',
-                 'dir2'       =>
-                     ['valid1.png' => 'Content dir1/dir2/valid1.png',
-                      'valid2.jpg' => 'Content dir1/dir2/valid2.jpg',
-                     ],
-                ],
-            'valid2.jpg' => 'Content valid2.jpg',
-        ],
-    ];
-
-    /** @var vfsStreamStructureVisitor $visitor */
-    $visitor = vfsStream::inspect(new vfsStreamStructureVisitor(), $assetsDir);
-
-    $this->assertEquals($expected, $visitor->getStructure());
-});
-
-it('cleans out invalid file sizes', function () {
-    $this->startOutputBuffer();
-    $assetsDir = vfsStream::newDirectory('/public/build/assets');
-    $this->deploymentDir->addChild($assetsDir);
-    $assetsDir = $this->deploymentDir->getChild('public/build/assets');
-
-    vfsStream::create([
-        'invalid1.jpg' => 'Content invalid1.jpg - abcdefghijklmnopqrstuvwxyz', // to be removed
-        'valid1.png'   => 'Content valid1.png',
-        'dir1'         =>
-            ['valid1.png'   => 'Content dir1/valid1.png',
-             'valid2.jpg'   => 'Content dir1/valid2.jpg',
-             'invalid2.jpg' => 'Content dir1/invalid2.jpg - abcdefghijklmnopqrstuvwxyz', // to be removed
-             'dir2'         =>
-                 ['valid1.png'   => 'Content dir1/dir2/valid1.png',
-                  'invalid3.jpg' => 'Content dir1/dir2/invalid3.jpg - abcdefghijklmnopqrstuvwxyz', // to be removed
-                  'valid2.jpg'   => 'Content dir1/dir2/valid2.jpg',
-                 ],
-            ],
-        'valid2.jpg'   => 'Content valid2.jpg',
-    ], $assetsDir);
-
-    callPrivateFunction(
-        (fn(string $assetDir) => $this->recursivelyRemoveInvalidFiles($assetDir)),
-        runUpdateClassFactory(['maxFileSize' => 30]),
-        "$this->deploymentPath/public/build/assets",
-    );
-
-    $expected = [
-        'assets' => [
-            'valid1.png' => 'Content valid1.png',
-            'dir1'       =>
-                ['valid1.png' => 'Content dir1/valid1.png',
-                 'valid2.jpg' => 'Content dir1/valid2.jpg',
-                 'dir2'       =>
-                     ['valid1.png' => 'Content dir1/dir2/valid1.png',
-                      'valid2.jpg' => 'Content dir1/dir2/valid2.jpg',
-                     ],
-                ],
-            'valid2.jpg' => 'Content valid2.jpg',
-        ],
-    ];
-
-    /** @var vfsStreamStructureVisitor $visitor */
-    $visitor = vfsStream::inspect(new vfsStreamStructureVisitor(), $assetsDir);
-
-    $this->assertEquals($expected, $visitor->getStructure());
 });
 
 it('throws an exception that the source directory does not exist when moving a directory', function () {
@@ -240,36 +126,38 @@ it('throws an exception that a destination folder could not be created when movi
 });
 
 it('outputs a notice that the backup directory is being retained', function () {
-//    $this->expectOutputRegex('Retaining old release directory\. Make sure you clean it up manually\.');
-
     callPrivateFunction(
         (fn() => $this->terminateOldReleaseDir()),
-        runUpdateClassFactory(['doRetainOldReleaseDir' => true])
+        runUpdateClassFactory([
+            'doRetainOldReleaseDir' => true,
+            'oldReleaseArchivePath' => 'archive.zip',
+        ])
     );
 
     $output = $this->getActualOutputForAssertion();
-    $this->assertStringContainsString('Retaining old release directory. Make sure you clean it up manually.', $output);
+    $this->assertStringContainsString('Retaining old release backup (archive.zip). Make sure you clean it up manually.', $output);
 });
 
 it('outputs a notice that the backup directory could not be deleted despite it being flagged for deletion', function () {
-    $this->rootFs->addChild(vfsStream::newDirectory('backup_test/public/build/assets/'));
-    $this->rootFs->getChild('backup_test/public/build/assets')?->chmod(6000);
+    $this->rootFs->addChild(vfsStream::newDirectory('backup_test'));
+    $this->rootFs->addChild(vfsStream::newFile('backup_test/archive.zip'));
+    $this->rootFs->getChild('backup_test/archive.zip')?->chmod(0400);
 
     callPrivateFunction(
         (fn() => $this->terminateOldReleaseDir()),
         runUpdateClassFactory(
             [
-                'laravelBasePath' => $this->rootPath,
-                'backupDirPath'   => "$this->rootPath/backup_test",
+                'laravelBasePath'       => $this->rootPath,
+                'oldReleaseArchivePath' => "$this->rootPath/backup_test/archive.zip",
             ]
         ));
 
     $output = $this->getActualOutputForAssertion();
-    $this->assertStringContainsString("Could not delete the old release directory: $this->rootPath/backup_test", $output);
+    $this->assertStringContainsString("Could not delete the old release: $this->rootPath/backup_test", $output);
 
 
     $this->assertTrue(
-        $this->rootFs->hasChild('backup_test/public/build/assets')
+        $this->rootFs->hasChild('backup_test/archive.zip')
     );
 });
 
@@ -338,20 +226,15 @@ it('cannot save the .env file when setting the current version number', function
 });
 
 it('fails to delete a missing directory', function () {
-    $this->expectExceptionMessage("The $this->rootPath/missing_dir does not exist.");
-    $this->expectException(InvalidArgumentException::class);
-
-    callPrivateFunction(
+    expect(callPrivateFunction(
         (fn(string $directory) => $this->deleteDirectory($directory)),
         runUpdateClassFactory(),
         "$this->rootPath/missing_dir"
-    );
+    ))->toBeTrue();
 });
 
 /**
  * @param array{
- *     zip?: ZipArchiveFake,
- *     downloadedArchivePath?: string,
  *     tempDirName?: string,
  *     laravelBasePath?: string,
  *     publicDirName?: string,
@@ -363,6 +246,7 @@ it('fails to delete a missing directory', function () {
  *     dirPermission?: int,
  *     filePermission?: int,
  *     backupDirPath?: string,
+ *     oldReleaseArchivePath?: string,
  *     doRetainOldReleaseDir?: bool,
  *     doOutput?: bool,
  * } $options
@@ -378,31 +262,25 @@ function runUpdateClassFactory(array $options = []): RunCompleteGitHubVersionRel
             'publicDirName'         => 'public',
             'frontendBuildDir'      => 'build',
             'installingVersion'     => '1.0.0',
-            'maxFileSize'           => 1024 * 1024 * 10, // 10MB
-            'allowedExtensions'     => ['png', 'jpg'],
             'protectedPaths'        => ['.env'],
             'dirPermission'         => 0755,
             'filePermission'        => 0644,
-            'backupDirPath'         => 'backup_test',
+            'oldReleaseArchivePath' => laravel_path('archive.zip'),
             'doRetainOldReleaseDir' => false,
             'doOutput'              => true,
         ],
         $options);
 
     return new RunCompleteGitHubVersionRelease(
-        zip: $options['zip'],
-        downloadedArchivePath: $options['downloadedArchivePath'],
         tempDirName: $options['tempDirName'],
         laravelBasePath: $options['laravelBasePath'],
         publicDirName: $options['publicDirName'],
         frontendBuildDir: $options['frontendBuildDir'],
         installingVersion: $options['installingVersion'],
-        maxFileSize: $options['maxFileSize'],
-        allowedExtensions: $options['allowedExtensions'],
         protectedPaths: $options['protectedPaths'],
         dirPermission: $options['dirPermission'],
         filePermission: $options['filePermission'],
-        backupDirPath: $options['backupDirPath'],
+        oldReleaseArchivePath: $options['oldReleaseArchivePath'],
         doRetainOldReleaseDir: $options['doRetainOldReleaseDir'],
         doOutput: $options['doOutput'],
     );

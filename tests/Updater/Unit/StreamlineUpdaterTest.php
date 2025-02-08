@@ -14,22 +14,10 @@ it('will fail when it is missing environment variables', function () {
     new StreamlineUpdater();
 });
 
-it('will fail when it receives invalid allowed file extensions', function () {
-    $this->expectException(InvalidArgumentException::class);
-    $this->expectExceptionMessageMatches(
-        '/' .
-        'Environment variable ALLOWED_FILE_EXTENSIONS=\[invalid\] cannot.*' .
-        'Environment variable PROTECTED_PATHS=\[invalid\] cannot' .
-        '/s'
-    );
-    setEnv(['ALLOWED_FILE_EXTENSIONS' => '[invalid]', 'PROTECTED_PATHS' => '[invalid]']);
-    new StreamlineUpdater();
-});
-
 it('can find the composer autoload file in the default vendor directory', function () {
     symlink(realpath('./composer.json'), './workbench/temp/composer.json');
 
-    setEnv(['BASE_PATH' => './workbench/temp']);
+    setEnv(['LARAVEL_BASE_PATH' => './workbench/temp']);
     $updater = new StreamlineUpdater();
     expect($updater->autoloadFile())->toBe('vendor/autoload.php');
     unlink('./workbench/temp/composer.json');
@@ -51,7 +39,7 @@ it('can find the composer autoload file in a different directory', function () {
     );
     $project->addChild($composerFile);
 
-    setEnv(['BASE_PATH' => $project->url(), 'IS_TESTING' => StreamlineUpdater::TESTING_SKIP_REQUIRE_AUTOLOAD]);
+    setEnv(['LARAVEL_BASE_PATH' => $project->url(), 'IS_TESTING' => StreamlineUpdater::TESTING_SKIP_REQUIRE_AUTOLOAD]);
     $updater = new StreamlineUpdater();
 
     expect($updater->autoloadFile())->toBe($vendor->url() . '/autoload.php');
@@ -60,7 +48,7 @@ it('can find the composer autoload file in a different directory', function () {
 it('throws an error when it cannot find composer.json file', function () {
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage('Cannot locate the base composer file (./not-working/composer.json)');
-    setEnv(['BASE_PATH' => './not-working']);
+    setEnv(['LARAVEL_BASE_PATH' => './not-working']);
     (new StreamlineUpdater())->autoloadFile();
 });
 
@@ -74,7 +62,7 @@ it('throws an error when the composer.json file is invalid', function () {
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage('The file ' . $root->url() . '/composer.json file contains invalid JSON');
 
-    setEnv(['BASE_PATH' => $root->url(), 'IS_TESTING' => StreamlineUpdater::TESTING_SKIP_REQUIRE_AUTOLOAD]);
+    setEnv(['LARAVEL_BASE_PATH' => $root->url(), 'IS_TESTING' => StreamlineUpdater::TESTING_SKIP_REQUIRE_AUTOLOAD]);
     (new StreamlineUpdater())->autoloadFile();
 });
 
@@ -85,19 +73,16 @@ it('can initialise the RunUpdate class', function () {
 
 /**
  * @param array{
- *     BASE_PATH?: string,
- *     SOURCE_DIR?: string,
+ *     TEMP_DIR?: string,
+ *     LARAVEL_BASE_PATH?: string,
  *     PUBLIC_DIR_NAME?: string,
  *     FRONT_END_BUILD_DIR?: string,
- *     TEMP_DIR?: string,
  *     INSTALLING_VERSION?: string,
- *     BACKUP_DIR?: string,
- *     MAX_FILE_SIZE?: string,
+ *     PROTECTED_PATHS?: array<string>,
  *     DIR_PERMISSION?: string,
  *     FILE_PERMISSION?: string,
- *     RETAIN_OLD_RELEASE?: string,
- *     ALLOWED_FILE_EXTENSIONS?: array<string>,
- *     PROTECTED_PATHS?: array<string>,
+ *     OLD_RELEASE_ARCHIVE_PATH?: string,
+ *     DO_RETAIN_OLD_RELEASE?: string,
  *     IS_TESTING?: int,
  * } $overrides
  */
@@ -116,19 +101,16 @@ function setEnv(array $overrides = []): void
 function getEnvVars(): array
 {
     return [
-        'BASE_PATH'               => './workbench',
-        'SOURCE_DIR'              => '/path/to/source',
-        'PUBLIC_DIR_NAME'         => 'public',
-        'FRONT_END_BUILD_DIR'     => 'build',
-        'TEMP_DIR'                => '/path/to/temp',
-        'INSTALLING_VERSION'      => '1.0.0',
-        'BACKUP_DIR'              => '/path/to/backup',
-        'MAX_FILE_SIZE'           => '1000000',
-        'DIR_PERMISSION'          => '0755',
-        'FILE_PERMISSION'         => '0644',
-        'RETAIN_OLD_RELEASE'      => 'true',
-        'ALLOWED_FILE_EXTENSIONS' => '["txt","jpg"]',
-        'PROTECTED_PATHS'         => '["protected.txt"]',
-        'IS_TESTING'              => StreamlineUpdater::TESTING_ON,
+        'TEMP_DIR'                 => '/path/to/temp',
+        'LARAVEL_BASE_PATH'        => './workbench',
+        'PUBLIC_DIR_NAME'          => 'public',
+        'FRONT_END_BUILD_DIR'      => 'build',
+        'INSTALLING_VERSION'       => '1.0.0',
+        'PROTECTED_PATHS'          => '["protected.txt"]',
+        'DIR_PERMISSION'           => '0755',
+        'FILE_PERMISSION'          => '0644',
+        'OLD_RELEASE_ARCHIVE_PATH' => '/path/to/old/release.zip',
+        'DO_RETAIN_OLD_RELEASE'    => 'true',
+        'IS_TESTING'               => StreamlineUpdater::TESTING_ON,
     ];
 }

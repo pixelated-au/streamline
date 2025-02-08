@@ -2,24 +2,20 @@
 
 declare(strict_types=1);
 
-use Pixelated\Streamline\Services\ZipArchive;
 use Pixelated\Streamline\Updater\RunCompleteGitHubVersionRelease;
 
 class StreamlineUpdater
 {
-    public string $basePath;
-    public string $sourceDir;
+    public string $laravelBasePath;
     public string $publicDirName;
     public string $frontEndBuildDir;
     public string $tempDir;
     public string $installingVersion;
-    public string $backupDir;
-    public array $allowedFileExtensions;
+    public string $oldReleaseArchivePath;
     public array $protectedPaths;
-    public int $maxFileSize;
     public int $dirPermission;
     public int $filePermission;
-    public bool $retainOldRelease;
+    public bool $doRetainOldRelease;
     public int $isTesting = self::TESTING_OFF;
     private array $envIssues = [];
 
@@ -32,21 +28,18 @@ class StreamlineUpdater
      */
     public function __construct()
     {
-        $this->basePath          = $this->env('BASE_PATH');
-        $this->sourceDir         = $this->env('SOURCE_DIR');
-        $this->publicDirName     = $this->env('PUBLIC_DIR_NAME');
-        $this->frontEndBuildDir  = $this->env('FRONT_END_BUILD_DIR');
-        $this->tempDir           = $this->env('TEMP_DIR');
-        $this->installingVersion = $this->env('INSTALLING_VERSION');
-        $this->backupDir         = $this->env('BACKUP_DIR');
-        $this->maxFileSize       = (int)$this->env('MAX_FILE_SIZE');
-        $this->dirPermission     = (int)$this->env('DIR_PERMISSION');
-        $this->filePermission    = (int)$this->env('FILE_PERMISSION');
-        $this->retainOldRelease  = (bool)$this->env('RETAIN_OLD_RELEASE');
-        $this->isTesting         = (int)(getenv('IS_TESTING') ?: self::TESTING_OFF);
-
-        $this->allowedFileExtensions = $this->jsonEnv('ALLOWED_FILE_EXTENSIONS');
+        $this->tempDir               = $this->env('TEMP_DIR');
+        $this->laravelBasePath       = $this->env('LARAVEL_BASE_PATH');
+        $this->publicDirName         = $this->env('PUBLIC_DIR_NAME');
+        $this->frontEndBuildDir      = $this->env('FRONT_END_BUILD_DIR');
+        $this->installingVersion     = $this->env('INSTALLING_VERSION');
         $this->protectedPaths        = $this->jsonEnv('PROTECTED_PATHS');
+        $this->dirPermission         = (int)$this->env('DIR_PERMISSION');
+        $this->filePermission        = (int)$this->env('FILE_PERMISSION');
+        $this->oldReleaseArchivePath = $this->env('OLD_RELEASE_ARCHIVE_PATH');
+        $this->doRetainOldRelease    = (bool)$this->env('DO_RETAIN_OLD_RELEASE');
+        $this->isTesting             = (int)(getenv('IS_TESTING') ?: self::TESTING_OFF);
+
         if (count($this->envIssues)) {
             throw new InvalidArgumentException(implode("\n", $this->envIssues));
         }
@@ -72,6 +65,7 @@ class StreamlineUpdater
         return (string)$val;
     }
 
+    /** @noinspection PhpSameParameterValueInspection */
     private function jsonEnv(string $name): array
     {
         $env = $this->env($name);
@@ -92,20 +86,16 @@ class StreamlineUpdater
     public function run(): void
     {
         $updater = new RunCompleteGitHubVersionRelease(
-            zip: new ZipArchive(),
-            downloadedArchivePath: $this->sourceDir,
             tempDirName: $this->tempDir,
-            laravelBasePath: $this->basePath,
+            laravelBasePath: $this->laravelBasePath,
             publicDirName: $this->publicDirName,
             frontendBuildDir: $this->frontEndBuildDir,
             installingVersion: $this->installingVersion,
-            maxFileSize: $this->maxFileSize,
-            allowedExtensions: $this->allowedFileExtensions,
             protectedPaths: $this->protectedPaths,
             dirPermission: $this->dirPermission,
             filePermission: $this->filePermission,
-            backupDirPath: $this->backupDir,
-            doRetainOldReleaseDir: $this->retainOldRelease,
+            oldReleaseArchivePath: $this->oldReleaseArchivePath,
+            doRetainOldReleaseDir: $this->doRetainOldRelease,
             doOutput: true,
         );
         // @codeCoverageIgnoreStart
@@ -118,7 +108,7 @@ class StreamlineUpdater
 
     public function autoloadFile(): string
     {
-        $composerJsonPath = rtrim($this->basePath, '/') . '/composer.json';
+        $composerJsonPath = rtrim($this->laravelBasePath, '/') . '/composer.json';
         if (!file_exists($composerJsonPath)) {
             throw new RuntimeException("Cannot locate the base composer file ($composerJsonPath) for autoloading");
         }
@@ -128,7 +118,7 @@ class StreamlineUpdater
             $dir      = $composer['config']['vendor-dir'] ?? 'vendor';
             return "$dir/autoload.php";
         } catch (JsonException) {
-            throw new RuntimeException("The file $this->basePath/composer.json file contains invalid JSON");
+            throw new RuntimeException("The file $this->laravelBasePath/composer.json file contains invalid JSON");
         }
     }
 }
