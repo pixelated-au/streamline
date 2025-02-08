@@ -233,6 +233,39 @@ it('fails to delete a missing directory', function () {
     ))->toBeTrue();
 });
 
+it('calls delete and will return false when the file does not exist', function () {
+    $nonExistentFile = vfsStream::url('root/non_existent_file.txt');
+
+    $result = callPrivateFunction(
+        fn(string $path) => $this->delete($path),
+        runUpdateClassFactory(),
+        $nonExistentFile
+    );
+
+    expect($result)->toBeFalse();
+});
+
+
+it('should return false when the file exists but cannot be deleted due to permissions', function () {
+    $this->disableErrorHandling();
+
+    $file = vfsStream::newFile('bad_permissions.txt');
+    $dir = vfsStream::newDirectory('temp', 0400);
+    $dir->addChild($file);
+
+    $this->rootFs->addChild($dir);
+
+    $closure = fn(string $path) => $this->delete($path);
+    $result = callPrivateFunction(
+        $closure,
+        runUpdateClassFactory(),
+        $file->url()
+    );
+
+    expect($result)->toBeFalse()
+        ->and($file->url())->toBeReadableFile();
+});
+
 /**
  * @param array{
  *     tempDirName?: string,
