@@ -221,7 +221,7 @@ readonly class RunCompleteGitHubVersionRelease
                 continue;
             }
 
-            $relativePath = $this->intersetPaths($this->laravelBasePath, $item->getPathname());
+            $relativePath = $this->intersectPaths($this->laravelBasePath, $item->getPathname());
             if (in_array($relativePath, $this->protectedPaths, true)) {
                 continue;
             }
@@ -252,7 +252,7 @@ readonly class RunCompleteGitHubVersionRelease
      * @param string $parentPath e.g., '/var/www/html'
      * @param string $childPath e.g., '/var/www/html/public/index.html'
      */
-    protected function intersetPaths(string $parentPath, string $childPath): string
+    protected function intersectPaths(string $parentPath, string $childPath): string
     {
         return str_replace($parentPath, '', $childPath);
     }
