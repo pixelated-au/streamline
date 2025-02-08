@@ -3,7 +3,6 @@
 namespace Pixelated\Streamline\Actions;
 
 use Closure;
-use Illuminate\Container\Attributes\Config as ConfigAttribute;
 use Illuminate\Support\Facades\Config;
 use Pixelated\Streamline\Wrappers;
 use ReflectionClass;
@@ -12,10 +11,16 @@ use RuntimeException;
 
 class InstantiateStreamlineUpdater
 {
+    /** @var class-string */
     private readonly string $runnerClass;
 
+    /**
+     * @param \Pixelated\Streamline\Wrappers\Process $process
+//     * @param class-string $runnerClass
+     */
     public function __construct(
         private readonly Wrappers\Process $process,
+        //TODO restore this after upgrading to Laravel 11
 //        #[ConfigAttribute('streamline.runner_class')]
 //        private readonly string           $runnerClass,
     )
@@ -31,7 +36,7 @@ class InstantiateStreamlineUpdater
     {
         $path = $this->getClassFilePath();
 
-        $script = "<?php require_once '$path'; (new \StreamlineUpdater())->run(); ?>";
+        $script = "<?php require_once '$path'; (new $this->runnerClass())->run(); ?>";
 
         $this->process
             ->invoke($script)
