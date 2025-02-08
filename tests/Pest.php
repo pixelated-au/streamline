@@ -18,7 +18,7 @@ pest()
     ->in('Feature');
 
 pest()
-    ->extends(TestCase::class)
+    ->extends(LaravelTestCase::class)
     ->use(Utils::class)
     ->group('feature', 'core')
     ->in('Updater/Feature');
