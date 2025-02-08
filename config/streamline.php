@@ -101,7 +101,7 @@ return [
     |
     */
 
-    'work_temp_dir' => env('STREAMLINE_WORK_TEMP_DIR', '.streamline_tmp'),
+    'work_temp_dir' => env('STREAMLINE_WORK_TEMP_DIR', '../.streamline_tmp'),
 
     /*
     |--------------------------------------------------------------------------
