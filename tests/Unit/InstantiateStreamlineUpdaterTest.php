@@ -2,13 +2,13 @@
 
 use Illuminate\Support\Facades\Config;
 use Pixelated\Streamline\Actions\InstantiateStreamlineUpdater;
-use Pixelated\Streamline\Wrappers\Process;
+use Pixelated\Streamline\Wrappers\ProcessFactory;
 
 it('should throw a RuntimeException when given a non-existent class name', function () {
     $classPath = sys_get_temp_dir() . '/BrokenClass.php';
     File::put($classPath, 'invalid class file');
 
-    $process              = Mockery::mock(Process::class);
+    $process              = Mockery::mock(ProcessFactory::class);
     $nonExistentClassName = $classPath;
 
     $this->expectException(RuntimeException::class);
@@ -31,7 +31,7 @@ it('should return the file path when a valid class is passed in', function () {
     $x         = File::put($classPath, '<?php class ValidTestClass {}');
     include $classPath;
 
-    $process = Mockery::mock(Process::class);
+    $process = Mockery::mock(ProcessFactory::class);
 
     try {
         /** @noinspection PhpUndefinedClassInspection */
@@ -46,7 +46,7 @@ it('should return the file path when a valid class is passed in', function () {
 });
 
 it('can properly parse an array and string values', function () {
-    $process = Mockery::mock(Process::class);
+    $process = Mockery::mock(ProcessFactory::class);
 
     /** @noinspection PhpUndefinedClassInspection */
     Config::set('streamline.runner_class', ValidTestClass::class);
@@ -61,7 +61,7 @@ it('can properly parse an array and string values', function () {
 it('should run the process and set all required environment variables correctly', function () {
     $this->expectNotToPerformAssertions();
 
-    $process          = Mockery::mock(Process::class);
+    $process          = Mockery::mock(ProcessFactory::class);
     $callback         = function () {
     };
     $versionToInstall = '2.0.0';
@@ -106,13 +106,15 @@ it('should run the process and set all required environment variables correctly'
 
     $expectedScript = "<?php require_once '$classPath'; (new TestRunnerClass())->run(); ?>";
 
+    $phpProcess = Mockery::mock(Symfony\Component\Process\Process::class);
+
     $process->shouldReceive('invoke')
         ->with($expectedScript)
         ->once()
-        ->andReturnSelf();
+        ->andReturn($phpProcess);
 
 
-    $process->shouldReceive('setEnv')
+    $phpProcess->shouldReceive('setEnv')
         ->once()
         ->with(Mockery::on(function ($env) use ($expectedEnv) {
             foreach ($expectedEnv as $key => $value) {
@@ -124,7 +126,7 @@ it('should run the process and set all required environment variables correctly'
         }))
         ->andReturnSelf();
 
-    $process->shouldReceive('run')
+    $phpProcess->shouldReceive('run')
         ->once()
         ->with($callback);
 
