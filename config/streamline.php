@@ -264,16 +264,33 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Process Class
+    |--------------------------------------------------------------------------
+    |
+    | This is the class that instantiates the external update process.
+    | Typically, it would extend Symfony\Component\Process\Process::class
+    | but it doesn't need to.
+    |
+    | @see Pixelated\Streamline\Actions\InstantiateStreamlineUpdater
+    |
+    */
+
+    'external_process_class' => \Symfony\Component\Process\PhpProcess::class,
+
+    /*
+    |--------------------------------------------------------------------------
     | Runner Class
     |--------------------------------------------------------------------------
     |
-    | This is the class that is instantiated via an external process.
+    | This is the class that is called via an external process (see above)
     | It loads all the necessary dependencies and settings to run the
     | updater class.
     |
     | It can be all-inclusive and do the heavy-lifting of the update process.
     | or it can be more focused and execute an external class such as what
     | this project does.
+    |
+    | @see Pixelated\Streamline\Actions\InstantiateStreamlineUpdater
     |
     */
 
@@ -295,7 +312,7 @@ return [
         MakeTempDir::class,
         DownloadRelease::class,
         UnpackRelease::class,
-        RunUpdate::class,
+//        RunUpdate::class,
     ],
 
     /*
