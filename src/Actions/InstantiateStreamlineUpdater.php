@@ -14,12 +14,8 @@ class InstantiateStreamlineUpdater
     /** @var class-string */
     private readonly string $runnerClass;
 
-    /**
-     * @param \Pixelated\Streamline\Wrappers\Process $process
-//     * @param class-string $runnerClass
-     */
     public function __construct(
-        private readonly Wrappers\Process $process,
+        private readonly Wrappers\ProcessFactory $process,
         //TODO restore this after upgrading to Laravel 11
 //        #[ConfigAttribute('streamline.runner_class')]
 //        private readonly string           $runnerClass,
