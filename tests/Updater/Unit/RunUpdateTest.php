@@ -1,7 +1,6 @@
 <?php
 
 use org\bovigo\vfs\vfsStream;
-use Pixelated\Streamline\Testing\Mocks\ZipArchiveFake;
 use Pixelated\Streamline\Updater\RunCompleteGitHubVersionRelease;
 
 beforeEach(function () {
@@ -250,13 +249,13 @@ it('should return false when the file exists but cannot be deleted due to permis
     $this->disableErrorHandling();
 
     $file = vfsStream::newFile('bad_permissions.txt');
-    $dir = vfsStream::newDirectory('temp', 0400);
+    $dir  = vfsStream::newDirectory('temp', 0400);
     $dir->addChild($file);
 
     $this->rootFs->addChild($dir);
 
     $closure = fn(string $path) => $this->delete($path);
-    $result = callPrivateFunction(
+    $result  = callPrivateFunction(
         $closure,
         runUpdateClassFactory(),
         $file->url()
@@ -288,8 +287,6 @@ function runUpdateClassFactory(array $options = []): RunCompleteGitHubVersionRel
 {
     $options = array_merge(
         [
-            'zip'                   => new ZipArchiveFake(),
-            'downloadedArchivePath' => laravel_path('archive.zip'),
             'tempDirName'           => 'temp',
             'laravelBasePath'       => laravel_path(),
             'publicDirName'         => 'public',
@@ -300,6 +297,7 @@ function runUpdateClassFactory(array $options = []): RunCompleteGitHubVersionRel
             'filePermission'        => 0644,
             'oldReleaseArchivePath' => laravel_path('archive.zip'),
             'doRetainOldReleaseDir' => false,
+            'downloadedArchivePath' => laravel_path('archive.zip'),
             'doOutput'              => true,
         ],
         $options);
