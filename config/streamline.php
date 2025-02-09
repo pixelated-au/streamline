@@ -312,7 +312,7 @@ return [
         MakeTempDir::class,
         DownloadRelease::class,
         UnpackRelease::class,
-//        RunUpdate::class,
+        RunUpdate::class,
     ],
 
     /*
