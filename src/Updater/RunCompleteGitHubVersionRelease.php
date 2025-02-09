@@ -29,7 +29,7 @@ readonly class RunCompleteGitHubVersionRelease
         $this->output('Starting update');
         $this->copyFrontEndAssetsFromOldToNewRelease();
         $this->moveNewReleaseIntoDeployment();
-        $this->terminateOldReleaseDir();
+        $this->terminateBackupArchive();
         $this->setEnvVersionNumber();
         $this->optimiseNewRelease();
         $this->output('Update completed');
@@ -73,7 +73,7 @@ readonly class RunCompleteGitHubVersionRelease
         $this->moveDirectory($this->tempDirName, $this->laravelBasePath);
     }
 
-    protected function terminateOldReleaseDir(): void
+    protected function terminateBackupArchive(): void
     {
         $filename = pathinfo($this->oldReleaseArchivePath)['basename'];
         if ($this->doRetainOldReleaseDir) {
