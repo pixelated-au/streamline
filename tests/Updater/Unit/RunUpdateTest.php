@@ -232,6 +232,8 @@ it('fails to delete a missing directory', function () {
     ))->toBeTrue();
 });
 
+
+
 it('calls delete and will return false when the file does not exist', function () {
     $nonExistentFile = vfsStream::url('root/non_existent_file.txt');
 
@@ -263,6 +265,73 @@ it('should return false when the file exists but cannot be deleted due to permis
 
     expect($result)->toBeFalse()
         ->and($file->url())->toBeReadableFile();
+});
+
+it('should handle multiple protected paths with wildcards correctly', function () {
+    $runUpdate = runUpdateClassFactory([
+        'protectedPaths' => [
+            'config/*',
+            'storage/logs/*',
+            'public/uploads/*',
+            'resources/views/*',
+        ],
+    ]);
+
+    $testCases = [
+        'config/app.php' => true,
+        'storage/logs/laravel.log' => true,
+        'public/uploads/image.jpg' => true,
+        'resources/views/welcome.blade.php' => true,
+        'app/Http/Controllers/Controller.php' => false,
+        'database/migrations/2023_01_01_000000_create_users_table.php' => false,
+    ];
+
+    foreach ($testCases as $path => $expected) {
+        $result = callPrivateFunction(
+            fn (string $relativePath) => $this->isProtectedPathWildcard($relativePath),
+            $runUpdate,
+            $path
+        );
+
+        expect($result)->toBe($expected, "Failed assertion for path: $path");
+    }
+});
+
+
+it('should correctly match a relative path that is exactly the same as a wildcard protected path without the asterisk', function () {
+    $runUpdate = runUpdateClassFactory([
+        'protectedPaths' => [
+            'config/*',
+            'storage/logs/*',
+            'public/uploads/*',
+        ],
+    ]);
+
+    $result = callPrivateFunction(
+        fn (string $relativePath) => $this->isProtectedPathWildcard($relativePath),
+        $runUpdate,
+        'config/'
+    );
+
+    expect($result)->toBeTrue();
+});
+
+it('should return false for an empty relative path', function () {
+    $runUpdate = runUpdateClassFactory([
+        'protectedPaths' => [
+            'config/*',
+            'storage/logs/*',
+            'public/uploads/*',
+        ],
+    ]);
+
+    $result = callPrivateFunction(
+        fn (string $relativePath) => $this->isProtectedPathWildcard($relativePath),
+        $runUpdate,
+        ''
+    );
+
+    expect($result)->toBeFalse();
 });
 
 /**
