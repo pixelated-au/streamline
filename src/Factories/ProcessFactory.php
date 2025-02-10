@@ -1,7 +1,7 @@
 <?php
 /** @noinspection PhpClassCanBeReadonlyInspection */
 
-namespace Pixelated\Streamline\Wrappers;
+namespace Pixelated\Streamline\Factories;
 
 use Illuminate\Support\Facades\Config;
 
