@@ -27,9 +27,8 @@ return [
     | Protected Files
     |--------------------------------------------------------------------------
     |
-    | The paths listed here will *not* be overwritten or deleted during the
-    | update process.
-    |
+    | The paths listed here (either an array or comma separated list) will
+    | *not* be overwritten or deleted during the update process.
     | The paths should be relative to your root installation directory.
     |
     | Any files in the root directory should just be the file name and not
