@@ -34,6 +34,12 @@ class InstantiateStreamlineUpdater
 
         $script = "<?php require_once '$path'; (new $this->runnerClass())->run(); ?>";
 
+        $protectedPaths =
+            $this->parseArray([
+                ...Config::commaToArray('streamline.protected_files'),
+                ...['vendor/*'],
+            ]);
+
         $this->process
             ->invoke($script)
             ->setEnv([
@@ -42,7 +48,7 @@ class InstantiateStreamlineUpdater
                 'PUBLIC_DIR_NAME'          => public_path(),
                 'FRONT_END_BUILD_DIR'      => config('streamline.laravel_build_dir_name'),
                 'INSTALLING_VERSION'       => $versionToInstall,
-                'PROTECTED_PATHS'          => $this->parseArray(Config::commaToArray('streamline.protected_files')),
+                'PROTECTED_PATHS'          => $protectedPaths,
                 'DIR_PERMISSION'           => (int)config('streamline.directory_permissions'),
                 'FILE_PERMISSION'          => (int)config('streamline.file_permissions'),
                 'OLD_RELEASE_ARCHIVE_PATH' => config('streamline.backup_dir'),
