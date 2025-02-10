@@ -225,6 +225,11 @@ readonly class RunCompleteGitHubVersionRelease
             if (in_array($relativePath, $this->protectedPaths, true)) {
                 continue;
             }
+
+            if ($this->isProtectedWildcardPath($relativePath)) {
+                continue;
+            }
+
             $this->delete($item->getPathname());
         }
 
@@ -275,5 +280,18 @@ readonly class RunCompleteGitHubVersionRelease
         }
 
         return trim(implode('/', array_reverse($commonPath)), '/');
+    }
+
+    protected function isProtectedWildcardPath(string $relativePath): bool
+    {
+        foreach ($this->protectedPaths as $protectedPath) {
+            if (str_ends_with($protectedPath, '*')) {
+                $wildcardPath = rtrim($protectedPath, '*');
+                if (str_starts_with($relativePath, $wildcardPath)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
