@@ -1,6 +1,7 @@
 <?php
 
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
+use Pixelated\Streamline\Pipes\BackupCurrentInstallation;
 use Pixelated\Streamline\Pipes\Cleanup;
 use Pixelated\Streamline\Pipes\DownloadRelease;
 use Pixelated\Streamline\Pipes\GetNextAvailableReleaseVersion;
@@ -101,7 +102,7 @@ return [
     |
     */
 
-    'work_temp_dir' => env('STREAMLINE_WORK_TEMP_DIR', '../.streamline_tmp'),
+    'work_temp_dir' => env('STREAMLINE_WORK_TEMP_DIR', base_path('../.streamline_tmp')),
 
     /*
     |--------------------------------------------------------------------------
@@ -312,6 +313,7 @@ return [
         MakeTempDir::class,
         DownloadRelease::class,
         UnpackRelease::class,
+        BackupCurrentInstallation::class,
         RunUpdate::class,
     ],
 
