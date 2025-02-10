@@ -31,7 +31,7 @@ it('can run an update using actual filesystem actions and deletes the backup dir
         publicDirName: $disk->path('public'),
         frontendBuildDir: 'build',
         installingVersion: '1.0.0',
-        protectedPaths: ['.env'],
+        protectedPaths: ['.env', 'vendor/*'],
         dirPermission: 0755,
         filePermission: 0644,
         oldReleaseArchivePath: $tempDisk->path('/old_releases/oldArchive.tgz'),
@@ -65,8 +65,9 @@ it('can run an update using actual filesystem actions and deletes the backup dir
     $this->assertFileExists($disk->path('public/build/dir1/file3.txt'));
     $this->assertFileExists($disk->path('public/build/dir1/dir2/file4.txt'));
     $this->assertFileExists($disk->path('public/build/file5.txt'));
-    $this->assertFileExists($disk->path('.env'));
     $this->assertFileExists($disk->path('public/build/assets/text-file/existing_file.txt'));
+    $this->assertFileExists($disk->path('.env'));
+    $this->assertFileExists($disk->path('vendor/protected-file.txt'));
 
     $this->assertSame(
         expected: "Prefix...\nSTREAMLINE_APPLICATION_VERSION_INSTALLED=1.0.0\nSuffix...",
@@ -84,6 +85,9 @@ function makeDirsAndFiles(Filesystem $disk, Filesystem $tempDisk): void
     $disk->makeDirectory('app');
     $disk->put('app/test.php', '<?php // Test file');
     $disk->put('.env', "Prefix...\nSTREAMLINE_APPLICATION_VERSION_INSTALLED=v0.0.0\nSuffix...");
+
+    $disk->makeDirectory('vendor');
+    $disk->put('vendor/protected-file.txt', 'protected file that should be copied across to the new deployment');
 
     $tempDisk->put('old_releases/oldArchive.tgz', 'old archive contents');
 }
