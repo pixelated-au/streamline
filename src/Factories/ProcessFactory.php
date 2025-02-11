@@ -4,6 +4,7 @@
 namespace Pixelated\Streamline\Factories;
 
 use Illuminate\Support\Facades\Config;
+use Symfony\Component\Process\Process;
 
 /**
  * This exists purely to inject a PhpProcess Object into the StreamlineUpdater class.
@@ -21,7 +22,7 @@ class ProcessFactory
         $this->processClass = Config::get('streamline.external_process_class');
     }
 
-    public function invoke(string $script, string $cwd = null, array $env = null, int $timeout = 60, ?array $php = null)
+    public function invoke(string $script, string $cwd = null, array $env = null, int $timeout = 60, ?array $php = null): Process
     {
         return new $this->processClass($script, $cwd, $env, $timeout, $php);
     }
