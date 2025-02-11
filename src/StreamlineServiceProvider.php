@@ -5,7 +5,9 @@ namespace Pixelated\Streamline;
 use Composer\InstalledVersions;
 use Illuminate\Console\OutputStyle;
 use Illuminate\Contracts\Support\DeferrableProvider;
+use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Console\AboutCommand;
+use Pixelated\Streamline\Actions\CreateArchive;
 use Pixelated\Streamline\Commands\CheckCommand;
 use Pixelated\Streamline\Commands\CleanAssetsDirectoryCommand;
 use Pixelated\Streamline\Commands\ListCommand;
@@ -37,6 +39,15 @@ class StreamlineServiceProvider extends PackageServiceProvider implements Deferr
 
     public function registeringPackage(): void
     {
+        $this->app->bind(
+            CreateArchive::class,
+            fn(Application $app) => new CreateArchive(
+                sourceFolder: base_path(),
+                destinationPath: config('streamline.backup_dir'),
+                filename: 'backup-' . date('Ymd_His') . '.tgz',
+            )
+        );
+
         $this->app->resolving(OutputStyle::class, fn(OutputStyle $outputStyle) => $this->app
             // Laravel resolves OutputStyle with make(). This means it won't be re-resolved which
             // means it can't be reused later. This is why we bind() it to the app instance
