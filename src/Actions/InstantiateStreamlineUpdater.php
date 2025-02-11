@@ -4,7 +4,7 @@ namespace Pixelated\Streamline\Actions;
 
 use Closure;
 use Illuminate\Support\Facades\Config;
-use Pixelated\Streamline\Wrappers;
+use Pixelated\Streamline\Factories;
 use ReflectionClass;
 use ReflectionException;
 use RuntimeException;
@@ -15,7 +15,7 @@ class InstantiateStreamlineUpdater
     private readonly string $runnerClass;
 
     public function __construct(
-        private readonly Wrappers\ProcessFactory $process,
+        private readonly Factories\ProcessFactory $process,
         //TODO restore this after upgrading to Laravel 11
 //        #[ConfigAttribute('streamline.runner_class')]
 //        private readonly string           $runnerClass,
