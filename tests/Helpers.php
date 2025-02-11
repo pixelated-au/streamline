@@ -17,11 +17,6 @@ function fakeOutputStyle(): void
     );
 }
 
-function callPrivateFunction(Closure $method, $updater, ...$parameters)
-{
-    return $method->call($updater, ...$parameters);
-}
-
 function workbench_path(): string
 {
     return getcwd() . '/workbench';
