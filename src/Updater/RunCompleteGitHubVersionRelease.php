@@ -37,9 +37,9 @@ readonly class RunCompleteGitHubVersionRelease
 
     protected function copyFrontEndAssetsFromOldToNewRelease(): void
     {
-        $this->output('Copying frontend assets');
         $existingReleaseBuildDir = "$this->publicDirName/$this->frontendBuildDir";
         $incomingReleaseBuildDir = $this->tempDirName . '/' . basename($this->publicDirName) . '/' . $this->frontendBuildDir;
+        $this->output("Copying frontend assets. From: $existingReleaseBuildDir to: $incomingReleaseBuildDir");
         $this->validateDirectoriesExist($existingReleaseBuildDir, $incomingReleaseBuildDir);
 
         $this->recursiveCopyOldBuildFilesToNewDir($existingReleaseBuildDir, $incomingReleaseBuildDir);
