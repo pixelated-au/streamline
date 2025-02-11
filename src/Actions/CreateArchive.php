@@ -1,64 +1,46 @@
 <?php
+/** @noinspection PhpClassCanBeReadonlyInspection */
 
 namespace Pixelated\Streamline\Actions;
 
-use FilesystemIterator;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
-use Phar;
-use PharData;
+use Pixelated\Streamline\Events\CommandClassCallback;
+use Pixelated\Streamline\Factories\CompressedArchiveBuilder;
 use RuntimeException;
 
 class CreateArchive
 {
+    private readonly CompressedArchiveBuilder $archiver;
+    private readonly string $gzipPath;
+
     public function __construct(
         private readonly string $sourceFolder,
         private readonly string $destinationPath,
-        private string          $filename,
+        private readonly string $filename,
     )
     {
+        $this->gzipPath        = "$this->destinationPath/$this->filename";
+        $tarPath = File::dirname($this->gzipPath) . '/' . File::name($this->gzipPath) . '.tar';
+        $this->archiver = app()->make(CompressedArchiveBuilder::class, ['tarArchivePath' => $tarPath]);
+    }
+
+    public function create(): void
+    {
+        Event::dispatch(new CommandClassCallback('info', "Backing up the current installation to $this->gzipPath"));
         // check that the source folder exists
         if (!File::exists($this->sourceFolder)) {
             throw new RuntimeException("Source folder '$this->sourceFolder' does not exist.");
         }
 
-        $this->filename = File::name($this->filename);
+        $this->checkDestinationPath();
+
+        $this->archiver->init()
+            ->makeArchive($this->sourceFolder);
     }
 
-    public function create(): void
+    protected function checkDestinationPath(): void
     {
-        $archivePath = $this->destinationPath . '/' . $this->filename . '.tar';
-        $gzipPath    = $this->destinationPath . '/' . $this->filename . '.tgz';
-
-        $this->checkDestinationPath($gzipPath);
-
-        // Create a new Phar archive
-        $phar = new PharData(
-            filename: $archivePath,
-            flags: FilesystemIterator::CURRENT_AS_FILEINFO
-            | FilesystemIterator::SKIP_DOTS
-            | FilesystemIterator::UNIX_PATHS,
-            format: Phar::TAR,
-        );
-
-        // Build the archive from the directory
-        $phar->buildFromDirectory($this->sourceFolder);
-
-        // Compress the tar file to .tgz (tar.gz)
-        $phar->compress(Phar::GZ);
-
-        // Free the Phar object from memory
-        unset($phar);
-
-        // Rename the .tar.gz file to .tgz
-        rename($archivePath . '.gz', $gzipPath);
-
-        // Remove the uncompressed .tar file
-        unlink($archivePath);
-    }
-
-    protected function checkDestinationPath(string $gzipPath): void
-    {
-
         if (
             !File::isDirectory($this->destinationPath) &&
             !File::makeDirectory($this->destinationPath, 0755, true) &&
@@ -72,8 +54,8 @@ class CreateArchive
         }
 
         // check that the filename is not already in use
-        if (File::exists($gzipPath)) {
-            throw new RuntimeException("Archive file '$this->filename.tgz' already exists.");
+        if (File::exists($this->gzipPath)) {
+            throw new RuntimeException("Archive file '$this->gzipPath' already exists.");
         }
     }
 }
