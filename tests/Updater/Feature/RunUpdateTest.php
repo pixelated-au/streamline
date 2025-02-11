@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Storage;
+use Pixelated\Streamline\Actions\CreateArchive;
 use Pixelated\Streamline\Updater\RunCompleteGitHubVersionRelease;
 
 beforeEach(function () {
@@ -19,12 +21,19 @@ it('can run an update using actual filesystem actions and deletes the backup dir
     $disk     = Storage::fake('local');
     $tempDisk = Storage::fake('temp');
 
-
     $tempDisk->makeDirectory('zip_temp');
+
+    $this->app->bind(
+        CreateArchive::class,
+        fn(Application $app) => new CreateArchive(
+            sourceFolder: $disk->path(''),
+            destinationPath: config('streamline.backup_dir'),
+            filename: 'backup-' . date('Ymd_His') . '.tgz',
+        )
+    );
 
     createNewReleaseFolderFileStructure($tempDisk);
     makeDirsAndFiles($disk, $tempDisk);
-
     $updater = new RunCompleteGitHubVersionRelease(
         tempDirName: $tempDisk->path('unpacked'),
         laravelBasePath: $disk->path(''),
@@ -42,7 +51,7 @@ it('can run an update using actual filesystem actions and deletes the backup dir
 
     $output = [
         'Starting update',
-        'Copying frontend assets',
+        'Copying frontend assets. From: ' . $disk->path('public/build') . ' to: ' . $tempDisk->path('unpacked/public/build'),
         'Chmod file: ' . $tempDisk->path('/unpacked/public/build/assets/text-file/existing_file.txt') . ' to 420',
         'Deleting contents of ' . $disk->path('') . ' to prepare for new release',
         'Moving downloaded files from ' . $tempDisk->path('unpacked') . ' to ' . $disk->path(''),
