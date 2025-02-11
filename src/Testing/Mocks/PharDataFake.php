@@ -5,6 +5,7 @@ namespace Pixelated\Streamline\Testing\Mocks;
 use FilesystemIterator;
 use Phar;
 use PharData;
+use Traversable;
 
 class PharDataFake extends PharData {
     /** @noinspection MagicMethodsValidityInspection
@@ -19,6 +20,12 @@ class PharDataFake extends PharData {
     {
         return [];
     }
+
+    public function buildFromIterator(Traversable $iterator, ?string $baseDirectory = null): array
+    {
+        return [];
+    }
+
 
     public function compress(int $compression, ?string $extension = null): ?Phar
     {
