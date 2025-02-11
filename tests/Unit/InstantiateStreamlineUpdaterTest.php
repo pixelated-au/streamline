@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Config;
 use Pixelated\Streamline\Actions\InstantiateStreamlineUpdater;
-use Pixelated\Streamline\Wrappers\ProcessFactory;
+use Pixelated\Streamline\Factories\ProcessFactory;
 
 it('should throw a RuntimeException when given a non-existent class name', function () {
     $classPath = sys_get_temp_dir() . '/BrokenClass.php';
@@ -88,20 +88,17 @@ it('should run the process and set all required environment variables correctly'
         ->andReturn($classPath);
 
     $expectedEnv = [
-        'BASE_PATH'               => base_path(),
-        'SOURCE_DIR'              => base_path('source'),
-        'PUBLIC_DIR_NAME'         => public_path(),
-        'FRONT_END_BUILD_DIR'     => 'build_dir_value',
-        'TEMP_DIR'                => base_path('temp_dir_value'),
-        'INSTALLING_VERSION'      => $versionToInstall,
-        'BACKUP_DIR'              => 'backup_dir_value',
-        'MAX_FILE_SIZE'           => 1000,
-        'DIR_PERMISSION'          => 0755,
-        'FILE_PERMISSION'         => 0644,
-        'RETAIN_OLD_RELEASE'      => true,
-        'ALLOWED_FILE_EXTENSIONS' => '["jpg","png","gif"]',
-        'PROTECTED_PATHS'         => '["path1","path2"]',
-        'IS_TESTING'              => true,
+        'TEMP_DIR'                 => base_path(config('streamline.work_temp_dir')),
+        'LARAVEL_BASE_PATH'        => base_path(),
+        'PUBLIC_DIR_NAME'          => public_path(),
+        'FRONT_END_BUILD_DIR'      => config('streamline.laravel_build_dir_name'),
+        'INSTALLING_VERSION'       => $versionToInstall,
+        'PROTECTED_PATHS'          => '["path1","path2","vendor/*"]',
+        'DIR_PERMISSION'           => 0755,
+        'FILE_PERMISSION'          => 0644,
+        'OLD_RELEASE_ARCHIVE_PATH' => config('streamline.backup_dir'),
+        'DO_RETAIN_OLD_RELEASE'    => true,
+        'IS_TESTING'               => true,
     ];
 
     $expectedScript = "<?php require_once '$classPath'; (new TestRunnerClass())->run(); ?>";

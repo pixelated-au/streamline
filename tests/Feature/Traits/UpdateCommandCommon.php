@@ -37,10 +37,14 @@ trait UpdateCommandCommon
 
     public function mockFile(): self
     {
-        File::shouldReceive('exists')->andReturnTrue();
+        File::shouldReceive('exists')->andReturn(true, true, false);
+        File::shouldReceive('isDirectory')->andReturnTrue();
         File::shouldReceive('isWritable')->andReturnTrue();
         File::shouldReceive('isReadable')->andReturnTrue();
         File::shouldReceive('put');
+        File::shouldReceive('dirname')->andReturnUsing(fn(string $value) => dirname($value));
+        File::shouldReceive('name')->andReturnUsing(fn(string $value) => pathinfo($value, PATHINFO_FILENAME));
+
         return $this;
     }
 

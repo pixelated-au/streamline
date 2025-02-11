@@ -8,7 +8,8 @@ use Pixelated\Streamline\Tests\Feature\Traits\UpdateCommandCommon;
 pest()->uses(UpdateCommandCommon::class, HttpMock::class);
 
 it('should run an update with no parameters', function () {
-    $this->mockProcess()
+    $this->mockFile()
+        ->mockProcess()
         ->mockCache(['v2.8.1', 'v2.0.0', 'v1.0.0'], 'v2.8.1')
         ->mockZipArchive();
 

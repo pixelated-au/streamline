@@ -1,6 +1,6 @@
 <?php
 
-use Pixelated\Streamline\Wrappers\ProcessFactory;
+use Pixelated\Streamline\Factories\ProcessFactory;
 use Symfony\Component\Process\PhpProcess;
 
 it('should create a new static instance with default values when only script is provided', function () {
