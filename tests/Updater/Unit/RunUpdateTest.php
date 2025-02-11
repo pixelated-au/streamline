@@ -18,24 +18,17 @@ it('throws an exception that the laravel base directory cannot be found', functi
     $this->expectExceptionMessage("Error: Release directory 'non-existent-directory' does not exist! This should be the directory that contains your application deployment.");
     $this->expectException(RuntimeException::class);
 
-    $closure = fn($liveAssetsDir, $oldAssetsDir) => $this->validateDirectoriesExist($liveAssetsDir, $oldAssetsDir);
-    callPrivateFunction(
-        $closure,
-        runUpdateClassFactory(['laravelBasePath' => 'non-existent-directory']),
-        "$this->deploymentPath/public/build", "$this->rootPath/temp/public/build"
-    );
+    $runUpdate = runUpdateClassFactory(['laravelBasePath' => 'non-existent-directory']);
+    $closure   = fn($liveAssetsDir, $oldAssetsDir) => $this->validateDirectoriesExist($liveAssetsDir, $oldAssetsDir);
+    $closure->call($runUpdate, "$this->deploymentPath/public/build", "$this->rootPath/temp/public/build");
 });
 
 it('throws an exception that the live/old assets directory cannot be found', function () {
     $this->expectExceptionMessage("Error: Invalid old assets directory: $this->deploymentPath/invalid");
     $this->expectException(RuntimeException::class);
-
-    $closure = fn($liveAssetsDir, $oldAssetsDir) => $this->validateDirectoriesExist($liveAssetsDir, $oldAssetsDir);
-    callPrivateFunction(
-        $closure,
-        runUpdateClassFactory(),
-        "$this->deploymentPath/invalid", "$this->deploymentPath/temp/public/build"
-    );
+    $runUpdate = runUpdateClassFactory();
+    $closure   = fn($liveAssetsDir, $oldAssetsDir) => $this->validateDirectoriesExist($liveAssetsDir, $oldAssetsDir);
+    $closure->call($runUpdate, "$this->deploymentPath/invalid", "$this->deploymentPath/temp/public/build");
 });
 
 it('throws an exception that the temp assets directory cannot be found', function () {
@@ -44,12 +37,9 @@ it('throws an exception that the temp assets directory cannot be found', functio
     $this->expectExceptionMessage("Error: Could not create assets directory: $this->rootPath/temp/public/build");
     $this->expectException(RuntimeException::class);
 
-    $closure = fn($liveAssetsDir, $oldAssetsDir) => $this->validateDirectoriesExist($liveAssetsDir, $oldAssetsDir);
-    callPrivateFunction(
-        $closure,
-        runUpdateClassFactory(),
-        "$this->deploymentPath/public/build", "$this->rootPath/temp/public/build"
-    );
+    $runUpdate = runUpdateClassFactory();
+    $closure   = fn($liveAssetsDir, $oldAssetsDir) => $this->validateDirectoriesExist($liveAssetsDir, $oldAssetsDir);
+    $closure->call($runUpdate, "$this->deploymentPath/public/build", "$this->rootPath/temp/public/build");
 });
 
 it('throws an exception when the destination directory is not writeable', function () {
@@ -59,26 +49,20 @@ it('throws an exception when the destination directory is not writeable', functi
     $this->expectExceptionMessage("Error: Failed to create directory: $this->deploymentPath/public/build/assets/NEW_DIRECTORY");
     $this->expectException(RuntimeException::class);
 
-    $closure = fn($source, $destination) => $this->recursiveCopyOldBuildFilesToNewDir($source, $destination);
-    callPrivateFunction(
-        $closure,
-        runUpdateClassFactory(),
-        "$this->rootPath/backup_dir/public/build/assets", "$this->deploymentPath/public/build/assets"
-    );
+    $runUpdate = runUpdateClassFactory();
+    $closure   = fn($source, $destination) => $this->recursiveCopyOldBuildFilesToNewDir($source, $destination);
+    $closure->call($runUpdate, "$this->rootPath/backup_dir/public/build/assets", "$this->deploymentPath/public/build/assets");
 });
 
 it('throws an exception that the source directory does not exist when moving a directory', function () {
     $this->expectExceptionMessage('Source directory (non-existent-directory) does not exist');
     $this->expectException(RuntimeException::class);
 
-    $closure = fn(string $source, string $destination, bool $isRoot = false) => $this->moveDirectory($source, $destination, $isRoot);
-    callPrivateFunction(
-        $closure,
-        runUpdateClassFactory([
-            'laravelBasePath' => 'test-directory',
-        ]),
-        'non-existent-directory', "$this->rootPath/temp/public/build"
-    );
+    $runUpdate = runUpdateClassFactory([
+        'laravelBasePath' => 'test-directory',
+    ]);
+    $closure   = fn(string $source, string $destination, bool $isRoot = false) => $this->moveDirectory($source, $destination, $isRoot);
+    $closure->call($runUpdate, 'non-existent-directory', "$this->rootPath/temp/public/build");
 });
 
 it('throws an exception that the destination could not be created when moving a directory', function () {
@@ -87,14 +71,11 @@ it('throws an exception that the destination could not be created when moving a 
     $this->expectExceptionMessage("Directory '$this->rootPath/temp/public/build' was not created");
     $this->expectException(RuntimeException::class);
 
-    $closure = fn(string $source, string $destination, bool $isRoot = false) => $this->moveDirectory($source, $destination, $isRoot);
-    callPrivateFunction(
-        $closure,
-        runUpdateClassFactory([
-            'laravelBasePath' => laravel_path(),
-        ]),
-        laravel_path(), "$this->rootPath/temp/public/build"
-    );
+    $runUpdate = runUpdateClassFactory([
+        'laravelBasePath' => laravel_path(),
+    ]);
+    $closure   = fn(string $source, string $destination, bool $isRoot = false) => $this->moveDirectory($source, $destination, $isRoot);
+    $closure->call($runUpdate, laravel_path(), "$this->rootPath/temp/public/build");
 });
 
 it('throws an exception that a destination folder could not be created when moving a directory', function () {
@@ -114,24 +95,20 @@ it('throws an exception that a destination folder could not be created when movi
     $this->expectExceptionMessage("Directory '$this->rootPath/temp/public/build/assets/dir1/no-permissions/dir2' was not created");
     $this->expectException(RuntimeException::class);
 
+    $runUpdate = runUpdateClassFactory([
+        'laravelBasePath' => $this->rootPath,
+    ]);
+
     $closure = fn(string $source, string $destination, bool $isRoot = false) => $this->moveDirectory($source, $destination, $isRoot);
-    callPrivateFunction(
-        $closure,
-        runUpdateClassFactory([
-            'laravelBasePath' => $this->rootPath,
-        ]),
-        "$this->deploymentPath/public/build/assets", "$this->rootPath/temp/public/build/assets"
-    );
+    $closure->call($runUpdate, "$this->deploymentPath/public/build/assets", "$this->rootPath/temp/public/build/assets");
 });
 
 it('outputs a notice that the backup directory is being retained', function () {
-    callPrivateFunction(
-        (fn() => $this->terminateOldReleaseDir()),
-        runUpdateClassFactory([
-            'doRetainOldReleaseDir' => true,
-            'oldReleaseArchivePath' => 'archive.zip',
-        ])
-    );
+    $runUpdate = runUpdateClassFactory([
+        'doRetainOldReleaseDir' => true,
+        'oldReleaseArchivePath' => 'archive.zip',
+    ]);
+    (fn() => $this->terminateBackupArchive())->call($runUpdate);
 
     $output = $this->getActualOutputForAssertion();
     $this->assertStringContainsString('Retaining old release backup (archive.zip). Make sure you clean it up manually.', $output);
@@ -142,18 +119,16 @@ it('outputs a notice that the backup directory could not be deleted despite it b
     $this->rootFs->addChild(vfsStream::newFile('backup_test/archive.zip'));
     $this->rootFs->getChild('backup_test/archive.zip')?->chmod(0400);
 
-    callPrivateFunction(
-        (fn() => $this->terminateOldReleaseDir()),
-        runUpdateClassFactory(
-            [
-                'laravelBasePath'       => $this->rootPath,
-                'oldReleaseArchivePath' => "$this->rootPath/backup_test/archive.zip",
-            ]
-        ));
+    $runUpdate = runUpdateClassFactory(
+        [
+            'laravelBasePath'       => $this->rootPath,
+            'oldReleaseArchivePath' => "$this->rootPath/backup_test/archive.zip",
+        ]
+    );
+    (fn() => $this->terminateBackupArchive())->call($runUpdate);
 
     $output = $this->getActualOutputForAssertion();
     $this->assertStringContainsString("Could not delete the old release: $this->rootPath/backup_test", $output);
-
 
     $this->assertTrue(
         $this->rootFs->hasChild('backup_test/archive.zip')
@@ -167,12 +142,9 @@ it('throws an exception that the source file cannot be read when copying assets'
     $this->expectExceptionMessage("Error: Source file is not readable: {$file->url()}");
     $this->expectException(RuntimeException::class);
 
-    $closure = fn(string $realSourcePath, string $realDestPath) => $this->copyAsset($realSourcePath, $realDestPath);
-    callPrivateFunction(
-        $closure,
-        runUpdateClassFactory(),
-        $file->url(), 'unused_destination'
-    );
+    $runUpdate = runUpdateClassFactory();
+    $closure   = fn(string $realSourcePath, string $realDestPath) => $this->copyAsset($realSourcePath, $realDestPath);
+    $closure->call($runUpdate, $file->url(), 'unused_destination');
 });
 
 it('throws an exception that the source file cannot be copied for an unknown reason when copying assets', function () {
@@ -185,12 +157,9 @@ it('throws an exception that the source file cannot be copied for an unknown rea
     $this->expectExceptionMessage("Error: Failed to copy file: {$file->url()} to $this->rootPath");
     $this->expectException(RuntimeException::class);
 
-    $closure = fn(string $realSourcePath, string $realDestPath) => $this->copyAsset($realSourcePath, $realDestPath);
-    callPrivateFunction(
-        $closure,
-        runUpdateClassFactory(),
-        $file->url(), $this->rootPath
-    );
+    $runUpdate = runUpdateClassFactory();
+    $closure   = fn(string $realSourcePath, string $realDestPath) => $this->copyAsset($realSourcePath, $realDestPath);
+    $closure->call($runUpdate, $file->url(), $this->rootPath);
 });
 
 it('cannot find the .env file when setting the current version number', function () {
@@ -200,10 +169,8 @@ it('cannot find the .env file when setting the current version number', function
     $this->expectExceptionMessage("Error: Environment file ($this->deploymentPath/.env) does not exist in the release directory");
     $this->expectException(RuntimeException::class);
 
-    callPrivateFunction(
-        (fn() => $this->setEnvVersionNumber()),
-        runUpdateClassFactory(['laravelBasePath' => $this->deploymentPath])
-    );
+    $runUpdate = runUpdateClassFactory(['laravelBasePath' => $this->deploymentPath]);
+    (fn() => $this->setEnvVersionNumber())->call($runUpdate);
 });
 
 it('cannot save the .env file when setting the current version number', function () {
@@ -216,32 +183,26 @@ it('cannot save the .env file when setting the current version number', function
     $this->expectExceptionMessage("Error: Failed to update version number in Laravel's .env file");
     $this->expectException(RuntimeException::class);
 
-    callPrivateFunction(
-        (fn() => $this->setEnvVersionNumber()),
-        runUpdateClassFactory(['laravelBasePath' => $this->deploymentPath])
-    );
+    $runUpdate = runUpdateClassFactory(['laravelBasePath' => $this->deploymentPath]);
+    (fn() => $this->setEnvVersionNumber())->call($runUpdate);
 
     $this->assertStringEqualsFile($dotEnvFile->url(), $dotEnvFileContents);
 });
 
 it('fails to delete a missing directory', function () {
-    expect(callPrivateFunction(
-        (fn(string $directory) => $this->deleteDirectory($directory)),
-        runUpdateClassFactory(),
-        "$this->rootPath/missing_dir"
-    ))->toBeTrue();
-});
+    $runUpdate = runUpdateClassFactory();
+    $result    = (fn($directory) => $this->deleteDirectory($directory))
+        ->call($runUpdate, "$this->rootPath/missing_dir");
 
+    expect($result)->toBeTrue();
+});
 
 
 it('calls delete and will return false when the file does not exist', function () {
     $nonExistentFile = vfsStream::url('root/non_existent_file.txt');
 
-    $result = callPrivateFunction(
-        fn(string $path) => $this->delete($path),
-        runUpdateClassFactory(),
-        $nonExistentFile
-    );
+    $runUpdate = runUpdateClassFactory();
+    $result    = (fn($path) => $this->delete($path))->call($runUpdate, $nonExistentFile);
 
     expect($result)->toBeFalse();
 });
@@ -256,12 +217,9 @@ it('should return false when the file exists but cannot be deleted due to permis
 
     $this->rootFs->addChild($dir);
 
+    $runUpdate = runUpdateClassFactory();
     $closure = fn(string $path) => $this->delete($path);
-    $result  = callPrivateFunction(
-        $closure,
-        runUpdateClassFactory(),
-        $file->url()
-    );
+    $result  = $closure->call($runUpdate, $file->url());
 
     expect($result)->toBeFalse()
         ->and($file->url())->toBeReadableFile();
@@ -278,21 +236,16 @@ it('should handle multiple protected paths with wildcards correctly', function (
     ]);
 
     $testCases = [
-        'config/app.php' => true,
-        'storage/logs/laravel.log' => true,
-        'public/uploads/image.jpg' => true,
-        'resources/views/welcome.blade.php' => true,
-        'app/Http/Controllers/Controller.php' => false,
+        'config/app.php'                                               => true,
+        'storage/logs/laravel.log'                                     => true,
+        'public/uploads/image.jpg'                                     => true,
+        'resources/views/welcome.blade.php'                            => true,
+        'app/Http/Controllers/Controller.php'                          => false,
         'database/migrations/2023_01_01_000000_create_users_table.php' => false,
     ];
 
     foreach ($testCases as $path => $expected) {
-        $result = callPrivateFunction(
-            fn (string $relativePath) => $this->isProtectedPathWildcard($relativePath),
-            $runUpdate,
-            $path
-        );
-
+        $result = (fn(string $relativePath) => $this->isProtectedWildcardPath($relativePath))->call($runUpdate, $path);
         expect($result)->toBe($expected, "Failed assertion for path: $path");
     }
 });
@@ -307,11 +260,7 @@ it('should correctly match a relative path that is exactly the same as a wildcar
         ],
     ]);
 
-    $result = callPrivateFunction(
-        fn (string $relativePath) => $this->isProtectedPathWildcard($relativePath),
-        $runUpdate,
-        'config/'
-    );
+    $result = (fn(string $relativePath) => $this->isProtectedWildcardPath($relativePath))->call($runUpdate, 'config/app.php');
 
     expect($result)->toBeTrue();
 });
@@ -325,11 +274,7 @@ it('should return false for an empty relative path', function () {
         ],
     ]);
 
-    $result = callPrivateFunction(
-        fn (string $relativePath) => $this->isProtectedPathWildcard($relativePath),
-        $runUpdate,
-        ''
-    );
+    $result = (fn(string $relativePath) => $this->isProtectedWildcardPath($relativePath))->call($runUpdate, '');
 
     expect($result)->toBeFalse();
 });
