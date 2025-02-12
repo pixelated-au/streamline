@@ -43,7 +43,7 @@ class InstantiateStreamlineUpdater
         $this->process
             ->invoke($script)
             ->setEnv([
-                'TEMP_DIR'                 => base_path(config('streamline.work_temp_dir')),
+                'TEMP_DIR'                 => config('streamline.work_temp_dir'),
                 'LARAVEL_BASE_PATH'        => base_path(),
                 'PUBLIC_DIR_NAME'          => public_path(),
                 'FRONT_END_BUILD_DIR'      => config('streamline.laravel_build_dir_name'),
