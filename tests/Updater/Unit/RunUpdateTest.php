@@ -46,61 +46,12 @@ it('throws an exception when the destination directory is not writeable', functi
     $this->rootFs->addChild(vfsStream::newDirectory('backup_dir/public/build/assets/NEW_DIRECTORY'));
     $this->deploymentDir->getChild('public/build/assets')?->chmod(0000);
 
-    $this->expectExceptionMessage("Error: Failed to create directory: $this->deploymentPath/public/build/assets/NEW_DIRECTORY");
+    $this->expectExceptionMessage("Directory \"$this->deploymentPath/public/build/assets/NEW_DIRECTORY\" was not created");
     $this->expectException(RuntimeException::class);
 
     $runUpdate = runUpdateClassFactory();
     $closure   = fn($source, $destination) => $this->recursiveCopyOldBuildFilesToNewDir($source, $destination);
     $closure->call($runUpdate, "$this->rootPath/backup_dir/public/build/assets", "$this->deploymentPath/public/build/assets");
-});
-
-it('throws an exception that the source directory does not exist when moving a directory', function () {
-    $this->expectExceptionMessage('Source directory (non-existent-directory) does not exist');
-    $this->expectException(RuntimeException::class);
-
-    $runUpdate = runUpdateClassFactory([
-        'laravelBasePath' => 'test-directory',
-    ]);
-    $closure   = fn(string $source, string $destination, bool $isRoot = false) => $this->moveDirectory($source, $destination, $isRoot);
-    $closure->call($runUpdate, 'non-existent-directory', "$this->rootPath/temp/public/build");
-});
-
-it('throws an exception that the destination could not be created when moving a directory', function () {
-    $this->rootFs->chmod(0000);
-
-    $this->expectExceptionMessage("Directory '$this->rootPath/temp/public/build' was not created");
-    $this->expectException(RuntimeException::class);
-
-    $runUpdate = runUpdateClassFactory([
-        'laravelBasePath' => laravel_path(),
-    ]);
-    $closure   = fn(string $source, string $destination, bool $isRoot = false) => $this->moveDirectory($source, $destination, $isRoot);
-    $closure->call($runUpdate, laravel_path(), "$this->rootPath/temp/public/build");
-});
-
-it('throws an exception that a destination folder could not be created when moving a directory', function () {
-    $this->rootFs->addChild(
-        vfsStream::newDirectory('temp/public/build/assets/dir1/no-permissions')
-    );
-    $this->rootFs->getChild('temp/public/build/assets/dir1/no-permissions')?->chmod(0000);
-
-    $noPermissionsDir = vfsStream::newDirectory('public/build/assets/dir1/no-permissions/dir2');
-    /** @var \org\bovigo\vfs\vfsStreamDirectory $dir2 */
-    $dir2 = $noPermissionsDir->getChild('public/build/assets/dir1/no-permissions/dir2');
-    $dir2->addChild(
-        vfsStream::newFile('a-file.txt')
-    );
-    $this->deploymentDir->addChild($noPermissionsDir);
-
-    $this->expectExceptionMessage("Directory '$this->rootPath/temp/public/build/assets/dir1/no-permissions/dir2' was not created");
-    $this->expectException(RuntimeException::class);
-
-    $runUpdate = runUpdateClassFactory([
-        'laravelBasePath' => $this->rootPath,
-    ]);
-
-    $closure = fn(string $source, string $destination, bool $isRoot = false) => $this->moveDirectory($source, $destination, $isRoot);
-    $closure->call($runUpdate, "$this->deploymentPath/public/build/assets", "$this->rootPath/temp/public/build/assets");
 });
 
 it('outputs a notice that the backup directory is being retained', function () {
@@ -218,8 +169,8 @@ it('should return false when the file exists but cannot be deleted due to permis
     $this->rootFs->addChild($dir);
 
     $runUpdate = runUpdateClassFactory();
-    $closure = fn(string $path) => $this->delete($path);
-    $result  = $closure->call($runUpdate, $file->url());
+    $closure   = fn(string $path) => $this->delete($path);
+    $result    = $closure->call($runUpdate, $file->url());
 
     expect($result)->toBeFalse()
         ->and($file->url())->toBeReadableFile();
@@ -277,6 +228,113 @@ it('should return false for an empty relative path', function () {
     $result = (fn(string $relativePath) => $this->isProtectedWildcardPath($relativePath))->call($runUpdate, '');
 
     expect($result)->toBeFalse();
+});
+
+it('should preserve protected paths', function () {
+    $this->rootFs   = vfsStream::setup();
+    $this->rootPath = vfsStream::url('root');
+    $protectedDir = vfsStream::newDirectory('protected_dir/sub');
+    $protectedDir->getChild('sub')?->addChild(vfsStream::newFile('protected_by_parent_file.txt'));
+    $this->rootFs->addChild($protectedDir);
+    $this->rootFs->addChild(vfsStream::newDirectory('un-protected_dir'));
+    $subDir = vfsStream::newDirectory('sub/directory');
+    $this->rootFs->addChild($subDir);
+    $this->rootFs->addChild(vfsStream::newFile('protected_file.txt'));
+    $this->rootFs->addChild(vfsStream::newFile('un-protected_file.txt'));
+    /** @noinspection PhpPossiblePolymorphicInvocationInspection */
+    $subDir->getChild('directory')?->addChild(vfsStream::newFile('protected_child_file.txt'));
+    $this->rootFs->addChild(vfsStream::newDirectory('temp'));
+
+
+
+    $runUpdate = runUpdateClassFactory([
+        'laravelBasePath' => $this->rootPath,
+        'tempDirName'     => "$this->rootPath/temp",
+        'protectedPaths'  => ['protected_dir/sub', 'protected_file.txt', 'sub/directory/protected_child_file.txt'],
+    ]);
+
+    (fn() => $this->preserveProtectedPaths())->call($runUpdate);
+
+    expect(is_dir("$this->rootPath/temp/protected_dir"))->toBeTrue()
+        ->and(file_exists("$this->rootPath/temp/protected_dir"))->toBeTrue()
+        ->and(file_exists("$this->rootPath/temp/protected_dir/sub/protected_by_parent_file.txt"))->toBeTrue()
+        ->and(file_exists("$this->rootPath/temp/protected_file.txt"))->toBeTrue()
+        ->and(file_exists("$this->rootPath/temp/sub/directory/protected_child_file.txt"))->toBeTrue();
+
+    $output = $this->getActualOutputForAssertion();
+    expect($output)->toContain('Preserving protected paths...')
+        ->and($output)->toContain('Protected paths preserved successfully.');
+});
+
+
+it('should preserve protected paths when they exist as files', function () {
+    $this->rootFs   = vfsStream::setup();
+    $this->rootPath = vfsStream::url('root');
+
+    $laravel = vfsStream::newDirectory('laravel');
+    $temp    = vfsStream::newDirectory('temp');
+    $this->rootFs->addChild($laravel);
+    $this->rootFs->addChild($temp);
+    vfsStream::newFile('protected.txt')->at($laravel)->setContent('Protected content');
+    vfsStream::newFile('unprotected.txt')->at($laravel)->setContent('Un-Protected content');
+    vfsStream::newFile('new.txt')->at($temp)->setContent('New content');
+
+    $runUpdate = runUpdateClassFactory([
+        'tempDirName'           => $temp->url(),
+        'laravelBasePath'       => $laravel->url(),
+        'protectedPaths'        => ['protected.txt'],
+        'dirPermission'         => 0755,
+        'filePermission'        => 0644,
+        'oldReleaseArchivePath' => 'archive.zip',
+        'doRetainOldReleaseDir' => true,
+        'doOutput'              => false
+    ]);
+
+    (fn() => $this->preserveProtectedPaths())->call($runUpdate);
+
+    expect(file_exists("{$temp->url()}/protected.txt"))->toBeTrue()
+        ->and(file_get_contents("{$temp->url()}/protected.txt"))->toBe('Protected content')
+        ->and(file_exists("{$temp->url()}/new.txt"))->toBeTrue()
+        ->and(file_exists("{$temp->url()}/unprotected.txt"))->toBeFalse()
+        ->and($temp->getChildren())->toHaveCount(2);
+});
+
+it('outputs a warning when a protected path is not found', function () {
+    $this->rootFs->addChild(vfsStream::newDirectory('deployment'));
+    $deploymentPath = vfsStream::url('streamline/deployment');
+
+    $runUpdate = runUpdateClassFactory([
+        'laravelBasePath' => $deploymentPath,
+        'protectedPaths'  => ['non_existent_path'],
+        'doOutput'        => true,
+    ]);
+
+    $this->expectOutputString(
+        "Preserving protected paths...\n" .
+        "Warning: Protected path not found: {$deploymentPath}/non_existent_path\n" .
+        "Protected paths preserved successfully.\n"
+    );
+
+    (fn() => $this->preserveProtectedPaths())->call($runUpdate);
+});
+
+it('throws an exception when the destination directory is not writable during directory copy', function () {
+    $this->rootFs   = vfsStream::setup();
+    $this->rootPath = vfsStream::url('root');
+    $this->rootFs->addChild(vfsStream::newDirectory('source'));
+    $this->rootFs->addChild(vfsStream::newDirectory('destination')->chmod(0444));
+
+    $runUpdate = runUpdateClassFactory([
+        'laravelBasePath' => "$this->rootPath/source",
+        'tempDirName'     => "$this->rootPath/destination",
+        'protectedPaths'  => ['protected_dir'],
+    ]);
+
+    $this->expectException(RuntimeException::class);
+    $this->expectExceptionMessage('Directory "vfs://streamline/destination" was not created');
+
+    $closure = fn(string $source, string $destination) => $this->copyDirectory($source, $destination);
+    $closure->call($runUpdate, 'vfs://streamline/source', 'vfs://streamline/destination');
 });
 
 /**
