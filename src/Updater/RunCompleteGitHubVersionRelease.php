@@ -10,6 +10,7 @@ use RuntimeException;
 readonly class RunCompleteGitHubVersionRelease
 {
     private string $laravelTempBackupDir;
+
     public function __construct(
         private string $tempDirName,
         private string $laravelBasePath,
@@ -60,9 +61,7 @@ readonly class RunCompleteGitHubVersionRelease
             $destPath   = $destination . DIRECTORY_SEPARATOR . $item->getFilename();
 
             if ($item->isDir()) {
-                if (!is_dir($destPath) && !mkdir($destPath, $this->dirPermission, true) && !is_dir($destPath)) {
-                    throw new RuntimeException("Error: Failed to create directory: $destPath");
-                }
+                $this->makeDir($destPath);
                 $this->recursiveCopyOldBuildFilesToNewDir($sourcePath, $destPath);
             } else {
                 $this->copyAsset($sourcePath, $destPath);
@@ -138,6 +137,8 @@ readonly class RunCompleteGitHubVersionRelease
 
     protected function optimiseNewRelease(): void
     {
+        $this->output("Resetting the CWD to $this->laravelBasePath");
+        chdir($this->laravelBasePath);
         $this->output('Running optimisation tasks...');
         $this->runCommand('php artisan optimize:clear');
         $this->output('Optimisation tasks completed.');
@@ -177,41 +178,7 @@ readonly class RunCompleteGitHubVersionRelease
         if (!$liveAssetsDir || !is_dir($liveAssetsDir)) {
             throw new RuntimeException("Error: Invalid old assets directory: $liveAssetsDir");
         }
-        if (!is_dir($tempWorkingDir) && !mkdir($tempWorkingDir, 0755, true) && !is_dir($tempWorkingDir)) {
-            throw new RuntimeException("Error: Could not create assets directory: $tempWorkingDir");
-        }
-    }
-
-    protected function moveDirectory(string $source, string $destination, bool $isRoot = false): void
-    {
-        if (!is_dir($source)) {
-            throw new RuntimeException("Source directory ($source) does not exist");
-        }
-
-        if (!is_dir($destination) && !mkdir($destination, 0755, true) && !is_dir($destination)) {
-            throw new RuntimeException("Directory '$destination' was not created");
-        }
-
-        $iterator = new RecursiveDirectoryIterator($source, FilesystemIterator::SKIP_DOTS);
-        $iterator->rewind();
-
-        /** @var \SplFileInfo $fileInfo */
-        foreach ($iterator as $fileInfo) {
-            $sourcePath = $fileInfo->getPathname();
-
-            $relativePath    = str_replace($source, '', $sourcePath);
-            $destinationPath = rtrim($destination, '/') . '/' . ltrim($relativePath, '/');
-            if ($fileInfo->isDir()) {
-                $this->moveDirectory($sourcePath, $destinationPath);
-                continue;
-            }
-
-            rename($sourcePath, $this->laravelBasePath . $this->commonChildPath($sourcePath, $destinationPath));
-        }
-
-        if (!$isRoot) {
-            rmdir($source);
-        }
+        $this->makeDir($tempWorkingDir, 'Error: Could not create assets directory: %s');
     }
 
     protected function preserveProtectedPaths(): void
@@ -219,9 +186,8 @@ readonly class RunCompleteGitHubVersionRelease
         $this->output('Preserving protected paths...');
 
         foreach ($this->protectedPaths as $protectedPath) {
-            $sourcePath = $this->laravelBasePath . '/' . ltrim($protectedPath, '/');
+            $sourcePath      = $this->laravelBasePath . '/' . ltrim($protectedPath, '/');
             $destinationPath = $this->tempDirName . '/' . ltrim($protectedPath, '/');
-
             if (is_dir($sourcePath)) {
                 $this->copyDirectory($sourcePath, $destinationPath);
             } elseif (file_exists($sourcePath)) {
@@ -236,21 +202,18 @@ readonly class RunCompleteGitHubVersionRelease
 
     private function copyDirectory(string $source, string $destination): void
     {
-        if (!is_dir($destination) && !mkdir($destination, $this->dirPermission, true) && !is_dir($destination)) {
-            throw new RuntimeException(sprintf('Directory "%s" was not created', $destination));
-        }
+        $this->makeDir($destination);
 
         $iterator = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($source, FilesystemIterator::SKIP_DOTS),
             RecursiveIteratorIterator::SELF_FIRST
         );
 
+        /** @var \SplFileInfo $item */
         foreach ($iterator as $item) {
-            $targetPath = $destination . DIRECTORY_SEPARATOR . $item->getSubPathName();
+            $targetPath = $destination . DIRECTORY_SEPARATOR . $item->getFilename();
             if ($item->isDir()) {
-                if (!is_dir($targetPath) && !mkdir($targetPath, $this->dirPermission, true) && !is_dir($targetPath)) {
-                    throw new RuntimeException(sprintf('Directory "%s" was not created', $targetPath));
-                }
+                $this->makeDir($targetPath);
             } else {
                 $this->copyFile($item->getPathname(), $targetPath);
             }
@@ -260,9 +223,7 @@ readonly class RunCompleteGitHubVersionRelease
     private function copyFile(string $source, string $destination): void
     {
         $destinationDir = dirname($destination);
-        if (!is_dir($destinationDir) && !mkdir($destinationDir, $this->dirPermission, true) && !is_dir($destinationDir)) {
-            throw new RuntimeException(sprintf('Directory "%s" was not created', $destinationDir));
-        }
+        $this->makeDir($destinationDir);
 
         if (!copy($source, $destination)) {
             throw new RuntimeException("Failed to copy file: $source to $destination");
@@ -331,25 +292,32 @@ readonly class RunCompleteGitHubVersionRelease
         return str_replace($parentPath, '', $childPath);
     }
 
-    /**
-     * Calculates the common path between two paths. If using the params below, it will return 'public/index.html'
-     * @param string $path1 - e.g., '/var/www/html'
-     * @param string $path2 - e.g., '/var/www/test/public/index.html'
-     */
-    protected function commonChildPath(string $path1, string $path2): string
+    public function makeDir(string $targetPath, string $errorMessage = 'Directory "%s" was not created'): void
     {
-        $path1 = array_reverse(explode('/', trim($path1, '/')));
-        $path2 = array_reverse(explode('/', trim($path2, '/')));
-
-        $commonPath = [];
-        foreach ($path1 as $index => $part) {
-            if (isset($path2[$index]) && $path2[$index] === $part) {
-                $commonPath[] = $part;
-            }
+        if (!is_dir($targetPath) && !mkdir($targetPath, $this->dirPermission, true) && !is_dir($targetPath)) {
+            throw new RuntimeException(sprintf($errorMessage, $targetPath));
         }
-
-        return trim(implode('/', array_reverse($commonPath)), '/');
     }
+
+//    /**
+//     * Calculates the common path between two paths. If using the params below, it will return 'public/index.html'
+//     * @param string $path1 - e.g., '/var/www/html'
+//     * @param string $path2 - e.g., '/var/www/test/public/index.html'
+//     */
+//    protected function commonChildPath(string $path1, string $path2): string
+//    {
+//        $path1 = array_reverse(explode('/', trim($path1, '/')));
+//        $path2 = array_reverse(explode('/', trim($path2, '/')));
+//
+//        $commonPath = [];
+//        foreach ($path1 as $index => $part) {
+//            if (isset($path2[$index]) && $path2[$index] === $part) {
+//                $commonPath[] = $part;
+//            }
+//        }
+//
+//        return trim(implode('/', array_reverse($commonPath)), '/');
+//    }
 
     protected function isProtectedWildcardPath(string $relativePath): bool
     {
