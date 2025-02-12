@@ -31,6 +31,7 @@ it('should create a .tar.gz file with correct structure and contents', function 
         Storage::makeDirectory($fullDir);
         Storage::put($fullDir . '/' . $file, "Content of $file");
     }
+
     Config::set('fake-production-environment', true);
     $createArchive = new CreateArchive(
         Storage::path($sourceFolder),
