@@ -36,11 +36,11 @@ it('can run an update using actual filesystem actions and deletes the backup dir
     makeDirsAndFiles($disk, $tempDisk);
     $updater = new RunCompleteGitHubVersionRelease(
         tempDirName: $tempDisk->path('unpacked'),
-        laravelBasePath: $disk->path(''),
-        publicDirName: $disk->path('public'),
+        laravelBasePath: $disk->path('laravel'),
+        publicDirName: $disk->path('laravel/public'),
         frontendBuildDir: 'build',
         installingVersion: '1.0.0',
-        protectedPaths: ['.env', 'vendor/*'],
+        protectedPaths: ['.env'],
         dirPermission: 0755,
         filePermission: 0644,
         oldReleaseArchivePath: $tempDisk->path('/old_releases/oldArchive.tgz'),
@@ -51,52 +51,51 @@ it('can run an update using actual filesystem actions and deletes the backup dir
 
     $output = [
         'Starting update',
-        'Copying frontend assets. From: ' . $disk->path('public/build') . ' to: ' . $tempDisk->path('unpacked/public/build'),
+        'Copying frontend assets. From: ' . $disk->path('laravel/public/build') . ' to: ' . $tempDisk->path('unpacked/public/build'),
         'Chmod file: ' . $tempDisk->path('/unpacked/public/build/assets/text-file/existing_file.txt') . ' to 420',
-        'Deleting contents of ' . $disk->path('') . ' to prepare for new release',
-        'Moving downloaded files from ' . $tempDisk->path('unpacked') . ' to ' . $disk->path(''),
-        'Deleting old release backup: oldArchive.tgz',
+        'Preserving protected paths...',
+        'Copied: '. $disk->path('laravel/.env') . ' to ' . $tempDisk->path('unpacked/.env'),
+        'Protected paths preserved successfully.',
+        'Moving ' . $disk->path('laravel') . ' to ' . $disk->path('laravel_old'),
+        'Moving ' . $tempDisk->path('unpacked') . ' to ' . $disk->path('laravel'),
+        'Deleting of ' . $disk->path('laravel_old') . " as it's no longer needed",
         'Setting version number in .env file to: 1.0.0',
         'Version number updated successfully in .env file',
         'Running optimisation tasks...',
-        'Executing: composer dump-autoload --no-interaction --no-dev --optimize',
         'Executing: php artisan optimize:clear',
         'Optimisation tasks completed.',
+        'Deleting old release backup: oldArchive.tgz',
         "Update completed\n",
     ];
     $this->expectOutputString(implode("\n", $output));
 
 
     $this->assertDirectoryDoesNotExist(laravel_path('mock_deployment.backup_dir'));
-    $this->assertFileExists($disk->path('app/test.php'));
-    $this->assertFileExists($disk->path('public/build/file1.txt'));
-    $this->assertFileExists($disk->path('public/build/file2.txt'));
-    $this->assertFileExists($disk->path('public/build/dir1/file3.txt'));
-    $this->assertFileExists($disk->path('public/build/dir1/dir2/file4.txt'));
-    $this->assertFileExists($disk->path('public/build/file5.txt'));
-    $this->assertFileExists($disk->path('public/build/assets/text-file/existing_file.txt'));
-    $this->assertFileExists($disk->path('.env'));
-    $this->assertFileExists($disk->path('vendor/protected-file.txt'));
+    $this->assertFileExists($disk->path('laravel/app/test.php'));
+    $this->assertFileExists($disk->path('laravel/public/build/file1.txt'));
+    $this->assertFileExists($disk->path('laravel/public/build/file2.txt'));
+    $this->assertFileExists($disk->path('laravel/public/build/dir1/file3.txt'));
+    $this->assertFileExists($disk->path('laravel/public/build/dir1/dir2/file4.txt'));
+    $this->assertFileExists($disk->path('laravel/public/build/file5.txt'));
+    $this->assertFileExists($disk->path('laravel/public/build/assets/text-file/existing_file.txt'));
+    $this->assertFileExists($disk->path('laravel/.env'));
 
     $this->assertSame(
         expected: "Prefix...\nSTREAMLINE_APPLICATION_VERSION_INSTALLED=1.0.0\nSuffix...",
-        actual: file_get_contents($disk->path('.env'))
+        actual: file_get_contents($disk->path('laravel/.env'))
     );
 });
 
 function makeDirsAndFiles(Filesystem $disk, Filesystem $tempDisk): void
 {
     // Mock frontend assets directory
-    $disk->makeDirectory('public/build/assets/text-file');
-    $disk->put('public/build/assets/text-file/existing_file.txt', 'an existing file that should be copied across to the new deployment');
+    $disk->makeDirectory('laravel/public/build/assets/text-file');
+    $disk->put('laravel/public/build/assets/text-file/existing_file.txt', 'an existing file that should be copied across to the new deployment');
 
     // Mock Laravel deployment structure
-    $disk->makeDirectory('app');
-    $disk->put('app/test.php', '<?php // Test file');
-    $disk->put('.env', "Prefix...\nSTREAMLINE_APPLICATION_VERSION_INSTALLED=v0.0.0\nSuffix...");
-
-    $disk->makeDirectory('vendor');
-    $disk->put('vendor/protected-file.txt', 'protected file that should be copied across to the new deployment');
+    $disk->makeDirectory('laravel/app');
+    $disk->put('laravel/app/test.php', '<?php // Test file');
+    $disk->put('laravel/.env', "Prefix...\nSTREAMLINE_APPLICATION_VERSION_INSTALLED=v0.0.0\nSuffix...");
 
     $tempDisk->put('old_releases/oldArchive.tgz', 'old archive contents');
 }
