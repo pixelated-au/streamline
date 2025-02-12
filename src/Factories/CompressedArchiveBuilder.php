@@ -2,9 +2,11 @@
 
 namespace Pixelated\Streamline\Factories;
 
-use FilesystemIterator;
+use Illuminate\Support\Facades\Event;
 use Phar;
 use PharData;
+use Pixelated\Streamline\Events\CommandClassCallback;
+use Pixelated\Streamline\Iterators\ArchiveBuilderIterator;
 use Pixelated\Streamline\Testing\Mocks\PharDataFake;
 
 class CompressedArchiveBuilder
@@ -23,19 +25,25 @@ class CompressedArchiveBuilder
 
     public function init(): static
     {
+        Event::dispatch(new CommandClassCallback('comment', "Instantiating Tar file with $this->archivingTool"));
+
         $this->pharData = app()->make($this->archivingTool, [
             'filename' => $this->tarArchivePath,
-            'flags'    => FilesystemIterator::CURRENT_AS_FILEINFO
-                | FilesystemIterator::SKIP_DOTS
-                | FilesystemIterator::UNIX_PATHS,
             'format'   => Phar::TAR,
         ]);
+        Event::dispatch(new CommandClassCallback('comment', 'Tar file instantiated'));
+
         return $this;
     }
 
     public function makeArchive(string $source): static
     {
-        $this->pharData->buildFromDirectory($source);
+        Event::dispatch(new CommandClassCallback('comment', "Building Tar file from $source"));
+
+        $iterator = app()->make(ArchiveBuilderIterator::class, ['path' => $source]);
+        $this->pharData->buildFromIterator($iterator, $source);
+
+        Event::dispatch(new CommandClassCallback('comment', 'Gzipping Tar file'));
         $this->pharData->compress(Phar::GZ);
         unset($this->pharData);
         return $this;
