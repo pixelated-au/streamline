@@ -41,15 +41,16 @@ it('should create a .tar.gz file with correct structure and contents', function 
     $createArchive->create();
 
     $expectedTgzPath = "$destinationPath/$filename";
-    Storage::assertExists($expectedTgzPath);
+    Storage::assertExists("$expectedTgzPath.gz");
 
     // Verify the archive structure and contents
     $pharPath = 'phar://' . Storage::path($expectedTgzPath);
+    $phar     = new PharData("$pharPath.gz");
+    $phar->decompress(Phar::GZ);
 
     foreach ($expectedFiles as $file => $dir) {
         $fullDir  = "$pharPath$dir";
         $fullPath = "$fullDir/$file";
-
         // Assert file exists
         expect(file_exists($fullPath))->toBeTrue("File $dir/$file does not exist in the archive.");
 
