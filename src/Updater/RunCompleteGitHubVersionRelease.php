@@ -4,10 +4,12 @@ namespace Pixelated\Streamline\Updater;
 
 use FilesystemIterator;
 use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use RuntimeException;
 
 readonly class RunCompleteGitHubVersionRelease
 {
+    private string $laravelTempBackupDir;
     public function __construct(
         private string $tempDirName,
         private string $laravelBasePath,
@@ -22,16 +24,19 @@ readonly class RunCompleteGitHubVersionRelease
         private bool   $doOutput = false,
     )
     {
+        $this->laravelTempBackupDir = "{$this->laravelBasePath}_old";
     }
 
     public function run(): void
     {
         $this->output('Starting update');
         $this->copyFrontEndAssetsFromOldToNewRelease();
+        $this->preserveProtectedPaths();
         $this->moveNewReleaseIntoDeployment();
-        $this->terminateBackupArchive();
+        $this->removeOldDeployment();
         $this->setEnvVersionNumber();
         $this->optimiseNewRelease();
+        $this->terminateBackupArchive();
         $this->output('Update completed');
     }
 
@@ -39,6 +44,7 @@ readonly class RunCompleteGitHubVersionRelease
     {
         $existingReleaseBuildDir = "$this->publicDirName/$this->frontendBuildDir";
         $incomingReleaseBuildDir = $this->tempDirName . '/' . basename($this->publicDirName) . '/' . $this->frontendBuildDir;
+
         $this->output("Copying frontend assets. From: $existingReleaseBuildDir to: $incomingReleaseBuildDir");
         $this->validateDirectoriesExist($existingReleaseBuildDir, $incomingReleaseBuildDir);
 
@@ -66,11 +72,16 @@ readonly class RunCompleteGitHubVersionRelease
 
     protected function moveNewReleaseIntoDeployment(): void
     {
-        $this->output("Deleting contents of $this->laravelBasePath to prepare for new release");
-        $this->deleteDirectory($this->laravelBasePath, true);
+        $this->output("Moving $this->laravelBasePath to $this->laravelTempBackupDir");
+        rename($this->laravelBasePath, $this->laravelTempBackupDir);
+        $this->output("Moving $this->tempDirName to $this->laravelBasePath");
+        rename($this->tempDirName, $this->laravelBasePath);
+    }
 
-        $this->output("Moving downloaded files from $this->tempDirName to $this->laravelBasePath");
-        $this->moveDirectory($this->tempDirName, $this->laravelBasePath);
+    protected function removeOldDeployment(): void
+    {
+        $this->output("Deleting of $this->laravelTempBackupDir as it's no longer needed");
+        $this->deleteDirectory($this->laravelTempBackupDir);
     }
 
     protected function terminateBackupArchive(): void
@@ -128,11 +139,11 @@ readonly class RunCompleteGitHubVersionRelease
     protected function optimiseNewRelease(): void
     {
         $this->output('Running optimisation tasks...');
-        $this->runCommand('composer dump-autoload --no-interaction --no-dev --optimize');
         $this->runCommand('php artisan optimize:clear');
         $this->output('Optimisation tasks completed.');
     }
 
+    /** @noinspection PhpSameParameterValueInspection */
     private function runCommand(string $command): void
     {
         $this->output("Executing: $command");
@@ -201,6 +212,64 @@ readonly class RunCompleteGitHubVersionRelease
         if (!$isRoot) {
             rmdir($source);
         }
+    }
+
+    protected function preserveProtectedPaths(): void
+    {
+        $this->output('Preserving protected paths...');
+
+        foreach ($this->protectedPaths as $protectedPath) {
+            $sourcePath = $this->laravelBasePath . '/' . ltrim($protectedPath, '/');
+            $destinationPath = $this->tempDirName . '/' . ltrim($protectedPath, '/');
+
+            if (is_dir($sourcePath)) {
+                $this->copyDirectory($sourcePath, $destinationPath);
+            } elseif (file_exists($sourcePath)) {
+                $this->copyFile($sourcePath, $destinationPath);
+            } else {
+                $this->output("Warning: Protected path not found: $sourcePath");
+            }
+        }
+
+        $this->output('Protected paths preserved successfully.');
+    }
+
+    private function copyDirectory(string $source, string $destination): void
+    {
+        if (!is_dir($destination) && !mkdir($destination, $this->dirPermission, true) && !is_dir($destination)) {
+            throw new RuntimeException(sprintf('Directory "%s" was not created', $destination));
+        }
+
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($source, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        foreach ($iterator as $item) {
+            $targetPath = $destination . DIRECTORY_SEPARATOR . $item->getSubPathName();
+            if ($item->isDir()) {
+                if (!is_dir($targetPath) && !mkdir($targetPath, $this->dirPermission, true) && !is_dir($targetPath)) {
+                    throw new RuntimeException(sprintf('Directory "%s" was not created', $targetPath));
+                }
+            } else {
+                $this->copyFile($item->getPathname(), $targetPath);
+            }
+        }
+    }
+
+    private function copyFile(string $source, string $destination): void
+    {
+        $destinationDir = dirname($destination);
+        if (!is_dir($destinationDir) && !mkdir($destinationDir, $this->dirPermission, true) && !is_dir($destinationDir)) {
+            throw new RuntimeException(sprintf('Directory "%s" was not created', $destinationDir));
+        }
+
+        if (!copy($source, $destination)) {
+            throw new RuntimeException("Failed to copy file: $source to $destination");
+        }
+
+        chmod($destination, $this->filePermission);
+        $this->output("Copied: $source to $destination");
     }
 
     /**
