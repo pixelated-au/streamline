@@ -7,7 +7,7 @@ it('should create a .tar.gz file with correct structure and contents', function 
     Storage::fake('local');
 
     $sourceFolder    = 'source';
-    $destinationPath = 'destination';
+    $destinationFolder = 'destination';
     $filename        = 'test_archive.tar';
 
     // Define expected file structure and contents
@@ -23,7 +23,7 @@ it('should create a .tar.gz file with correct structure and contents', function 
     ];
 
     Storage::makeDirectory($sourceFolder);
-    Storage::makeDirectory($destinationPath);
+    Storage::makeDirectory($destinationFolder);
 
     // Create directory structure and files
     foreach ($expectedFiles as $file => $dir) {
@@ -35,22 +35,28 @@ it('should create a .tar.gz file with correct structure and contents', function 
     Config::set('fake-production-environment', true);
     $createArchive = new CreateArchive(
         Storage::path($sourceFolder),
-        Storage::path($destinationPath),
+        Storage::path($destinationFolder),
         $filename
     );
     $createArchive->create();
 
-    $expectedTgzPath = "$destinationPath/$filename";
-    Storage::assertExists("$expectedTgzPath.gz");
+    $expectedTarPath = "$destinationFolder/$filename";
+    Storage::assertExists("$expectedTarPath.gz");
 
-    // Verify the archive structure and contents
-    $pharPath = 'phar://' . Storage::path($expectedTgzPath);
-    $phar     = new PharData("$pharPath.gz");
-    $phar->decompress(Phar::GZ);
+    $expectedGzPath = "$destinationFolder/$filename.gz";
+    Storage::assertExists($expectedGzPath);
+    Storage::assertMissing($expectedTarPath);
+
+    $extractPath = Storage::path("$destinationFolder/extracted");
+
+    $decoded = gzdecode(Storage::read("$expectedTarPath.gz"));
+    Storage::write($expectedTarPath, $decoded);
+    $tarPhar = new PharData(Storage::path($expectedTarPath));
+    $tarPhar->extractTo($extractPath, null, true); // true to overwrite
+    unset($tarPhar);
 
     foreach ($expectedFiles as $file => $dir) {
-        $fullDir  = "$pharPath$dir";
-        $fullPath = "$fullDir/$file";
+        $fullPath = $extractPath . $dir . '/' . $file;
         // Assert file exists
         expect(file_exists($fullPath))->toBeTrue("File $dir/$file does not exist in the archive.");
 
@@ -58,8 +64,10 @@ it('should create a .tar.gz file with correct structure and contents', function 
         $actualContent   = file_get_contents($fullPath);
         $expectedContent = "Content of $file";
         expect($actualContent)->toBe($expectedContent, "Content mismatch for file $dir/$file")
-            ->and($fullDir)->toBeDirectory("$dir directory does not exist in the archive.");
+            ->and($extractPath . $dir)->toBeDirectory("$dir directory does not exist in the archive.");
     }
+    Storage::deleteDirectory($sourceFolder);
+    Storage::deleteDirectory($destinationFolder);
 });
 
 it('should throw an exception when the source folder does not exist', function () {
