@@ -37,7 +37,6 @@ class InstantiateStreamlineUpdater
         $protectedPaths =
             $this->parseArray([
                 ...Config::commaToArray('streamline.protected_files'),
-                ...['vendor/*'],
             ]);
 
         $this->process
