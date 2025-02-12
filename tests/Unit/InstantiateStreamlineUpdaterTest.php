@@ -88,12 +88,12 @@ it('should run the process and set all required environment variables correctly'
         ->andReturn($classPath);
 
     $expectedEnv = [
-        'TEMP_DIR'                 => base_path(config('streamline.work_temp_dir')),
+        'TEMP_DIR'                 => config('streamline.work_temp_dir'),
         'LARAVEL_BASE_PATH'        => base_path(),
         'PUBLIC_DIR_NAME'          => public_path(),
         'FRONT_END_BUILD_DIR'      => config('streamline.laravel_build_dir_name'),
         'INSTALLING_VERSION'       => $versionToInstall,
-        'PROTECTED_PATHS'          => '["path1","path2","vendor/*"]',
+        'PROTECTED_PATHS'          => '["path1","path2"]',
         'DIR_PERMISSION'           => 0755,
         'FILE_PERMISSION'          => 0644,
         'OLD_RELEASE_ARCHIVE_PATH' => config('streamline.backup_dir'),
