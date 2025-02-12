@@ -30,7 +30,8 @@
         "roave/security-advisories": "dev-latest",
         "spatie/laravel-ray": "^1.39",
         "spaze/phpstan-disallowed-calls": "^4.0",
-        "xepozz/internal-mocker": "^1.4"
+        "xepozz/internal-mocker": "^1.4",
+        "ext-zlib": "*"
     },
     "autoload": {
         "psr-4": {
