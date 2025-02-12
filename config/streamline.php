@@ -2,7 +2,6 @@
 
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 use Pixelated\Streamline\Pipes\BackupCurrentInstallation;
-use Pixelated\Streamline\Pipes\Cleanup;
 use Pixelated\Streamline\Pipes\DownloadRelease;
 use Pixelated\Streamline\Pipes\GetNextAvailableReleaseVersion;
 use Pixelated\Streamline\Pipes\MakeTempDir;
@@ -101,7 +100,7 @@ return [
     |
     */
 
-    'work_temp_dir' => env('STREAMLINE_WORK_TEMP_DIR', base_path('../.streamline_tmp')),
+    'work_temp_dir' => env('STREAMLINE_WORK_TEMP_DIR', dirname(base_path()) . '/.streamline_tmp'),
 
     /*
     |--------------------------------------------------------------------------
@@ -113,7 +112,7 @@ return [
     |
     */
 
-    'backup_dir' => env('STREAMLINE_BACKUP_DIR', base_path('../streamline_backups')),
+    'backup_dir' => env('STREAMLINE_BACKUP_DIR', dirname(base_path()) . '/streamline_backups'),
 
     /*
     |--------------------------------------------------------------------------
@@ -328,7 +327,7 @@ return [
     */
 
     'cleanup' => static function (UpdateBuilderInterface $builder) {
-        app()->make(Cleanup::class)->__invoke($builder);
+//        app()->make(Cleanup::class)->__invoke($builder);
     },
 
     /*
