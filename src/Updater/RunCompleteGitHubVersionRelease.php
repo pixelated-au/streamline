@@ -200,7 +200,7 @@ readonly class RunCompleteGitHubVersionRelease
         $this->output('Protected paths preserved successfully.');
     }
 
-    private function copyDirectory(string $source, string $destination): void
+    protected function copyDirectory(string $source, string $destination): void
     {
         $this->makeDir($destination);
 
@@ -209,9 +209,9 @@ readonly class RunCompleteGitHubVersionRelease
             RecursiveIteratorIterator::SELF_FIRST
         );
 
-        /** @var \SplFileInfo $item */
         foreach ($iterator as $item) {
-            $targetPath = $destination . DIRECTORY_SEPARATOR . $item->getFilename();
+            $targetPath = str_replace($source, $destination, $item->getPathname());
+
             if ($item->isDir()) {
                 $this->makeDir($targetPath);
             } else {
@@ -220,12 +220,13 @@ readonly class RunCompleteGitHubVersionRelease
         }
     }
 
-    private function copyFile(string $source, string $destination): void
+    protected function copyFile(string $source, string $destination): void
     {
-        $destinationDir = dirname($destination);
-        $this->makeDir($destinationDir);
+        if (!file_exists(dirname($destination))) {
+            $this->makeDir(dirname($destination));
+        }
 
-        if (!copy($source, $destination)) {
+        if (!@copy($source, $destination)) {
             throw new RuntimeException("Failed to copy file: $source to $destination");
         }
 
@@ -251,15 +252,6 @@ readonly class RunCompleteGitHubVersionRelease
                 continue;
             }
 
-            $relativePath = $this->intersectPaths($this->laravelBasePath, $item->getPathname());
-            if (in_array($relativePath, $this->protectedPaths, true)) {
-                continue;
-            }
-
-            if ($this->isProtectedWildcardPath($relativePath)) {
-                continue;
-            }
-
             $this->delete($item->getPathname());
         }
 
@@ -282,42 +274,12 @@ readonly class RunCompleteGitHubVersionRelease
         return false;
     }
 
-    /**
-     * Calculates the relative path between two paths. If using the params below, it will return public/index.html
-     * @param string $parentPath e.g., '/var/www/html'
-     * @param string $childPath e.g., '/var/www/html/public/index.html'
-     */
-    protected function intersectPaths(string $parentPath, string $childPath): string
-    {
-        return str_replace($parentPath, '', $childPath);
-    }
-
     public function makeDir(string $targetPath, string $errorMessage = 'Directory "%s" was not created'): void
     {
         if (!is_dir($targetPath) && !mkdir($targetPath, $this->dirPermission, true) && !is_dir($targetPath)) {
             throw new RuntimeException(sprintf($errorMessage, $targetPath));
         }
     }
-
-//    /**
-//     * Calculates the common path between two paths. If using the params below, it will return 'public/index.html'
-//     * @param string $path1 - e.g., '/var/www/html'
-//     * @param string $path2 - e.g., '/var/www/test/public/index.html'
-//     */
-//    protected function commonChildPath(string $path1, string $path2): string
-//    {
-//        $path1 = array_reverse(explode('/', trim($path1, '/')));
-//        $path2 = array_reverse(explode('/', trim($path2, '/')));
-//
-//        $commonPath = [];
-//        foreach ($path1 as $index => $part) {
-//            if (isset($path2[$index]) && $path2[$index] === $part) {
-//                $commonPath[] = $part;
-//            }
-//        }
-//
-//        return trim(implode('/', array_reverse($commonPath)), '/');
-//    }
 
     protected function isProtectedWildcardPath(string $relativePath): bool
     {
