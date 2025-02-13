@@ -233,7 +233,8 @@ it('should return false for an empty relative path', function () {
 it('should preserve protected paths', function () {
     $this->rootFs   = vfsStream::setup();
     $this->rootPath = vfsStream::url('root');
-    $protectedDir = vfsStream::newDirectory('protected_dir/sub');
+    $protectedDir   = vfsStream::newDirectory('protected_dir/sub');
+    /** @noinspection PhpPossiblePolymorphicInvocationInspection */
     $protectedDir->getChild('sub')?->addChild(vfsStream::newFile('protected_by_parent_file.txt'));
     $this->rootFs->addChild($protectedDir);
     $this->rootFs->addChild(vfsStream::newDirectory('un-protected_dir'));
@@ -244,8 +245,6 @@ it('should preserve protected paths', function () {
     /** @noinspection PhpPossiblePolymorphicInvocationInspection */
     $subDir->getChild('directory')?->addChild(vfsStream::newFile('protected_child_file.txt'));
     $this->rootFs->addChild(vfsStream::newDirectory('temp'));
-
-
 
     $runUpdate = runUpdateClassFactory([
         'laravelBasePath' => $this->rootPath,
@@ -311,7 +310,7 @@ it('outputs a warning when a protected path is not found', function () {
 
     $this->expectOutputString(
         "Preserving protected paths...\n" .
-        "Warning: Protected path not found: {$deploymentPath}/non_existent_path\n" .
+        "Warning: Protected path not found: $deploymentPath/non_existent_path\n" .
         "Protected paths preserved successfully.\n"
     );
 
@@ -336,6 +335,89 @@ it('throws an exception when the destination directory is not writable during di
     $closure = fn(string $source, string $destination) => $this->copyDirectory($source, $destination);
     $closure->call($runUpdate, 'vfs://streamline/source', 'vfs://streamline/destination');
 });
+
+it('should handle large directories with many nested subdirectories', function () {
+    $this->startOutputBuffer();
+    $this->expectsOutput();
+    $this->rootFs = vfsStream::setup('streamline');
+    $source       = vfsStream::newDirectory('source')->at($this->rootFs);
+    $destination  = vfsStream::newDirectory('destination')->at($this->rootFs);
+
+    createNestedDirectories($source, 2, 3);
+
+    $runUpdate = runUpdateClassFactory();
+    $closure   = fn($src, $dest) => $this->copyDirectory($src, $dest);
+    $closure->call($runUpdate, $source->url(), $destination->url());
+
+    assertDirectoriesEqual($source, $destination);
+});
+
+it('throws an exception when the destination directory is not writable during file copy', function () {
+    $this->rootFs = vfsStream::setup('streamline');
+    $sourceDir    = vfsStream::newDirectory('source');
+    $this->rootFs->addChild($sourceDir);
+    $destinationDir = vfsStream::newDirectory('destination');
+    $this->rootFs->addChild($destinationDir);
+    $sourceFile = vfsStream::newFile('test.txt')->at($sourceDir);
+    $destinationDir->chmod(0000);
+
+    $this->expectException(RuntimeException::class);
+    $this->expectExceptionMessage("Failed to copy file: {$sourceFile->url()} to {$destinationDir->url()}");
+
+    $runUpdate = runUpdateClassFactory();
+    $closure   = fn(string $source, string $destination) => $this->copyFile($source, $destination);
+    $closure->call($runUpdate, $sourceFile->url(), $destinationDir->url() . '/' . $sourceFile->getName());
+    $this->assertTrue(true);
+});
+
+function createNestedDirectories($dir, $depth, $filesPerDir, $currentDepth = 0): void
+{
+    for ($i = 0; $i < $filesPerDir; $i++) {
+        vfsStream::newFile("file_{$currentDepth}_$i.txt")->at($dir)->setContent("Content $i");
+    }
+
+    if ($currentDepth >= $depth) {
+        return;
+    }
+
+    for ($i = 0; $i < $filesPerDir; $i++) {
+        $dirDepth = $currentDepth + 1;
+        $subdir   = vfsStream::newDirectory("subdir_{$dirDepth}_$i")->at($dir);
+        createNestedDirectories($subdir, $depth, $filesPerDir, $currentDepth + 1);
+    }
+}
+
+function assertDirectoriesEqual($expected, $actual): void
+{
+    $expectedIterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($expected->url(), FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::SELF_FIRST
+    );
+
+    $actualIterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($actual->url(), FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::SELF_FIRST
+    );
+
+    $expectedPaths = iterator_to_array($expectedIterator);
+    $actualPaths   = iterator_to_array($actualIterator);
+
+    expect(count($expectedPaths))->toBe(count($actualPaths));
+
+    foreach ($expectedPaths as $path => $expectedFile) {
+        $relativePath = substr($path, strlen($expected->url()));
+        $actualPath   = $actual->url() . $relativePath;
+
+        expect(file_exists($actualPath))->toBeTrue();
+
+        if ($expectedFile->isDir()) {
+            expect(is_dir($actualPath))->toBeTrue();
+        } else {
+            expect(is_file($actualPath))->toBeTrue()
+                ->and(file_get_contents($actualPath))->toBe(file_get_contents($path));
+        }
+    }
+}
 
 /**
  * @param array{
