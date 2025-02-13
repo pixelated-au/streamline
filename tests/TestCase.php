@@ -7,9 +7,6 @@ use PHPUnit\Framework\TestCase as BaseTestCase;
 
 class TestCase extends BaseTestCase
 {
-//    use InteractsWithContainer;
-//    use WithWorkbench;
-
     protected vfsStreamDirectory $rootFs;
     protected vfsStreamDirectory $deploymentDir;
     protected string $rootPath;

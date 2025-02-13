@@ -7,6 +7,13 @@
     ],
     "homepage": "https://github.com/pixelated-au/streamline",
     "license": "MIT",
+    "authors": [
+        {
+            "name": ":author_name",
+            "email": "author@domain.com",
+            "role": "Developer"
+        }
+    ],
     "require": {
         "php": "^8.3",
         "ext-zip": "*",
@@ -16,20 +23,16 @@
     },
     "require-dev": {
         "composer/composer": "^2.8",
-        "larastan/larastan": "^3.0",
-        "laravel/framework": "^v11.38.2",
         "laravel/pint": "^1.14",
         "mikey179/vfsstream": "^1.6",
         "mockery/mockery": "^1.6",
-        "nunomaduro/collision": "^8.1.1",
-        "orchestra/testbench": "^9.0.0",
-        "pestphp/pest": "^v3.5.0",
+        "nunomaduro/collision": "^8.1.1||^7.10.0",
+        "orchestra/testbench": "^9.0.0||^8.22.0",
+        "pestphp/pest": "^3.5.0",
+        "pestphp/pest-plugin-arch": "^3.0",
         "pestphp/pest-plugin-laravel": "^3.0",
         "php-mock/php-mock-mockery": "^1.4",
-        "phpstan/phpstan": "^2.1",
-        "roave/security-advisories": "dev-latest",
-        "spatie/laravel-ray": "^1.39",
-        "spaze/phpstan-disallowed-calls": "^4.0",
+        "spatie/laravel-ray": "^1.35",
         "xepozz/internal-mocker": "^1.4",
         "ext-zlib": "*"
     },
@@ -44,19 +47,14 @@
     "autoload-dev": {
         "psr-4": {
             "Pixelated\\Streamline\\Tests\\": "tests/",
-            "Workbench\\App\\": "workbench/app/",
-            "Workbench\\Database\\Factories\\": "workbench/database/factories/",
-            "Workbench\\Database\\Seeders\\": "workbench/database/seeders/"
+            "Workbench\\App\\": "workbench/app/"
         }
     },
     "scripts": {
-        "pre-install-cmd": "run",
-        "post-autoload-dump": [
-            "@prepare",
-            "@composer run prepare"
-        ],
+        "post-autoload-dump": "@composer run prepare",
         "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
         "prepare": "@php vendor/bin/testbench package:discover --ansi",
+        "analyse": "vendor/bin/phpstan analyse",
         "build": "@php vendor/bin/testbench workbench:build --ansi",
         "start": [
             "Composer\\Config::disableProcessTimeout",
