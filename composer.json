@@ -2,18 +2,12 @@
     "name": "pixelated-au/streamline",
     "description": "Self-update your Laravel deployment",
     "keywords": [
+        "pixelated australia",
         "laravel",
         "streamline"
     ],
     "homepage": "https://github.com/pixelated-au/streamline",
     "license": "MIT",
-    "authors": [
-        {
-            "name": ":author_name",
-            "email": "author@domain.com",
-            "role": "Developer"
-        }
-    ],
     "require": {
         "php": "^8.3",
         "ext-zip": "*",
