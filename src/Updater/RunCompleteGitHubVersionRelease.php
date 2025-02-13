@@ -276,7 +276,7 @@ readonly class RunCompleteGitHubVersionRelease
 
     public function makeDir(string $targetPath, string $errorMessage = 'Directory "%s" was not created'): void
     {
-        if (!is_dir($targetPath) && !mkdir($targetPath, $this->dirPermission, true) && !is_dir($targetPath)) {
+        if (!@is_dir($targetPath) && !@mkdir($targetPath, $this->dirPermission, true) && !@is_dir($targetPath)) {
             throw new RuntimeException(sprintf($errorMessage, $targetPath));
         }
     }
