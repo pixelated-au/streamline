@@ -32,6 +32,7 @@
         "pestphp/pest-plugin-arch": "^3.0",
         "pestphp/pest-plugin-laravel": "^3.0",
         "php-mock/php-mock-mockery": "^1.4",
+        "roave/security-advisories": "dev-latest",
         "spatie/laravel-ray": "^1.35",
         "xepozz/internal-mocker": "^1.4",
         "ext-zlib": "*"
