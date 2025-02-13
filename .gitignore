@@ -31,6 +31,6 @@ _ide_helper_models.php
 /workbench/storage/app/
 /workbench/storage/logs/
 /workbench/storage/framework/
-/workbench/bootstrap/cache/
+/workbench/bootstrap/cache/*.php
 /phpstan.neon
 /temp/
