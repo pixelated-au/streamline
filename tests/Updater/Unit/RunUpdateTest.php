@@ -44,10 +44,12 @@ it('throws an exception that the temp assets directory cannot be found', functio
 
 it('throws an exception when the destination directory is not writeable', function () {
     $this->rootFs->addChild(vfsStream::newDirectory('backup_dir/public/build/assets/NEW_DIRECTORY'));
-    $this->deploymentDir->getChild('public/build/assets')?->chmod(0000);
+    $assetsDir = $this->deploymentDir->getChild('public/build/assets');
+    $this->assertNotNull($assetsDir);
+    $assetsDir->chmod(0444);
 
-    $this->expectExceptionMessage("Directory \"$this->deploymentPath/public/build/assets/NEW_DIRECTORY\" was not created");
     $this->expectException(RuntimeException::class);
+    $this->expectExceptionMessage("Directory \"$this->deploymentPath/public/build/assets/NEW_DIRECTORY\" was not created");
 
     $runUpdate = runUpdateClassFactory();
     $closure   = fn($source, $destination) => $this->recursiveCopyOldBuildFilesToNewDir($source, $destination);
