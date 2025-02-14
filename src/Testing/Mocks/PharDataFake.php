@@ -7,7 +7,8 @@ use Phar;
 use PharData;
 use Traversable;
 
-class PharDataFake extends PharData {
+class PharDataFake extends PharData
+{
     /** @noinspection MagicMethodsValidityInspection
      * @noinspection PhpMissingParentConstructorInspection
      */
@@ -26,11 +27,8 @@ class PharDataFake extends PharData {
         return [];
     }
 
-
     public function compress(int $compression, ?string $extension = null): ?Phar
     {
         return null;
     }
-
-
 }

@@ -4,16 +4,14 @@ namespace Pixelated\Streamline\Pipes;
 
 use Illuminate\Support\Facades\Event;
 use Pixelated\Streamline\Events\CommandClassCallback;
-use Pixelated\Streamline\Pipeline\Pipe;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
+use Pixelated\Streamline\Pipeline\Pipe;
 use RuntimeException;
 use ZipArchive;
 
 readonly class UnpackRelease implements Pipe
 {
-    public function __construct(private ZipArchive $zip)
-    {
-    }
+    public function __construct(private ZipArchive $zip) {}
 
     public function __invoke(UpdateBuilderInterface $builder): UpdateBuilderInterface
     {

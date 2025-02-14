@@ -19,24 +19,25 @@ function fakeOutputStyle(): void
 
 function workbench_path(): string
 {
-    return getcwd() . '/workbench';
+    return getcwd().'/workbench';
 }
 
 function laravel_path(string $path = ''): string
 {
     /** @noinspection PhpPossiblePolymorphicInvocationInspection */
-    return rtrim(test()->deploymentPath() . "/$path", '/');
+    return rtrim(test()->deploymentPath()."/$path", '/');
 }
 
 function working_path(string $path = ''): string
 {
-    if (!file_exists(laravel_path('mock_deployment'))) {
+    if (! file_exists(laravel_path('mock_deployment'))) {
         /** @noinspection NestedPositiveIfStatementsInspection */
-        if (!mkdir($concurrentDirectory = laravel_path('mock_deployment')) && !is_dir($concurrentDirectory)) {
+        if (! mkdir($concurrentDirectory = laravel_path('mock_deployment')) && ! is_dir($concurrentDirectory)) {
             throw new RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
         }
     }
     $path = $path ? "mock_deployment/$path" : 'mock_deployment';
+
     return laravel_path($path);
 }
 
@@ -45,12 +46,12 @@ function deleteDirectory(string $directory): bool
     // Normalize the directory path and ensure it exists
     $directory = rtrim($directory, '/');
 
-    if (!file_exists($directory)) {
+    if (! file_exists($directory)) {
         return false;
     }
 
     // Ensure the path is a directory
-    if (!is_dir($directory)) {
+    if (! is_dir($directory)) {
         return false;
     }
 
@@ -58,18 +59,18 @@ function deleteDirectory(string $directory): bool
     $files = array_diff(scandir($directory), ['.', '..']);
 
     foreach ($files as $file) {
-        $path = $directory . '/' . $file;
+        $path = $directory.'/'.$file;
 
         // Recursively delete directories
         if (is_dir($path)) {
             deleteDirectory($path);
-        } else if (!unlink($path)) {
+        } elseif (! unlink($path)) {
             return false;
         }
     }
 
     // Remove the now-empty directory
-    if (!rmdir($directory)) {
+    if (! rmdir($directory)) {
         return false;
     }
 

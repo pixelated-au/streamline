@@ -16,11 +16,13 @@ class ArchiveBuilderIterator extends RecursiveIteratorIterator
             flags: FilesystemIterator::SKIP_DOTS | FilesystemIterator::UNIX_PATHS
         );
 
-        $filteredIterator = new class($iterator) extends RecursiveFilterIterator {
+        $filteredIterator = new class($iterator) extends RecursiveFilterIterator
+        {
             public function accept(): bool
             {
                 $current = $this->current();
-                return !$current->isLink();
+
+                return ! $current->isLink();
             }
         };
 

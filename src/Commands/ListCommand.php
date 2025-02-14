@@ -9,6 +9,7 @@ use Pixelated\Streamline\Commands\Traits\GitHubApi;
 class ListCommand extends Command
 {
     use GitHubApi;
+
     public $signature = 'streamline:list';
 
     public $description = 'Retrieves the available updates from GitHub and stores them in the cache';

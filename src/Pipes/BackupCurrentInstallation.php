@@ -8,9 +8,7 @@ use Pixelated\Streamline\Pipeline\Pipe;
 
 readonly class BackupCurrentInstallation implements Pipe
 {
-    public function __construct(private CreateArchive $createArchive)
-    {
-    }
+    public function __construct(private CreateArchive $createArchive) {}
 
     /**
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
@@ -18,6 +16,7 @@ readonly class BackupCurrentInstallation implements Pipe
     public function __invoke(UpdateBuilderInterface $builder): UpdateBuilderInterface
     {
         $this->createArchive->create();
+
         return $builder;
     }
 }

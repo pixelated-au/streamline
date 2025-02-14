@@ -37,7 +37,7 @@ it('should throw a RuntimeException when zip->open fails', function () {
 
     $unpackRelease = new UnpackRelease($zip);
 
-    expect(fn() => $unpackRelease($builder))
+    expect(fn () => $unpackRelease($builder))
         ->toThrow(RuntimeException::class, 'Error: Failed to unpack /path/to/archive.zip');
 
     Event::assertDispatched(CommandClassCallback::class, function (CommandClassCallback $event) {

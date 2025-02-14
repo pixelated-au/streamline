@@ -1,4 +1,5 @@
 <?php
+
 /** @noinspection PhpUnused */
 
 namespace Pixelated\Streamline\Install;
@@ -15,12 +16,14 @@ class RequiredFunctionsCheck
         $value = self::isSystemFunctionEnabled();
         if ($value !== null) {
             $io->warning(
-                "The PHP system() (https://www.php.net/system) function is disabled on your PHP configuration.\n" .
-                "You will not be able to use this package to update your application unless that is enabled.\n" .
+                "The PHP system() (https://www.php.net/system) function is disabled on your PHP configuration.\n".
+                "You will not be able to use this package to update your application unless that is enabled.\n".
                 "Error: $value"
             );
+
             return false;
         }
+
         return true;
     }
 
@@ -34,7 +37,7 @@ class RequiredFunctionsCheck
         }
 
         // Check if function exists and is not in disabled functions
-        if (!function_exists('system')) {
+        if (! function_exists('system')) {
             return 'The function_exists("system") check returns false';
         }
 
@@ -55,8 +58,9 @@ class RequiredFunctionsCheck
                 return 'Unable to run the system() function. It does not output as expected. This might be due to permissions or restrictions.';
             }
         } catch (Exception $e) {
-            return 'Unable to execute system commands due to an exception: ' . $e->getMessage();
+            return 'Unable to execute system commands due to an exception: '.$e->getMessage();
         }
+
         return null;
     }
 }

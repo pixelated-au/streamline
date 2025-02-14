@@ -1,7 +1,7 @@
 <?php
 
-use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 use Pixelated\Streamline\Actions\CheckAvailableVersions as DoCheck;
+use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 use Pixelated\Streamline\Pipes\GetNextAvailableReleaseVersion;
 
 it('should set the version to install based on the result of checkAvailableVersions->execute()', function () {

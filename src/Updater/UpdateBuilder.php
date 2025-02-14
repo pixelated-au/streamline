@@ -7,9 +7,13 @@ use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 class UpdateBuilder implements UpdateBuilderInterface
 {
     private ?string $requestedVersion = null;
+
     private ?string $versionToInstall = null;
+
     private bool $forceUpdate = false;
+
     private string $workTempDir;
+
     private string $downloadedArchivePath;
 
     public function __construct()
@@ -20,6 +24,7 @@ class UpdateBuilder implements UpdateBuilderInterface
     public function setRequestedVersion(?string $version): UpdateBuilderInterface
     {
         $this->requestedVersion = $version;
+
         return $this;
     }
 
@@ -31,6 +36,7 @@ class UpdateBuilder implements UpdateBuilderInterface
     public function setNextAvailableRepositoryVersion(?string $version = null): UpdateBuilderInterface
     {
         $this->versionToInstall = $version;
+
         return $this;
     }
 
@@ -42,6 +48,7 @@ class UpdateBuilder implements UpdateBuilderInterface
     public function forceUpdate(bool $doForce): UpdateBuilderInterface
     {
         $this->forceUpdate = $doForce;
+
         return $this;
     }
 
@@ -58,6 +65,7 @@ class UpdateBuilder implements UpdateBuilderInterface
     public function setDownloadedArchivePath(string $path): self
     {
         $this->downloadedArchivePath = $path;
+
         return $this;
     }
 

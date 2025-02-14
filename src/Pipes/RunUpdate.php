@@ -11,9 +11,8 @@ use RuntimeException;
 
 readonly class RunUpdate implements Pipe
 {
-    public function __construct(private InstantiateStreamlineUpdater $runUpdate)
-        {
-        }
+    public function __construct(private InstantiateStreamlineUpdater $runUpdate) {}
+
     public function __invoke($builder): UpdateBuilderInterface
     {
         $this->runUpdate->execute($builder->getNextAvailableRepositoryVersion(), function (string $type, string $output) {

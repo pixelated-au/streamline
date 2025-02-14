@@ -27,7 +27,6 @@ it('should dispatch an info event when the update executes successfully', functi
     });
 });
 
-
 it('should dispatch an error event when the update encounters an error', function () {
     $builder = $this->createMock(UpdateBuilderInterface::class);
     $builder->method('getNextAvailableRepositoryVersion')->willReturn('1.0.0');
@@ -53,7 +52,6 @@ it('should dispatch an error event when the update encounters an error', functio
         return $event->action === 'error' && $event->value === 'Update failed';
     });
 });
-
 
 it('should throw a RuntimeException with the error output when an error occurs', function () {
     $builder = $this->createMock(UpdateBuilderInterface::class);

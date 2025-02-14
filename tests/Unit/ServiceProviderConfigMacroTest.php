@@ -19,7 +19,7 @@ it('should return the original array when given an array input', function () {
 
 it('should throw an exception when given a non-string, non-array input', function () {
     Config::set('test.key', 42);
-    expect(fn() => Config::commaToArray('test.key'))
+    expect(fn () => Config::commaToArray('test.key'))
         ->toThrow(Exception::class, 'Invalid value (42) for test.key. Expected a comma-separated list or an array.');
 });
 

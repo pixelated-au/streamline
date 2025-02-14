@@ -18,17 +18,17 @@ afterEach(function () {
 });
 
 it('can run an update using actual filesystem actions and deletes the backup directory from the previous release', function () {
-    $disk     = Storage::fake('local');
+    $disk = Storage::fake('local');
     $tempDisk = Storage::fake('temp');
 
     $tempDisk->makeDirectory('zip_temp');
 
     $this->app->bind(
         CreateArchive::class,
-        fn(Application $app) => new CreateArchive(
+        fn (Application $app) => new CreateArchive(
             sourceFolder: $disk->path(''),
             destinationPath: config('streamline.backup_dir'),
-            filename: 'backup-' . date('Ymd_His') . '.tgz',
+            filename: 'backup-'.date('Ymd_His').'.tgz',
         )
     );
 
@@ -51,17 +51,17 @@ it('can run an update using actual filesystem actions and deletes the backup dir
 
     $output = [
         'Starting update',
-        'Copying frontend assets. From: ' . $disk->path('laravel/public/build') . ' to: ' . $tempDisk->path('unpacked/public/build'),
-        'Chmod file: ' . $tempDisk->path('/unpacked/public/build/assets/text-file/existing_file.txt') . ' to 420',
+        'Copying frontend assets. From: '.$disk->path('laravel/public/build').' to: '.$tempDisk->path('unpacked/public/build'),
+        'Chmod file: '.$tempDisk->path('/unpacked/public/build/assets/text-file/existing_file.txt').' to 420',
         'Preserving protected paths...',
-        'Copied: ' . $disk->path('laravel/.env') . ' to ' . $tempDisk->path('unpacked/.env'),
+        'Copied: '.$disk->path('laravel/.env').' to '.$tempDisk->path('unpacked/.env'),
         'Protected paths preserved successfully.',
-        'Moving ' . $disk->path('laravel') . ' to ' . $disk->path('laravel_old'),
-        'Moving ' . $tempDisk->path('unpacked') . ' to ' . $disk->path('laravel'),
-        'Deleting of ' . $disk->path('laravel_old') . " as it's no longer needed",
+        'Moving '.$disk->path('laravel').' to '.$disk->path('laravel_old'),
+        'Moving '.$tempDisk->path('unpacked').' to '.$disk->path('laravel'),
+        'Deleting of '.$disk->path('laravel_old')." as it's no longer needed",
         'Setting version number in .env file to: 1.0.0',
         'Version number updated successfully in .env file',
-        'Resetting the CWD to ' . $disk->path('laravel'),
+        'Resetting the CWD to '.$disk->path('laravel'),
         'Running optimisation tasks...',
         'Executing: php artisan optimize:clear',
         'Optimisation tasks completed.',
@@ -69,7 +69,6 @@ it('can run an update using actual filesystem actions and deletes the backup dir
         "Update completed\n",
     ];
     $this->expectOutputString(implode("\n", $output));
-
 
     $this->assertDirectoryDoesNotExist(laravel_path('mock_deployment.backup_dir'));
     $this->assertFileExists($disk->path('laravel/app/test.php'));
@@ -119,5 +118,5 @@ function createNewReleaseFolderFileStructure(Filesystem $tempDisk, ?array $files
         'unpacked/public/build/dir1/dir2/file4.txt',
         'unpacked/public/build/file5.txt',
     ])
-        ->each(fn(string $file) => $tempDisk->put($file, "This file has the name: $file"));
+        ->each(fn (string $file) => $tempDisk->put($file, "This file has the name: $file"));
 }

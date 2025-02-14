@@ -8,21 +8,22 @@ use PHPUnit\Framework\TestCase as BaseTestCase;
 class TestCase extends BaseTestCase
 {
     protected vfsStreamDirectory $rootFs;
+
     protected vfsStreamDirectory $deploymentDir;
+
     protected string $rootPath;
+
     protected string $deploymentPath;
 
     protected function setUp(): void
     {
         parent::setUp();
-        if (!file_exists('./workbench/.env')) {
+        if (! file_exists('./workbench/.env')) {
             symlink('.env', './workbench/.env');
         }
     }
 
-    public function getEnvironmentSetUp($app): void
-    {
-    }
+    public function getEnvironmentSetUp($app): void {}
 
     public function deploymentPath(): string
     {

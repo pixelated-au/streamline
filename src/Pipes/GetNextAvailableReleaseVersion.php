@@ -8,9 +8,7 @@ use Pixelated\Streamline\Pipeline\Pipe;
 
 readonly class GetNextAvailableReleaseVersion implements Pipe
 {
-    public function __construct(private DoCheck $checkAvailableVersions)
-    {
-    }
+    public function __construct(private DoCheck $checkAvailableVersions) {}
 
     public function __invoke(UpdateBuilderInterface $builder): UpdateBuilderInterface
     {

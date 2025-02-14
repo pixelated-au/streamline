@@ -22,7 +22,7 @@ it('should correctly set the downloaded archive path on the builder', function (
     GitHubApi::shouldReceive('withProgressCallback')->andReturnSelf();
     GitHubApi::shouldReceive('get');
 
-    $downloadRelease = new DownloadRelease();
+    $downloadRelease = new DownloadRelease;
     $result = $downloadRelease($builder);
 
     expect($result)->toBe($builder);
@@ -48,7 +48,7 @@ it('should dispatch an Event with the correct version information', function () 
     GitHubApi::shouldReceive('withProgressCallback')->andReturnSelf();
     GitHubApi::shouldReceive('get');
 
-    $downloadRelease = new DownloadRelease();
+    $downloadRelease = new DownloadRelease;
     $result = $downloadRelease($builder);
 
     expect($result)->toBe($builder);

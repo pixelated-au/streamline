@@ -46,7 +46,7 @@ it('can validate that the system function is not enabled because it is in disabl
         $result = RequiredFunctionsCheck::run($composerEvent);
         $ioSpy->shouldHaveReceived(
             'warning',
-            fn(string $args) => str_starts_with($args, 'The PHP system()')
+            fn (string $args) => str_starts_with($args, 'The PHP system()')
                 && str_ends_with($args, "function is listed in PHP's disable_functions() check. This means someone has deliberately disabled it, possibly a system administrator.")
         );
         $this->assertFalse($result);
@@ -70,7 +70,7 @@ it('can validate that the system function is not enabled because it is not liste
         $result = RequiredFunctionsCheck::run($composerEvent);
         $ioSpy->shouldHaveReceived(
             'warning',
-            fn(string $args) => str_ends_with($args, 'The function_exists("system") check returns false')
+            fn (string $args) => str_ends_with($args, 'The function_exists("system") check returns false')
         );
         $this->assertFalse($result);
     }
@@ -95,7 +95,7 @@ it('can validate that the system function is not enabled because it cannot execu
         $result = RequiredFunctionsCheck::run($composerEvent);
         $ioSpy->shouldHaveReceived(
             'warning',
-            fn(string $args) => str_ends_with($args, 'Whoopsy daisy!')
+            fn (string $args) => str_ends_with($args, 'Whoopsy daisy!')
         );
         $this->assertFalse($result);
     }
@@ -120,7 +120,7 @@ it('returns an error message when the system function is run but does not return
         $result = RequiredFunctionsCheck::run($composerEvent);
         $ioSpy->shouldHaveReceived(
             'warning',
-            fn(string $args) => str_contains($args, 'Unable to run the system() function')
+            fn (string $args) => str_contains($args, 'Unable to run the system() function')
         );
         $this->assertFalse($result);
     }

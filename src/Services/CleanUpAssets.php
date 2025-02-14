@@ -14,7 +14,9 @@ use RuntimeException;
 
 /**
  * @template TGroupedFiles array<string, array{filename: string, mtime: int}>
+ *
  * @description Groups filenames by their root name. Eg foo.adc4953.js will be grouped by "foo"
+ *
  * @note Expects the filenames to be in the format [filename].[hash].[ext]
  */
 class CleanUpAssets
@@ -23,21 +25,22 @@ class CleanUpAssets
      * @var Collection<int, string|TGroupedFiles>
      */
     protected Collection $filesToDelete;
+
     private int $numRevisions;
+
     private Filesystem $filesystem;
 
     public function __construct(
-//        #[Config('streamline.laravel_asset_dir_name')]
-//        private readonly string $assetDir,
-//        #[Config('streamline.web_assets_build_num_revisions')]
-//        private int             $numRevisions
-    )
-    {
-        //TODO restore these after upgrading to Laravel 11
-        $this->numRevisions  = config('streamline.web_assets_build_num_revisions');
-        $assetDir            = config('streamline.laravel_asset_dir_name');
-        $this->filesystem    = Facades\Storage::disk(config('streamline.laravel_public_disk_name'));
-        $buildDir            = config('streamline.laravel_build_dir_name');
+        //        #[Config('streamline.laravel_asset_dir_name')]
+        //        private readonly string $assetDir,
+        //        #[Config('streamline.web_assets_build_num_revisions')]
+        //        private int             $numRevisions
+    ) {
+        // TODO restore these after upgrading to Laravel 11
+        $this->numRevisions = config('streamline.web_assets_build_num_revisions');
+        $assetDir = config('streamline.laravel_asset_dir_name');
+        $this->filesystem = Facades\Storage::disk(config('streamline.laravel_public_disk_name'));
+        $buildDir = config('streamline.laravel_build_dir_name');
         $this->filesToDelete = collect($this->filesystem->files("$buildDir/$assetDir"));
     }
 
@@ -48,10 +51,10 @@ class CleanUpAssets
         }
 
         $assets = $this->filter();
-        Event::dispatch(new CommandClassCallback('info', 'DELETING EXPIRED ASSETS: ' . ($assets->isEmpty() ? 'No matching assets found. Likely because none meet the minimum amount of revisions' : $assets->implode(', '))));
+        Event::dispatch(new CommandClassCallback('info', 'DELETING EXPIRED ASSETS: '.($assets->isEmpty() ? 'No matching assets found. Likely because none meet the minimum amount of revisions' : $assets->implode(', '))));
         $result = $this->filesystem->delete($assets->toArray());
 
-        if (!$result) {
+        if (! $result) {
             throw new RuntimeException('Error: Failed to clean out redundant front-end build assets. Could not execute the cleanup command.');
         }
     }
@@ -64,15 +67,15 @@ class CleanUpAssets
         // Keep only files that end with .js, .css or .map
         return $this->filesToDelete
             // Filter out files whose extension does not match any of the allowed ones
-            ->filter(fn(string $file) => Str::endsWith(
+            ->filter(fn (string $file) => Str::endsWith(
                 haystack: $file,
                 needles: Arr::map(
                     array: Facades\Config::commaToArray('streamline.web_assets_filterable_file_types'),
-                    callback: static fn(string $ext) => Str::of($ext)
+                    callback: static fn (string $ext) => Str::of($ext)
                         // Prefix each extension with a dot if it doesn't already have one
                         ->when(
-                            value: fn(Stringable $ext) => !$ext->startsWith('.'),
-                            callback: fn(Stringable $ext) => $ext->prepend('.')
+                            value: fn (Stringable $ext) => ! $ext->startsWith('.'),
+                            callback: fn (Stringable $ext) => $ext->prepend('.')
                         )
                 )
             ))
@@ -81,24 +84,24 @@ class CleanUpAssets
             ->mapToGroups(
                 function (string $file) {
                     $baseName = preg_replace('/\.[^.]+\.[^.]+$/', '', $file);
+
                     return [$baseName => [
                         'filename' => $file,
-                        'mtime'    => $this->filesystem->lastModified($file),
+                        'mtime' => $this->filesystem->lastModified($file),
                     ]];
                 }
             )
-            ->map(fn(Collection $group) => $group
-                ->sortBy(fn(array $meta) => $meta['mtime']))
-            ->tap(function (Collection $group) {
-            })
+            ->map(fn (Collection $group) => $group
+                ->sortBy(fn (array $meta) => $meta['mtime']))
+            ->tap(function (Collection $group) {})
             // remove Global number of revisions from the collection
-            ->map(fn(Collection $meta, string $baseName) => $meta
+            ->map(fn (Collection $meta, string $baseName) => $meta
                 ->when(
                     $meta->count() > $this->numRevisions,
-                    fn(Collection $meta) => $meta->take($meta->count() - $this->numRevisions),
-                    fn() => collect(),
+                    fn (Collection $meta) => $meta->take($meta->count() - $this->numRevisions),
+                    fn () => collect(),
                 )
-                ->map(fn(array $meta) => $meta['filename'])
+                ->map(fn (array $meta) => $meta['filename'])
             )
             ->flatten();
     }

@@ -19,7 +19,7 @@ it('should successfully create the temporary directory if it does not exist', fu
     File::shouldReceive('exists')->once()->with($tempDir)->andReturn(false);
     File::shouldReceive('makeDirectory')->once()->andReturn(true);
 
-    $makeTempDir = new MakeTempDir();
+    $makeTempDir = new MakeTempDir;
     $result = $makeTempDir($builder);
 
     expect($result)->toBe($builder);
@@ -37,9 +37,9 @@ it('should throw a RuntimeException when the directory can not be created', func
     File::shouldReceive('makeDirectory')->andReturnFalse();
     File::shouldReceive('isDirectory')->with($tempDir)->andReturnFalse();
 
-    $makeTempDir = new MakeTempDir();
+    $makeTempDir = new MakeTempDir;
 
-    expect(fn() => $makeTempDir($builder))
+    expect(fn () => $makeTempDir($builder))
         ->toThrow(RuntimeException::class, "Working directory '$tempDir' could not be created");
 });
 
@@ -51,7 +51,7 @@ it('should dispatch an Event with the correct CommandClassCallback', function ()
     Event::fake();
     File::shouldReceive('exists')->once()->with($tempDir)->andReturn(true);
 
-    $makeTempDir = new MakeTempDir();
+    $makeTempDir = new MakeTempDir;
     $result = $makeTempDir($builder);
 
     expect($result)->toBe($builder);

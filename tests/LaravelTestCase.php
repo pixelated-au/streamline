@@ -17,8 +17,11 @@ class LaravelTestCase extends Orchestra
     use WithWorkbench;
 
     protected vfsStreamDirectory $rootFs;
+
     protected vfsStreamDirectory $deploymentDir;
+
     protected string $rootPath;
+
     protected string $deploymentPath;
 
     protected function setUp(): void
@@ -26,7 +29,7 @@ class LaravelTestCase extends Orchestra
         parent::setUp();
 
         Http::preventStrayRequests();
-        if (!File::isDirectory(storage_path('streamline_temp'))) {
+        if (! File::isDirectory(storage_path('streamline_temp'))) {
             File::makeDirectory(storage_path('streamline_temp'));
         } else {
             File::cleanDirectory(storage_path('streamline_temp'));

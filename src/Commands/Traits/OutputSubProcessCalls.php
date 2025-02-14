@@ -5,8 +5,8 @@ namespace Pixelated\Streamline\Commands\Traits;
 use Illuminate\Support\Facades\Event;
 use Pixelated\Streamline\Events\CommandClassCallback;
 
-trait OutputSubProcessCalls {
-
+trait OutputSubProcessCalls
+{
     private function listenForSubProcessEvents(): void
     {
         // @codeCoverageIgnoreStart
@@ -29,5 +29,4 @@ trait OutputSubProcessCalls {
         );
         // @codeCoverageIgnoreEnd
     }
-
 }

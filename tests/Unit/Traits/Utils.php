@@ -4,7 +4,7 @@ namespace Pixelated\Streamline\Tests\Unit\Traits;
 
 trait Utils
 {
-    /** @var bool $hasOutput used to start the output buffer */
+    /** @var bool used to start the output buffer */
     protected bool $hasOutput = false;
 
     protected bool $hasDisabledErrorHandling = false;

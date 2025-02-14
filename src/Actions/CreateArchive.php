@@ -1,4 +1,5 @@
 <?php
+
 /** @noinspection PhpClassCanBeReadonlyInspection */
 
 namespace Pixelated\Streamline\Actions;
@@ -12,16 +13,16 @@ use RuntimeException;
 class CreateArchive
 {
     private readonly CompressedArchiveBuilder $archiver;
+
     private readonly string $gzipPath;
 
     public function __construct(
         private readonly string $sourceFolder,
         private readonly string $destinationPath,
         private readonly string $filename,
-    )
-    {
-        $this->gzipPath        = "$this->destinationPath/$this->filename";
-        $tarPath = File::dirname($this->gzipPath) . '/' . File::name($this->gzipPath) . '.tar';
+    ) {
+        $this->gzipPath = "$this->destinationPath/$this->filename";
+        $tarPath = File::dirname($this->gzipPath).'/'.File::name($this->gzipPath).'.tar';
         $this->archiver = app()->make(CompressedArchiveBuilder::class, ['tarArchivePath' => $tarPath]);
     }
 
@@ -29,7 +30,7 @@ class CreateArchive
     {
         Event::dispatch(new CommandClassCallback('info', "Backing up the current installation to $this->gzipPath"));
         // check that the source folder exists
-        if (!File::exists($this->sourceFolder)) {
+        if (! File::exists($this->sourceFolder)) {
             throw new RuntimeException("Source folder '$this->sourceFolder' does not exist.");
         }
 
@@ -42,14 +43,14 @@ class CreateArchive
     protected function checkDestinationPath(): void
     {
         if (
-            !File::isDirectory($this->destinationPath) &&
-            !File::makeDirectory($this->destinationPath, 0755, true) &&
-            !File::isDirectory($this->destinationPath)) {
+            ! File::isDirectory($this->destinationPath) &&
+            ! File::makeDirectory($this->destinationPath, 0755, true) &&
+            ! File::isDirectory($this->destinationPath)) {
             throw new RuntimeException(sprintf('Directory "%s" was not created', $this->destinationPath));
         }
 
         // check that the destination path is writable
-        if (!File::isWritable($this->destinationPath)) {
+        if (! File::isWritable($this->destinationPath)) {
             throw new RuntimeException("Destination path '$this->destinationPath' is not writable.");
         }
 

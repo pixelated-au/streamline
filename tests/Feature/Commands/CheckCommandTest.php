@@ -22,7 +22,7 @@ it('checks for available updates with a remote request', function () {
         ->mockCache();
     $this->mockHttpReleases();
 
-    $this->instance(Artisan::class, fn(MockInterface $mock) => $mock
+    $this->instance(Artisan::class, fn (MockInterface $mock) => $mock
         ->shouldReceive('call')
         ->once()
         ->with('streamline:list')
@@ -38,7 +38,7 @@ it('checks for available updates forcing a remote request', function () {
     $this->mockCache();
     $this->mockHttpReleases();
 
-    $this->instance(Artisan::class, fn(MockInterface $mock) => $mock
+    $this->instance(Artisan::class, fn (MockInterface $mock) => $mock
         ->shouldReceive('call')
         ->once()
         ->with('streamline:list')
@@ -53,12 +53,12 @@ it('checks for available updates forcing a remote request', function () {
 it('throws an exception when doing a remote request because a version is missing', function () {
     $this->setDefaults([
         'nextAvailableVersion' => null,
-        'availableVersions'    => null,
+        'availableVersions' => null,
     ])
         ->mockCache();
     $this->mockHttpReleases();
 
-    $this->instance(Artisan::class, fn(MockInterface $mock) => $mock
+    $this->instance(Artisan::class, fn (MockInterface $mock) => $mock
         ->shouldReceive('call')
         ->once()
         ->with('streamline:list')

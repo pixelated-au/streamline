@@ -18,7 +18,6 @@ class CheckCommand extends Command
 
     public $description = 'Check for an available update';
 
-
     public function handle(CheckAvailableVersions $availableVersions): int
     {
         $this->setGitHubAuthToken();
@@ -26,9 +25,10 @@ class CheckCommand extends Command
 
         try {
             $nextVersion = $availableVersions->execute($this->option('force'));
-            $this->info('Next available version: ' . $nextVersion);
+            $this->info('Next available version: '.$nextVersion);
         } catch (RuntimeException $e) {
             $this->error($e->getMessage());
+
             return self::FAILURE;
         }
 

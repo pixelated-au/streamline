@@ -4,7 +4,6 @@ use Pixelated\Streamline\Tests\LaravelTestCase;
 use Pixelated\Streamline\Tests\TestCase;
 use Pixelated\Streamline\Tests\Unit\Traits\Utils;
 
-
 $_ENV['TEST_DIR'] = __DIR__;
 
 /**
@@ -13,7 +12,7 @@ $_ENV['TEST_DIR'] = __DIR__;
  */
 pest()
     ->extends(LaravelTestCase::class)
-    ->afterEach(fn() => Mockery::close())
+    ->afterEach(fn () => Mockery::close())
     ->group('feature', 'core')
     ->in('Feature');
 
@@ -25,19 +24,19 @@ pest()
 
 pest()
     ->extends(LaravelTestCase::class)
-    ->afterEach(fn() => Mockery::close())
+    ->afterEach(fn () => Mockery::close())
     ->group('unit', 'core')
     ->in('Unit');
 
 pest()
     ->extends(TestCase::class)
     ->use(Utils::class)
-    ->afterEach(fn() => $this->cleanUp())
+    ->afterEach(fn () => $this->cleanUp())
     ->group('unit', 'core')
     ->in('Updater/Unit');
 
 pest()
     ->extends(LaravelTestCase::class)
-    ->afterEach(fn() => Mockery::close())
+    ->afterEach(fn () => Mockery::close())
     ->group('arch')
     ->in('Arch');

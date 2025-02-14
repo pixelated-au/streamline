@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Process;
 use Mockery\MockInterface;
 use Pixelated\Streamline\Actions\GetAvailableVersions;
 use Pixelated\Streamline\Enums\CacheKeysEnum;
-use Pixelated\Streamline\Facades\DeployableUpdaterStubTools;
 use ZipArchive;
 
 trait UpdateCommandCommon
@@ -21,6 +20,7 @@ trait UpdateCommandCommon
      *     requestedVersionToInstallByUser: string|null,
      *     doForceUpdate: bool,
      * } $options
+     *
      * @deprecated
      */
     public function setDefaults(array $options): self
@@ -28,10 +28,11 @@ trait UpdateCommandCommon
         foreach ($options as $key => $option) {
             // check to see if the variable exists on this instance and then set the default value
             if (property_exists($this, "_$key")) {
-                $key        = "_$key";
+                $key = "_$key";
                 $this->$key = $option;
             }
         }
+
         return $this;
     }
 
@@ -42,8 +43,8 @@ trait UpdateCommandCommon
         File::shouldReceive('isWritable')->andReturnTrue();
         File::shouldReceive('isReadable')->andReturnTrue();
         File::shouldReceive('put');
-        File::shouldReceive('dirname')->andReturnUsing(fn(string $value) => dirname($value));
-        File::shouldReceive('name')->andReturnUsing(fn(string $value) => pathinfo($value, PATHINFO_FILENAME));
+        File::shouldReceive('dirname')->andReturnUsing(fn (string $value) => dirname($value));
+        File::shouldReceive('name')->andReturnUsing(fn (string $value) => pathinfo($value, PATHINFO_FILENAME));
 
         return $this;
     }
@@ -74,11 +75,11 @@ trait UpdateCommandCommon
     {
         test()->mock(
             GetAvailableVersions::class,
-            fn(MockInterface $mock) => $mock->shouldReceive('execute')->andReturn($returnedVersion)
+            fn (MockInterface $mock) => $mock->shouldReceive('execute')->andReturn($returnedVersion)
         );
+
         return $this;
     }
-
 
     public function mockZipArchive(): self
     {
@@ -87,6 +88,7 @@ trait UpdateCommandCommon
             $mock->shouldReceive('extractTo')->andReturn(true);
             $mock->shouldReceive('close')->andReturn(true);
         });
+
         return $this;
     }
 }

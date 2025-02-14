@@ -1,4 +1,6 @@
-<?php /** @noinspection PhpClassCanBeReadonlyInspection */
+<?php
+
+/** @noinspection PhpClassCanBeReadonlyInspection */
 
 namespace Pixelated\Streamline\Actions;
 
@@ -9,10 +11,7 @@ use Pixelated\Streamline\Services\GitHubApi;
 
 class GetAvailableVersions
 {
-    public function __construct(private readonly ProgressMeter $meter)
-    {
-    }
-
+    public function __construct(private readonly ProgressMeter $meter) {}
 
     public function execute(): string
     {

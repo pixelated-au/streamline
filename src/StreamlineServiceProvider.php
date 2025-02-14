@@ -34,24 +34,24 @@ class StreamlineServiceProvider extends PackageServiceProvider implements Deferr
                 CheckCommand::class,
                 CleanAssetsDirectoryCommand::class
             )
-            ->hasInstallCommand(fn(InstallCommand $command) => $command->publishConfigFile());
+            ->hasInstallCommand(fn (InstallCommand $command) => $command->publishConfigFile());
     }
 
     public function registeringPackage(): void
     {
         $this->app->bind(
             CreateArchive::class,
-            fn(Application $app) => new CreateArchive(
+            fn (Application $app) => new CreateArchive(
                 sourceFolder: base_path(),
                 destinationPath: config('streamline.backup_dir'),
-                filename: 'backup-' . date('Ymd_His') . '.tgz',
+                filename: 'backup-'.date('Ymd_His').'.tgz',
             )
         );
 
-        $this->app->resolving(OutputStyle::class, fn(OutputStyle $outputStyle) => $this->app
+        $this->app->resolving(OutputStyle::class, fn (OutputStyle $outputStyle) => $this->app
             // Laravel resolves OutputStyle with make(). This means it won't be re-resolved which
             // means it can't be reused later. This is why we bind() it to the app instance
-            ->bindIf(OutputStyle::class, fn() => $outputStyle)
+            ->bindIf(OutputStyle::class, fn () => $outputStyle)
         );
     }
 
@@ -71,8 +71,8 @@ class StreamlineServiceProvider extends PackageServiceProvider implements Deferr
 
     protected function getVersionInfo(): string
     {
-        return '<fg=bright-magenta>' .
-            InstalledVersions::getPrettyVersion('pixelated-au/streamline') .
+        return '<fg=bright-magenta>'.
+            InstalledVersions::getPrettyVersion('pixelated-au/streamline').
             '</>';
     }
 

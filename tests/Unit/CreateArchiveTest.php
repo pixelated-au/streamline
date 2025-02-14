@@ -6,9 +6,9 @@ use Pixelated\Streamline\Actions\CreateArchive;
 it('should create a .tar.gz file with correct structure and contents', function () {
     Storage::fake('local');
 
-    $sourceFolder    = 'source';
+    $sourceFolder = 'source';
     $destinationFolder = 'destination';
-    $filename        = 'test_archive.tar';
+    $filename = 'test_archive.tar';
 
     // Define expected file structure and contents
     $expectedFiles = [
@@ -29,7 +29,7 @@ it('should create a .tar.gz file with correct structure and contents', function 
     foreach ($expectedFiles as $file => $dir) {
         $fullDir = "$sourceFolder$dir";
         Storage::makeDirectory($fullDir);
-        Storage::put($fullDir . '/' . $file, "Content of $file");
+        Storage::put($fullDir.'/'.$file, "Content of $file");
     }
 
     Config::set('fake-production-environment', true);
@@ -56,15 +56,15 @@ it('should create a .tar.gz file with correct structure and contents', function 
     unset($tarPhar);
 
     foreach ($expectedFiles as $file => $dir) {
-        $fullPath = $extractPath . $dir . '/' . $file;
+        $fullPath = $extractPath.$dir.'/'.$file;
         // Assert file exists
         expect(file_exists($fullPath))->toBeTrue("File $dir/$file does not exist in the archive.");
 
         // Assert file content
-        $actualContent   = file_get_contents($fullPath);
+        $actualContent = file_get_contents($fullPath);
         $expectedContent = "Content of $file";
         expect($actualContent)->toBe($expectedContent, "Content mismatch for file $dir/$file")
-            ->and($extractPath . $dir)->toBeDirectory("$dir directory does not exist in the archive.");
+            ->and($extractPath.$dir)->toBeDirectory("$dir directory does not exist in the archive.");
     }
     Storage::deleteDirectory($sourceFolder);
     Storage::deleteDirectory($destinationFolder);
@@ -96,7 +96,7 @@ it('should throw an exception when the destination directory cannot be created',
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage('Directory "/non-existent/directory" was not created');
 
-    (fn() => $this->checkDestinationPath())->call($createArchive);
+    (fn () => $this->checkDestinationPath())->call($createArchive);
 });
 
 it('should throw an exception when the destination path is not writable', function () {
@@ -113,12 +113,12 @@ it('should throw an exception when the destination path is not writable', functi
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage("Destination path '$destinationPath' is not writable.");
 
-    (fn() => $this->checkDestinationPath())->call($createArchive);
+    (fn () => $this->checkDestinationPath())->call($createArchive);
 });
 
 it('should throw an exception when the archive file already exists', function () {
     $destinationPath = '/path/to/destination';
-    $filename        = 'test_archive.tgz';
+    $filename = 'test_archive.tgz';
 
     File::shouldReceive('dirname')->andReturn('');
     File::shouldReceive('exists')->andReturn([true, false]);
@@ -131,5 +131,5 @@ it('should throw an exception when the archive file already exists', function ()
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage("Archive file '$destinationPath/$filename' already exists.");
 
-    (fn() => $this->checkDestinationPath())->call($createArchive);
+    (fn () => $this->checkDestinationPath())->call($createArchive);
 });

@@ -2,7 +2,8 @@
 
 namespace Pixelated\Streamline\Enums;
 
-enum GitHubPaginationLinkHeaderTypeEnum : string {
+enum GitHubPaginationLinkHeaderTypeEnum: string
+{
     case NEXT = 'next';
     case LAST = 'last';
 }

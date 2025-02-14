@@ -12,8 +12,8 @@ it('returns next non symlink file when current is symlink', function () {
     $iterator = new ArchiveBuilderIterator($disk->path(''));
 
     $matchedFiles = [
-        'file1.txt'   => false,
-        'file2.txt'   => false,
+        'file1.txt' => false,
+        'file2.txt' => false,
         'symlink.txt' => false,
     ];
 

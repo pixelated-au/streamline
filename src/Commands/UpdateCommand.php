@@ -11,8 +11,8 @@ use Throwable;
 
 class UpdateCommand extends Command
 {
-    use OutputSubProcessCalls;
     use GitHubApi;
+    use OutputSubProcessCalls;
 
     protected $signature = 'streamline:run-update
     {--install-version= : Specify version to install}
@@ -35,6 +35,7 @@ class UpdateCommand extends Command
             ->through(config('streamline.update-pipeline'))
             ->catch(function (Throwable $e) {
                 $this->error($e->getMessage());
+
                 return self::FAILURE;
             })
             ->finally(config('streamline.cleanup'))

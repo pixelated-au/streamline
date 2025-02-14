@@ -10,45 +10,47 @@ class Pipeline
 {
     /** @var \Pixelated\Streamline\Pipeline\Pipe[] */
     protected array $pipes = [];
+
     protected ?Closure $exceptionHandler = null;
+
     private Closure $destination;
+
     private ?Closure $finallyHandler = null;
 
-    public function __construct(protected UpdateBuilderInterface $builder)
-    {
-    }
+    public function __construct(protected UpdateBuilderInterface $builder) {}
 
     /**
-     * @param array{Closure|\Pixelated\Streamline\Pipeline\Pipe} $pipes
+     * @param  array{Closure|\Pixelated\Streamline\Pipeline\Pipe}  $pipes
      */
     public function through(array $pipes): static
     {
         $this->pipes = $pipes;
+
         return $this;
     }
 
     /**
-     * @param \Closure $exceptionHandler
      * @return $this
      */
     public function catch(Closure $exceptionHandler): static
     {
         $this->exceptionHandler = $exceptionHandler;
+
         return $this;
     }
 
     /**
-     * @param Closure $finallyHandler
      * @return $this
      */
     public function finally(Closure $finallyHandler): static
     {
         $this->finallyHandler = $finallyHandler;
+
         return $this;
     }
 
     /**
-     * @param Closure(): mixed $destination
+     * @param  Closure(): mixed  $destination
      */
     public function then(Closure $destination): mixed
     {
@@ -75,12 +77,12 @@ class Pipeline
         return function ($stack, $pipe) {
             return function ($passable) use ($stack, $pipe) {
                 try {
-                    if (!is_callable($pipe)) {
+                    if (! is_callable($pipe)) {
                         $pipe = app()->make($pipe);
                     }
                     $result = $pipe($passable);
 
-                    if (!$result instanceof UpdateBuilderInterface) {
+                    if (! $result instanceof UpdateBuilderInterface) {
                         return ($this->destination)($result);
                     }
 
@@ -107,6 +109,7 @@ class Pipeline
                 throw $e;
             }
         };
+
         return $this->destination;
     }
 }

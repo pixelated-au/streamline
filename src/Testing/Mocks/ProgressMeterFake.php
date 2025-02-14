@@ -1,4 +1,6 @@
-<?php /** @noinspection PhpUnused */
+<?php
+
+/** @noinspection PhpUnused */
 
 namespace Pixelated\Streamline\Testing\Mocks;
 
@@ -11,8 +13,7 @@ class ProgressMeterFake extends ProgressMeter
      */
     public function __construct()
     {
-        $this->initCallback(function () {
-        });
+        $this->initCallback(function () {});
     }
 
     public function __invoke(int $downloadTotal, int $downloadedBytes): void
@@ -30,11 +31,8 @@ class ProgressMeterFake extends ProgressMeter
         return true;
     }
 
-
     public function finish(): void
     {
         // Do nothing
     }
-
-
 }

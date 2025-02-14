@@ -2,23 +2,23 @@
 
 use org\bovigo\vfs\vfsStream;
 
-beforeAll(fn() => putenv('IS_TESTING=' . StreamlineUpdater::TESTING_ON));
+beforeAll(fn () => putenv('IS_TESTING='.StreamlineUpdater::TESTING_ON));
 
 it('will fail when it is missing environment variables', function () {
     $this->expectException(InvalidArgumentException::class);
     $this->expectExceptionMessageMatches('/Environment variable .* needs to be set!/');
     $envVars = collect(getEnvVars())
-        ->map(fn($value) => $value === '')
+        ->map(fn ($value) => $value === '')
         ->toArray();
     setEnv($envVars);
-    new StreamlineUpdater();
+    new StreamlineUpdater;
 });
 
 it('can find the composer autoload file in the default vendor directory', function () {
     symlink(realpath('./composer.json'), './workbench/temp/composer.json');
 
     setEnv(['LARAVEL_BASE_PATH' => './workbench/temp']);
-    $updater = new StreamlineUpdater();
+    $updater = new StreamlineUpdater;
     expect($updater->autoloadFile())->toBe('vendor/autoload.php');
     unlink('./workbench/temp/composer.json');
 });
@@ -40,18 +40,17 @@ it('can find the composer autoload file in a different directory', function () {
     $project->addChild($composerFile);
 
     setEnv(['LARAVEL_BASE_PATH' => $project->url(), 'IS_TESTING' => StreamlineUpdater::TESTING_SKIP_REQUIRE_AUTOLOAD]);
-    $updater = new StreamlineUpdater();
+    $updater = new StreamlineUpdater;
 
-    expect($updater->autoloadFile())->toBe($vendor->url() . '/autoload.php');
+    expect($updater->autoloadFile())->toBe($vendor->url().'/autoload.php');
 });
 
 it('throws an error when it cannot find composer.json file', function () {
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage('Cannot locate the base composer file (./not-working/composer.json)');
     setEnv(['LARAVEL_BASE_PATH' => './not-working']);
-    (new StreamlineUpdater())->autoloadFile();
+    (new StreamlineUpdater)->autoloadFile();
 });
-
 
 it('throws an error when the composer.json file is invalid', function () {
     $root = vfsStream::setup('streamline');
@@ -60,15 +59,15 @@ it('throws an error when the composer.json file is invalid', function () {
     $root->addChild($composerFile);
 
     $this->expectException(RuntimeException::class);
-    $this->expectExceptionMessage('The file ' . $root->url() . '/composer.json file contains invalid JSON');
+    $this->expectExceptionMessage('The file '.$root->url().'/composer.json file contains invalid JSON');
 
     setEnv(['LARAVEL_BASE_PATH' => $root->url(), 'IS_TESTING' => StreamlineUpdater::TESTING_SKIP_REQUIRE_AUTOLOAD]);
-    (new StreamlineUpdater())->autoloadFile();
+    (new StreamlineUpdater)->autoloadFile();
 });
 
 it('can initialise the RunUpdate class', function () {
     setEnv();
-    (new StreamlineUpdater())->run();
+    (new StreamlineUpdater)->run();
 })->throwsNoExceptions();
 
 it('should add an error message to envIssues when JSON parsing fails twice', function () {
@@ -77,7 +76,7 @@ it('should add an error message to envIssues when JSON parsing fails twice', fun
     );
     $this->expectException(InvalidArgumentException::class);
     $this->expectExceptionMessageMatches('/Environment variable PROTECTED_PATHS=invalid json cannot be converted to an array. Pass in a JSON compatible array string!/');
-    (new StreamlineUpdater())->run();
+    (new StreamlineUpdater)->run();
 });
 
 /**
@@ -110,16 +109,16 @@ function setEnv(array $overrides = []): void
 function getEnvVars(): array
 {
     return [
-        'TEMP_DIR'                 => '/path/to/temp',
-        'LARAVEL_BASE_PATH'        => './workbench',
-        'PUBLIC_DIR_NAME'          => 'public',
-        'FRONT_END_BUILD_DIR'      => 'build',
-        'INSTALLING_VERSION'       => '1.0.0',
-        'PROTECTED_PATHS'          => '["protected.txt"]',
-        'DIR_PERMISSION'           => '0755',
-        'FILE_PERMISSION'          => '0644',
+        'TEMP_DIR' => '/path/to/temp',
+        'LARAVEL_BASE_PATH' => './workbench',
+        'PUBLIC_DIR_NAME' => 'public',
+        'FRONT_END_BUILD_DIR' => 'build',
+        'INSTALLING_VERSION' => '1.0.0',
+        'PROTECTED_PATHS' => '["protected.txt"]',
+        'DIR_PERMISSION' => '0755',
+        'FILE_PERMISSION' => '0644',
         'OLD_RELEASE_ARCHIVE_PATH' => '/path/to/old/release.zip',
-        'DO_RETAIN_OLD_RELEASE'    => 'true',
-        'IS_TESTING'               => StreamlineUpdater::TESTING_ON,
+        'DO_RETAIN_OLD_RELEASE' => 'true',
+        'IS_TESTING' => StreamlineUpdater::TESTING_ON,
     ];
 }

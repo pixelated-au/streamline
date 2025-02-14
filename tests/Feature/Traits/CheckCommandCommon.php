@@ -8,6 +8,7 @@ use Pixelated\Streamline\Enums\CacheKeysEnum;
 trait CheckCommandCommon
 {
     protected ?string $_nextAvailableVersion = 'v2.8.7b';
+
     protected ?array $_availableVersions = ['v2.8.7b', 'foo', 'bar'];
 
     /**
@@ -21,10 +22,11 @@ trait CheckCommandCommon
         foreach ($options as $key => $option) {
             // check to see if the variable exists on this instance and then set the default value
             if (property_exists($this, "_$key")) {
-                $key        = "_$key";
+                $key = "_$key";
                 $this->$key = $option;
             }
         }
+
         return $this;
     }
 

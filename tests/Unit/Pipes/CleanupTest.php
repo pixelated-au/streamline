@@ -12,7 +12,7 @@ it('should dispatch an Event with CommandClassCallback containing info and the d
     Event::fake();
     File::shouldReceive('deleteDirectory')->once()->with($tempDir);
 
-    $cleanup = new Cleanup();
+    $cleanup = new Cleanup;
     $result = $cleanup($mockBuilder);
 
     Event::assertDispatched(function (CommandClassCallback $event) use ($tempDir) {

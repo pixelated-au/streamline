@@ -17,14 +17,13 @@ readonly class RunCompleteGitHubVersionRelease
         private string $publicDirName,
         private string $frontendBuildDir,
         private string $installingVersion,
-        private array  $protectedPaths,
-        private int    $dirPermission,
-        private int    $filePermission,
+        private array $protectedPaths,
+        private int $dirPermission,
+        private int $filePermission,
         private string $oldReleaseArchivePath,
-        private bool   $doRetainOldReleaseDir = true,
-        private bool   $doOutput = false,
-    )
-    {
+        private bool $doRetainOldReleaseDir = true,
+        private bool $doOutput = false,
+    ) {
         $this->laravelTempBackupDir = "{$this->laravelBasePath}_old";
     }
 
@@ -44,7 +43,7 @@ readonly class RunCompleteGitHubVersionRelease
     protected function copyFrontEndAssetsFromOldToNewRelease(): void
     {
         $existingReleaseBuildDir = "$this->publicDirName/$this->frontendBuildDir";
-        $incomingReleaseBuildDir = $this->tempDirName . '/' . basename($this->publicDirName) . '/' . $this->frontendBuildDir;
+        $incomingReleaseBuildDir = $this->tempDirName.'/'.basename($this->publicDirName).'/'.$this->frontendBuildDir;
 
         $this->output("Copying frontend assets. From: $existingReleaseBuildDir to: $incomingReleaseBuildDir");
         $this->validateDirectoriesExist($existingReleaseBuildDir, $incomingReleaseBuildDir);
@@ -58,7 +57,7 @@ readonly class RunCompleteGitHubVersionRelease
         /** @var \SplFileInfo $item */
         foreach ($iterator as $item) {
             $sourcePath = $item->isLink() ? $item->getLinkTarget() : $item->getPathname();
-            $destPath   = $destination . DIRECTORY_SEPARATOR . $item->getFilename();
+            $destPath = $destination.DIRECTORY_SEPARATOR.$item->getFilename();
 
             if ($item->isDir()) {
                 $this->makeDir($destPath);
@@ -88,6 +87,7 @@ readonly class RunCompleteGitHubVersionRelease
         $filename = pathinfo($this->oldReleaseArchivePath)['basename'];
         if ($this->doRetainOldReleaseDir) {
             $this->output("Retaining old release backup ($filename). Make sure you clean it up manually.");
+
             return;
         }
 
@@ -101,11 +101,11 @@ readonly class RunCompleteGitHubVersionRelease
 
     protected function copyAsset(string $realSourcePath, string $realDestPath): void
     {
-        if (!is_readable($realSourcePath)) {
+        if (! is_readable($realSourcePath)) {
             throw new RuntimeException("Error: Source file is not readable: $realSourcePath");
         }
 
-        if (!copy($realSourcePath, $realDestPath)) {
+        if (! copy($realSourcePath, $realDestPath)) {
             throw new RuntimeException("Error: Failed to copy file: $realSourcePath to $realDestPath");
         }
         $this->output("Chmod file: $realDestPath to $this->filePermission");
@@ -115,7 +115,7 @@ readonly class RunCompleteGitHubVersionRelease
     protected function setEnvVersionNumber(): void
     {
         $this->output("Setting version number in .env file to: $this->installingVersion");
-        $envFilePath = rtrim($this->laravelBasePath, '/') . '/.env';
+        $envFilePath = rtrim($this->laravelBasePath, '/').'/.env';
 
         if (file_exists($envFilePath) === false) {
             throw new RuntimeException("Error: Environment file ($envFilePath) does not exist in the release directory");
@@ -124,11 +124,11 @@ readonly class RunCompleteGitHubVersionRelease
         $contents = file_get_contents($envFilePath);
         $contents = preg_replace(
             pattern: '/STREAMLINE_APPLICATION_VERSION_INSTALLED=\S+/',
-            replacement: 'STREAMLINE_APPLICATION_VERSION_INSTALLED=' . $this->installingVersion,
+            replacement: 'STREAMLINE_APPLICATION_VERSION_INSTALLED='.$this->installingVersion,
             subject: $contents
         );
 
-        if (!file_put_contents($envFilePath, $contents)) {
+        if (! file_put_contents($envFilePath, $contents)) {
             throw new RuntimeException("Error: Failed to update version number in Laravel's .env file");
         }
 
@@ -172,10 +172,10 @@ readonly class RunCompleteGitHubVersionRelease
 
     protected function validateDirectoriesExist(string $liveAssetsDir, string $tempWorkingDir): void
     {
-        if (!file_exists($this->laravelBasePath)) {
+        if (! file_exists($this->laravelBasePath)) {
             throw new RuntimeException("Error: Release directory '$this->laravelBasePath' does not exist! This should be the directory that contains your application deployment.");
         }
-        if (!$liveAssetsDir || !is_dir($liveAssetsDir)) {
+        if (! $liveAssetsDir || ! is_dir($liveAssetsDir)) {
             throw new RuntimeException("Error: Invalid old assets directory: $liveAssetsDir");
         }
         $this->makeDir($tempWorkingDir, 'Error: Could not create assets directory: %s');
@@ -186,8 +186,8 @@ readonly class RunCompleteGitHubVersionRelease
         $this->output('Preserving protected paths...');
 
         foreach ($this->protectedPaths as $protectedPath) {
-            $sourcePath      = $this->laravelBasePath . '/' . ltrim($protectedPath, '/');
-            $destinationPath = $this->tempDirName . '/' . ltrim($protectedPath, '/');
+            $sourcePath = $this->laravelBasePath.'/'.ltrim($protectedPath, '/');
+            $destinationPath = $this->tempDirName.'/'.ltrim($protectedPath, '/');
             if (is_dir($sourcePath)) {
                 $this->copyDirectory($sourcePath, $destinationPath);
             } elseif (file_exists($sourcePath)) {
@@ -222,11 +222,11 @@ readonly class RunCompleteGitHubVersionRelease
 
     protected function copyFile(string $source, string $destination): void
     {
-        if (!file_exists(dirname($destination))) {
+        if (! file_exists(dirname($destination))) {
             $this->makeDir(dirname($destination));
         }
 
-        if (!@copy($source, $destination)) {
+        if (! @copy($source, $destination)) {
             throw new RuntimeException("Failed to copy file: $source to $destination");
         }
 
@@ -240,15 +240,16 @@ readonly class RunCompleteGitHubVersionRelease
      */
     protected function deleteDirectory($directory, $preserve = false): bool
     {
-        if (!file_exists($directory)) {
+        if (! file_exists($directory)) {
             return true; // Directory does not exist. No need to delete it.
         }
         $items = new FilesystemIterator($directory);
 
         /** @var \SplFileInfo $item */
         foreach ($items as $item) {
-            if ($item->isDir() && !$item->isLink()) {
+            if ($item->isDir() && ! $item->isLink()) {
                 $this->deleteDirectory($item->getPathname());
+
                 continue;
             }
 
@@ -257,7 +258,7 @@ readonly class RunCompleteGitHubVersionRelease
 
         unset($items);
 
-        if (!$preserve) {
+        if (! $preserve) {
             @rmdir($directory);
         }
 
@@ -268,6 +269,7 @@ readonly class RunCompleteGitHubVersionRelease
     {
         if (@unlink($path)) {
             clearstatcache(false, $path);
+
             return true;
         }
 
@@ -276,7 +278,7 @@ readonly class RunCompleteGitHubVersionRelease
 
     public function makeDir(string $targetPath, string $errorMessage = 'Directory "%s" was not created'): void
     {
-        if (!@is_dir($targetPath) && !@mkdir($targetPath, $this->dirPermission, true) && !@is_dir($targetPath)) {
+        if (! @is_dir($targetPath) && ! @mkdir($targetPath, $this->dirPermission, true) && ! @is_dir($targetPath)) {
             throw new RuntimeException(sprintf($errorMessage, $targetPath));
         }
     }
@@ -291,6 +293,7 @@ readonly class RunCompleteGitHubVersionRelease
                 }
             }
         }
+
         return false;
     }
 }

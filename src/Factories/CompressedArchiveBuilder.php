@@ -13,13 +13,13 @@ use Pixelated\Streamline\Testing\Mocks\PharDataFake;
 class CompressedArchiveBuilder
 {
     private string $archivingTool;
+
     private PharData $pharData;
 
     public function __construct(
         private readonly string $tarArchivePath,
-    )
-    {
-        $this->archivingTool = !config('fake-production-environment') && app()->runningUnitTests()
+    ) {
+        $this->archivingTool = ! config('fake-production-environment') && app()->runningUnitTests()
             ? PharDataFake::class
             : PharData::class;
     }
@@ -29,7 +29,7 @@ class CompressedArchiveBuilder
         Event::dispatch(new CommandClassCallback('comment', "Instantiating Tar builder with $this->archivingTool"));
         $this->pharData = app()->make($this->archivingTool, [
             'filename' => $this->tarArchivePath,
-            'format'   => Phar::TAR,
+            'format' => Phar::TAR,
         ]);
         Event::dispatch(new CommandClassCallback('comment', 'Tar builder instantiated'));
 
@@ -50,7 +50,7 @@ class CompressedArchiveBuilder
         $this->pharData->compress(Phar::GZ);
         unset($this->pharData);
         Event::dispatch(new CommandClassCallback('comment', "Deleting non-compressed Tar file: $this->tarArchivePath"));
-        try{
+        try {
             PharData::unlinkArchive($this->tarArchivePath);
         } catch (PharException $e) {
             if ($this->archivingTool !== PharDataFake::class) {
@@ -60,6 +60,7 @@ class CompressedArchiveBuilder
             }
         }
         Event::dispatch(new CommandClassCallback('success', 'Backup created successfully'));
+
         return $this;
     }
 }

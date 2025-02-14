@@ -18,13 +18,12 @@ class ConfigCommaToArrayMacro
                 // @phpstan-ignore variable.undefined
                 $result = $this->get($key, $default);
                 if (is_string($result)) {
-                    return Arr::map(explode(',', $result), static fn($value) => trim($value));
+                    return Arr::map(explode(',', $result), static fn ($value) => trim($value));
                 }
 
-                throw_if(!is_array($result), exception: 'Invalid value (' .var_export($result, true).") for $key. Expected a comma-separated list or an array.");
+                throw_if(! is_array($result), exception: 'Invalid value ('.var_export($result, true).") for $key. Expected a comma-separated list or an array.");
 
                 return $result;
             });
     }
-
 }

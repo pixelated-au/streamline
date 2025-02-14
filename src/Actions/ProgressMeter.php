@@ -10,14 +10,16 @@ use Symfony\Component\Console\Helper\ProgressBar;
 class ProgressMeter
 {
     private ProgressBar $progressBar;
+
     protected bool $hasStarted = false;
+
     protected string $message = '';
 
     public readonly Closure $progressCallback;
 
     public function __construct(private readonly ?OutputStyle $output, private readonly ?float $minSecondsBetweenRedraws = null)
     {
-        if (!$output || !app()->runningInConsole()) {
+        if (! $output || ! app()->runningInConsole()) {
             return;
         }
         ProgressBar::setFormatDefinition('custom', ' %current%/%max% [%bar%] %percent:3s%% - %message%');
@@ -26,7 +28,7 @@ class ProgressMeter
 
     public function __invoke(int $downloadTotal, int $downloadedBytes): void
     {
-        if (!isset($this->output)) {
+        if (! isset($this->output)) {
             throw new InvalidArgumentException('OutputStyle needs to be passed in if you want to use the ProgressMeter.');
         }
 
@@ -41,8 +43,8 @@ class ProgressMeter
     protected function initCallback(?Closure $callback = null): void
     {
         $this->progressCallback = $callback ?: function (int $downloadTotal, int $downloadedBytes) {
-            if (!$this->hasStarted) {
-                $this->init((bool)$downloadTotal);
+            if (! $this->hasStarted) {
+                $this->init((bool) $downloadTotal);
             }
 
             if (isset($this->progressBar)) {
@@ -50,7 +52,7 @@ class ProgressMeter
                     $this->progressBar->setMessage($this->message);
                 }
                 $downloadTotal
-                    ? $this->progressBar->setProgress((int)round($downloadedBytes / $downloadTotal * 100))
+                    ? $this->progressBar->setProgress((int) round($downloadedBytes / $downloadTotal * 100))
                     : $this->progressBar->advance();
             }
         };
@@ -59,7 +61,7 @@ class ProgressMeter
     public function init(bool $hasContentLength): void
     {
         $this->progressBar = $this->output->createProgressBar($hasContentLength ? 100 : 0);
-        if (!is_null($this->minSecondsBetweenRedraws)) {
+        if (! is_null($this->minSecondsBetweenRedraws)) {
             $this->progressBar->minSecondsBetweenRedraws($this->minSecondsBetweenRedraws);
         }
         if ($this->message) {

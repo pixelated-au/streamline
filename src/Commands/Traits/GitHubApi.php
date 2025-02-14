@@ -14,9 +14,9 @@ trait GitHubApi
     protected function configure(): void
     {
         $this->addOption(
-            name:'gh-token',
+            name: 'gh-token',
             mode: InputOption::VALUE_OPTIONAL,
-            description:  'Extend the GitHub rate limits by specifying your auth token'
+            description: 'Extend the GitHub rate limits by specifying your auth token'
         );
     }
 

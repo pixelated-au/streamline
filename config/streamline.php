@@ -100,7 +100,7 @@ return [
     |
     */
 
-    'work_temp_dir' => env('STREAMLINE_WORK_TEMP_DIR', dirname(base_path()) . '/.streamline_tmp'),
+    'work_temp_dir' => env('STREAMLINE_WORK_TEMP_DIR', dirname(base_path()).'/.streamline_tmp'),
 
     /*
     |--------------------------------------------------------------------------
@@ -112,7 +112,7 @@ return [
     |
     */
 
-    'backup_dir' => env('STREAMLINE_BACKUP_DIR', dirname(base_path()) . '/streamline_backups'),
+    'backup_dir' => env('STREAMLINE_BACKUP_DIR', dirname(base_path()).'/streamline_backups'),
 
     /*
     |--------------------------------------------------------------------------
@@ -175,7 +175,7 @@ return [
     |
     */
 
-    'directory_permissions' => (int)env('STREAMLINE_DIRECTORY_PERMISSIONS', 0755),
+    'directory_permissions' => (int) env('STREAMLINE_DIRECTORY_PERMISSIONS', 0755),
 
     /*
     |--------------------------------------------------------------------------
@@ -187,7 +187,7 @@ return [
     |
     */
 
-    'file_permissions' => (int)env('STREAMLINE_FILE_PERMISSIONS', 0644),
+    'file_permissions' => (int) env('STREAMLINE_FILE_PERMISSIONS', 0644),
 
     /*
     |--------------------------------------------------------------------------
@@ -327,7 +327,7 @@ return [
     */
 
     'cleanup' => static function (UpdateBuilderInterface $builder) {
-//        app()->make(Cleanup::class)->__invoke($builder);
+        //        app()->make(Cleanup::class)->__invoke($builder);
     },
 
     /*
@@ -342,7 +342,7 @@ return [
 
     'logging' => [
         'driver' => 'single',
-        'path'   => storage_path('logs/streamline.log'),
-        'level'  => env('LOG_LEVEL', 'debug'),
+        'path' => storage_path('logs/streamline.log'),
+        'level' => env('LOG_LEVEL', 'debug'),
     ],
 ];

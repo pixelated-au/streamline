@@ -1,4 +1,5 @@
 <?php
+
 /** @noinspection PhpClassCanBeReadonlyInspection */
 
 namespace Pixelated\Streamline\Factories;
@@ -14,15 +15,14 @@ class ProcessFactory
     private readonly string $processClass;
 
     public function __construct(
-//        #[Config('streamline.external_process_class')]
-//        private readonly string $processClass,
-    )
-    {
-        //TODO restore this after upgrading to Laravel 11
+        //        #[Config('streamline.external_process_class')]
+        //        private readonly string $processClass,
+    ) {
+        // TODO restore this after upgrading to Laravel 11
         $this->processClass = Config::get('streamline.external_process_class');
     }
 
-    public function invoke(string $script, string $cwd = null, array $env = null, int $timeout = 60, ?array $php = null): Process
+    public function invoke(string $script, ?string $cwd = null, ?array $env = null, int $timeout = 60, ?array $php = null): Process
     {
         return new $this->processClass($script, $cwd, $env, $timeout, $php);
     }
