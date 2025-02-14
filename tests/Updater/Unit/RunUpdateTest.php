@@ -154,6 +154,7 @@ it('fails to delete a missing directory', function () {
 it('calls delete and will return false when the file does not exist', function () {
     $nonExistentFile = vfsStream::url('root/non_existent_file.txt');
 
+    $this->disableErrorHandling();
     $runUpdate = runUpdateClassFactory();
     $result    = (fn($path) => $this->delete($path))->call($runUpdate, $nonExistentFile);
 
@@ -355,6 +356,7 @@ it('should handle large directories with many nested subdirectories', function (
 });
 
 it('throws an exception when the destination directory is not writable during file copy', function () {
+    $this->disableErrorHandling();
     $this->rootFs = vfsStream::setup('streamline');
     $sourceDir    = vfsStream::newDirectory('source');
     $this->rootFs->addChild($sourceDir);
