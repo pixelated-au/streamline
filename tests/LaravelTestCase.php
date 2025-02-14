@@ -27,13 +27,7 @@ class LaravelTestCase extends Orchestra
     protected function setUp(): void
     {
         parent::setUp();
-
         Http::preventStrayRequests();
-        if (! File::isDirectory(storage_path('streamline_temp'))) {
-            File::makeDirectory(storage_path('streamline_temp'));
-        } else {
-            File::cleanDirectory(storage_path('streamline_temp'));
-        }
     }
 
     protected function getPackageProviders($app): array
