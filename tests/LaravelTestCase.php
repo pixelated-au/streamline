@@ -3,7 +3,6 @@
 namespace Pixelated\Streamline\Tests;
 
 use Illuminate\Foundation\Testing\Concerns\InteractsWithContainer;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Orchestra\Testbench\Concerns\WithWorkbench;
 use Orchestra\Testbench\TestCase as Orchestra;
