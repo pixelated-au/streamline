@@ -15,7 +15,6 @@ use Pixelated\Streamline\Commands\UpdateCommand;
 use Pixelated\Streamline\Macros\ConfigCommaToArrayMacro;
 use Pixelated\Streamline\Services\CleanUpAssets;
 use Pixelated\Streamline\Services\GitHubApi;
-use Pixelated\Streamline\Services\ZipArchive;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -82,7 +81,6 @@ class StreamlineServiceProvider extends PackageServiceProvider implements Deferr
         return [
             GitHubApi::class,
             CleanUpAssets::class,
-            ZipArchive::class,
         ];
         // @codeCoverageIgnoreEnd
     }

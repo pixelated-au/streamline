@@ -10,8 +10,7 @@ pest()->uses(UpdateCommandCommon::class, HttpMock::class);
 it('should run an update with no parameters', function () {
     $this->mockFile()
         ->mockProcess()
-        ->mockCache(['v2.8.1', 'v2.0.0', 'v1.0.0'], 'v2.8.1')
-        ->mockZipArchive();
+        ->mockCache(['v2.8.1', 'v2.0.0', 'v1.0.0'], 'v2.8.1');
 
     $this->mockGetWebArchive();
 
@@ -31,8 +30,7 @@ it('should run an update with a specific version', function () {
     $this->mockFile()
         ->mockProcess()
         ->mockCache(['v2.8.1', 'v2.0.0', 'v1.0.0'], 'v2.0.0')
-        ->mockGetAvailableVersions()
-        ->mockZipArchive();
+        ->mockGetAvailableVersions();
     File::shouldReceive('deleteDirectory');
 
     $this->mockGetWebArchive();
@@ -118,8 +116,7 @@ it('should run a "forced" update on an existing version', function () {
     $this->mockFile()
         ->mockProcess()
         ->mockCache(['v2.0.0', 'v1.0.0'])
-        ->mockGetAvailableVersions()
-        ->mockZipArchive();
+        ->mockGetAvailableVersions();
     File::shouldReceive('deleteDirectory');
 
     $this->mockGetWebArchive();
@@ -132,8 +129,7 @@ it('should run a "forced" update on the most recent', function () {
     $this->mockFile()
         ->mockProcess()
         ->mockCache(['v2.0.0', 'v1.0.0'], 'v2.0.0')
-        ->mockGetAvailableVersions()
-        ->mockZipArchive();
+        ->mockGetAvailableVersions();
     File::shouldReceive('deleteDirectory');
 
     Config::set('streamline.installed_version', 'v2.0.0');
