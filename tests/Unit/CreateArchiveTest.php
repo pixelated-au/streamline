@@ -3,72 +3,76 @@
 use Illuminate\Support\Facades\Storage;
 use Pixelated\Streamline\Actions\CreateArchive;
 
-it('should create a .tar.gz file with correct structure and contents', function () {
-    Storage::fake('local');
+it('should create a .tar.gz file with correct structure and contents',
+    /**
+     * @throws \League\Flysystem\FilesystemException
+     */
+    function () {
+        Storage::fake('local');
 
-    $sourceFolder = 'source';
-    $destinationFolder = 'destination';
-    $filename = 'test_archive.tar';
+        $sourceFolder = 'source';
+        $destinationFolder = 'destination';
+        $filename = 'test_archive.tar';
 
-    // Define expected file structure and contents
-    $expectedFiles = [
-        'file1.txt' => '/set1',
-        'file2.txt' => '/set1/level1',
-        'file3.txt' => '/set1/level1/level2',
-        'file4.txt' => '/set1/level1/level2/level3',
-        'fileA.txt' => '/set2',
-        'fileB.txt' => '/set2/level1',
-        'fileC.txt' => '/set2/level1/level2',
-        'fileD.txt' => '/set2/level1/level2/level3',
-    ];
+        // Define expected file structure and contents
+        $expectedFiles = [
+            'file1.txt' => '/set1',
+            'file2.txt' => '/set1/level1',
+            'file3.txt' => '/set1/level1/level2',
+            'file4.txt' => '/set1/level1/level2/level3',
+            'fileA.txt' => '/set2',
+            'fileB.txt' => '/set2/level1',
+            'fileC.txt' => '/set2/level1/level2',
+            'fileD.txt' => '/set2/level1/level2/level3',
+        ];
 
-    Storage::makeDirectory($sourceFolder);
-    Storage::makeDirectory($destinationFolder);
+        Storage::makeDirectory($sourceFolder);
+        Storage::makeDirectory($destinationFolder);
 
-    // Create directory structure and files
-    foreach ($expectedFiles as $file => $dir) {
-        $fullDir = "$sourceFolder$dir";
-        Storage::makeDirectory($fullDir);
-        Storage::put($fullDir.'/'.$file, "Content of $file");
-    }
+        // Create directory structure and files
+        foreach ($expectedFiles as $file => $dir) {
+            $fullDir = "$sourceFolder$dir";
+            Storage::makeDirectory($fullDir);
+            Storage::put($fullDir.'/'.$file, "Content of $file");
+        }
 
-    Config::set('fake-production-environment', true);
-    $createArchive = new CreateArchive(
-        Storage::path($sourceFolder),
-        Storage::path($destinationFolder),
-        $filename
-    );
-    $createArchive->create();
+        Config::set('fake-production-environment', true);
+        $createArchive = new CreateArchive(
+            Storage::path($sourceFolder),
+            Storage::path($destinationFolder),
+            $filename
+        );
+        $createArchive->create();
 
-    $expectedTarPath = "$destinationFolder/$filename";
-    Storage::assertExists("$expectedTarPath.gz");
+        $expectedTarPath = "$destinationFolder/$filename";
+        Storage::assertExists("$expectedTarPath.gz");
 
-    $expectedGzPath = "$destinationFolder/$filename.gz";
-    Storage::assertExists($expectedGzPath);
-    Storage::assertMissing($expectedTarPath);
+        $expectedGzPath = "$destinationFolder/$filename.gz";
+        Storage::assertExists($expectedGzPath);
+        Storage::assertMissing($expectedTarPath);
 
-    $extractPath = Storage::path("$destinationFolder/extracted");
+        $extractPath = Storage::path("$destinationFolder/extracted");
 
-    $decoded = gzdecode(Storage::read("$expectedTarPath.gz"));
-    Storage::write($expectedTarPath, $decoded);
-    $tarPhar = new PharData(Storage::path($expectedTarPath));
-    $tarPhar->extractTo($extractPath, null, true); // true to overwrite
-    unset($tarPhar);
+        $decoded = gzdecode(Storage::read("$expectedTarPath.gz"));
+        Storage::write($expectedTarPath, $decoded);
+        $tarPhar = new PharData(Storage::path($expectedTarPath));
+        $tarPhar->extractTo($extractPath, null, true); // true to overwrite
+        unset($tarPhar);
 
-    foreach ($expectedFiles as $file => $dir) {
-        $fullPath = $extractPath.$dir.'/'.$file;
-        // Assert file exists
-        expect(file_exists($fullPath))->toBeTrue("File $dir/$file does not exist in the archive.");
+        foreach ($expectedFiles as $file => $dir) {
+            $fullPath = $extractPath.$dir.'/'.$file;
+            // Assert file exists
+            expect(file_exists($fullPath))->toBeTrue("File $dir/$file does not exist in the archive.");
 
-        // Assert file content
-        $actualContent = file_get_contents($fullPath);
-        $expectedContent = "Content of $file";
-        expect($actualContent)->toBe($expectedContent, "Content mismatch for file $dir/$file")
-            ->and($extractPath.$dir)->toBeDirectory("$dir directory does not exist in the archive.");
-    }
-    Storage::deleteDirectory($sourceFolder);
-    Storage::deleteDirectory($destinationFolder);
-});
+            // Assert file content
+            $actualContent = file_get_contents($fullPath);
+            $expectedContent = "Content of $file";
+            expect($actualContent)->toBe($expectedContent, "Content mismatch for file $dir/$file")
+                ->and($extractPath.$dir)->toBeDirectory("$dir directory does not exist in the archive.");
+        }
+        Storage::deleteDirectory($sourceFolder);
+        Storage::deleteDirectory($destinationFolder);
+    });
 
 it('should throw an exception when the source folder does not exist', function () {
     $nonExistentFolder = 'non_existent_folder';
