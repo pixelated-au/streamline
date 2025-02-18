@@ -54,14 +54,13 @@ class InstantiateStreamlineUpdater
                 'OLD_RELEASE_ARCHIVE_PATH' => config('streamline.backup_dir'),
                 'DO_RETAIN_OLD_RELEASE' => (bool) config('streamline.retain_old_releases'),
                 'IS_TESTING' => defined('IS_TESTING'), // Set in phpunit config XML file.
-            ])
-            ->run($callback);
+            ])->run($callback);
     }
 
     protected function parseArray(array|string $input): string
     {
         if (is_array($input)) {
-            return '["'.implode('","', $input).'"]';
+            return '["' . implode('","', $input) . '"]';
         }
 
         return $input;
@@ -72,7 +71,7 @@ class InstantiateStreamlineUpdater
         try {
             return (new ReflectionClass($this->runnerClass))->getFileName();
         } catch (ReflectionException $e) {
-            throw new RuntimeException("Error instantiating updater class '$this->runnerClass': ".$e->getMessage());
+            throw new RuntimeException("Error instantiating updater class '$this->runnerClass': " . $e->getMessage());
         }
     }
 }

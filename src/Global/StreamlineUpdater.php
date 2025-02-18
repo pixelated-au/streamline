@@ -66,6 +66,7 @@ class StreamlineUpdater
         if ($this->isTesting & self::TESTING_SKIP_REQUIRE_AUTOLOAD) {
             return;
         }
+
         require $this->autoloadFile();
     }
 
@@ -123,7 +124,7 @@ class StreamlineUpdater
 
     public function autoloadFile(): string
     {
-        $composerJsonPath = rtrim($this->laravelBasePath, '/').'/composer.json';
+        $composerJsonPath = rtrim($this->laravelBasePath, '/') . '/composer.json';
         if (! file_exists($composerJsonPath)) {
             throw new RuntimeException("Cannot locate the base composer file ($composerJsonPath) for autoloading");
         }

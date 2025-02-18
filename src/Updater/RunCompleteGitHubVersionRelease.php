@@ -43,7 +43,7 @@ readonly class RunCompleteGitHubVersionRelease
     protected function copyFrontEndAssetsFromOldToNewRelease(): void
     {
         $existingReleaseBuildDir = "$this->publicDirName/$this->frontendBuildDir";
-        $incomingReleaseBuildDir = $this->tempDirName.'/'.basename($this->publicDirName).'/'.$this->frontendBuildDir;
+        $incomingReleaseBuildDir = $this->tempDirName . '/' . basename($this->publicDirName) . '/' . $this->frontendBuildDir;
 
         $this->output("Copying frontend assets. From: $existingReleaseBuildDir to: $incomingReleaseBuildDir");
         $this->validateDirectoriesExist($existingReleaseBuildDir, $incomingReleaseBuildDir);
@@ -57,7 +57,7 @@ readonly class RunCompleteGitHubVersionRelease
         /** @var \SplFileInfo $item */
         foreach ($iterator as $item) {
             $sourcePath = $item->isLink() ? $item->getLinkTarget() : $item->getPathname();
-            $destPath = $destination.DIRECTORY_SEPARATOR.$item->getFilename();
+            $destPath = $destination . DIRECTORY_SEPARATOR . $item->getFilename();
 
             if ($item->isDir()) {
                 $this->makeDir($destPath);
@@ -115,7 +115,7 @@ readonly class RunCompleteGitHubVersionRelease
     protected function setEnvVersionNumber(): void
     {
         $this->output("Setting version number in .env file to: $this->installingVersion");
-        $envFilePath = rtrim($this->laravelBasePath, '/').'/.env';
+        $envFilePath = rtrim($this->laravelBasePath, '/') . '/.env';
 
         if (file_exists($envFilePath) === false) {
             throw new RuntimeException("Error: Environment file ($envFilePath) does not exist in the release directory");
@@ -124,7 +124,7 @@ readonly class RunCompleteGitHubVersionRelease
         $contents = file_get_contents($envFilePath);
         $contents = preg_replace(
             pattern: '/STREAMLINE_APPLICATION_VERSION_INSTALLED=\S+/',
-            replacement: 'STREAMLINE_APPLICATION_VERSION_INSTALLED='.$this->installingVersion,
+            replacement: 'STREAMLINE_APPLICATION_VERSION_INSTALLED=' . $this->installingVersion,
             subject: $contents
         );
 
@@ -186,8 +186,8 @@ readonly class RunCompleteGitHubVersionRelease
         $this->output('Preserving protected paths...');
 
         foreach ($this->protectedPaths as $protectedPath) {
-            $sourcePath = $this->laravelBasePath.'/'.ltrim($protectedPath, '/');
-            $destinationPath = $this->tempDirName.'/'.ltrim($protectedPath, '/');
+            $sourcePath = $this->laravelBasePath . '/' . ltrim($protectedPath, '/');
+            $destinationPath = $this->tempDirName . '/' . ltrim($protectedPath, '/');
             if (is_dir($sourcePath)) {
                 $this->copyDirectory($sourcePath, $destinationPath);
             } elseif (file_exists($sourcePath)) {

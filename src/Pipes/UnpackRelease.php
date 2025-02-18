@@ -23,6 +23,7 @@ readonly class UnpackRelease implements Pipe
         if ($this->zip->open($downloadedArchivePath) === true) {
             $this->zip->extractTo($tempDir);
             $this->zip->close();
+
         } else {
             throw new RuntimeException("Error: Failed to unpack $downloadedArchivePath");
         }
