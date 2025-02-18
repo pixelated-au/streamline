@@ -22,8 +22,11 @@ class CreateArchive
         private readonly string $filename,
     ) {
         $this->gzipPath = "$this->destinationPath/$this->filename";
-        $tarPath = File::dirname($this->gzipPath).'/'.File::name($this->gzipPath).'.tar';
-        $this->archiver = app()->make(CompressedArchiveBuilder::class, ['tarArchivePath' => $tarPath]);
+        $tarPath = File::dirname($this->gzipPath) . '/' . File::name($this->gzipPath) . '.zip';
+        $this->archiver = app()->make(
+            abstract: CompressedArchiveBuilder::class,
+            parameters: ['zipArchivePath' => $tarPath]
+        );
     }
 
     public function create(): void

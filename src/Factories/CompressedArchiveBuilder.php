@@ -3,62 +3,51 @@
 namespace Pixelated\Streamline\Factories;
 
 use Illuminate\Support\Facades\Event;
-use Phar;
-use PharData;
-use PharException;
 use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Iterators\ArchiveBuilderIterator;
-use Pixelated\Streamline\Testing\Mocks\PharDataFake;
+use RuntimeException;
+use ZipArchive;
 
-class CompressedArchiveBuilder
+readonly class CompressedArchiveBuilder
 {
-    private string $archivingTool;
-
-    private PharData $pharData;
-
     public function __construct(
-        private readonly string $tarArchivePath,
-    ) {
-        $this->archivingTool = ! config('fake-production-environment') && app()->runningUnitTests()
-            ? PharDataFake::class
-            : PharData::class;
-    }
+        private string $zipArchivePath,
+        private ZipArchive $zip,
+    ) {}
 
     public function init(): static
     {
-        Event::dispatch(new CommandClassCallback('comment', "Instantiating Tar builder with $this->archivingTool"));
-        $this->pharData = app()->make($this->archivingTool, [
-            'filename' => $this->tarArchivePath,
-            'format' => Phar::TAR,
-        ]);
-        Event::dispatch(new CommandClassCallback('comment', 'Tar builder instantiated'));
+        Event::dispatch(new CommandClassCallback('comment', 'Initializing Zip archive'));
+        $result = $this->zip->open($this->zipArchivePath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        if ($result !== true) {
+            throw new RuntimeException('Failed to create zip file: ' . $this->zipArchivePath);
+        }
+        Event::dispatch(new CommandClassCallback('comment', 'Zip archive initialized'));
 
         return $this;
     }
 
-    /**
-     * @throws \PharException
-     */
     public function makeArchive(string $source): static
     {
-        Event::dispatch(new CommandClassCallback('comment', "Building Tar file from $source"));
-
+        Event::dispatch(new CommandClassCallback('comment', "Building Zip file from $source"));
         $iterator = app()->make(ArchiveBuilderIterator::class, ['path' => $source]);
-        $this->pharData->buildFromIterator($iterator, $source);
+        $basePathLength = strlen($source) + 1; // +1 for the trailing slash
 
-        Event::dispatch(new CommandClassCallback('comment', 'Gzip Tar file'));
-        $this->pharData->compress(Phar::GZ);
-        unset($this->pharData);
-        Event::dispatch(new CommandClassCallback('comment', "Deleting non-compressed Tar file: $this->tarArchivePath"));
-        try {
-            PharData::unlinkArchive($this->tarArchivePath);
-        } catch (PharException $e) {
-            if ($this->archivingTool !== PharDataFake::class) {
-                // @codeCoverageIgnoreStart
-                throw $e;
-                // @codeCoverageIgnoreEnd
+        foreach ($iterator as $file) {
+            if ($file->isDir()) {
+                continue; // Skip directories, they'll be created automatically
+            }
+
+            $filePath = $file->getPathname();
+            $relativePath = substr($filePath, $basePathLength);
+            if ($this->zip->addFile($filePath, $relativePath) === false) {
+                throw new RuntimeException('Failed to add file to zip: ' . $filePath);
             }
         }
+        if ($this->zip->close() === false) {
+            throw new RuntimeException('Failed to close zip file');
+        }
+
         Event::dispatch(new CommandClassCallback('success', 'Backup created successfully'));
 
         return $this;
