@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Process;
 use Mockery\MockInterface;
 use Pixelated\Streamline\Actions\GetAvailableVersions;
 use Pixelated\Streamline\Enums\CacheKeysEnum;
+use ZipArchive;
 
 trait UpdateCommandCommon
 {
@@ -76,6 +77,18 @@ trait UpdateCommandCommon
             GetAvailableVersions::class,
             fn (MockInterface $mock) => $mock->shouldReceive('execute')->andReturn($returnedVersion)
         );
+
+        return $this;
+    }
+
+    public function mockZipArchive(): self
+    {
+        test()->mock(ZipArchive::class, function (MockInterface $mock) {
+            $mock->shouldReceive('open')->andReturn(true);
+            $mock->shouldReceive('extractTo')->andReturn(true);
+            $mock->shouldReceive('addFile')->andReturn(true);
+            $mock->shouldReceive('close')->andReturn(true);
+        });
 
         return $this;
     }

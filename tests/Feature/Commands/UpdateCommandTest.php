@@ -10,7 +10,8 @@ pest()->uses(UpdateCommandCommon::class, HttpMock::class);
 it('should run an update with no parameters', function () {
     $this->mockFile()
         ->mockProcess()
-        ->mockCache(['v2.8.1', 'v2.0.0', 'v1.0.0'], 'v2.8.1');
+        ->mockCache(['v2.8.1', 'v2.0.0', 'v1.0.0'], 'v2.8.1')
+        ->mockZipArchive();
 
     $this->mockGetWebArchive();
 
@@ -30,7 +31,8 @@ it('should run an update with a specific version', function () {
     $this->mockFile()
         ->mockProcess()
         ->mockCache(['v2.8.1', 'v2.0.0', 'v1.0.0'], 'v2.0.0')
-        ->mockGetAvailableVersions();
+        ->mockGetAvailableVersions()
+        ->mockZipArchive();
     File::shouldReceive('deleteDirectory');
 
     $this->mockGetWebArchive();
@@ -81,16 +83,17 @@ it('should run an update but GitHub throws a connection error', function () {
         ->assertExitCode(1);
 });
 
-it('should run an update requesting a version but it is older than the installed version and then throw an error', function () {
-    $this->mockProcess()
-        ->mockCache(['v2.0.0', 'v1.0.0'])
-        ->mockGetAvailableVersions();
-    $this->mockHttpReleases();
+it('should run an update requesting a version but it is older than the installed version and then throw an error',
+    function () {
+        $this->mockProcess()
+            ->mockCache(['v2.0.0', 'v1.0.0'])
+            ->mockGetAvailableVersions();
+        $this->mockHttpReleases();
 
-    $this->artisan('streamline:run-update --install-version=v1.0.0')
-        ->expectsOutputToContain('Version v1.0.0 is not greater than the current version (v2.0.0)')
-        ->assertExitCode(1);
-});
+        $this->artisan('streamline:run-update --install-version=v1.0.0')
+            ->expectsOutputToContain('Version v1.0.0 is not greater than the current version (v2.0.0)')
+            ->assertExitCode(1);
+    });
 
 it('should run an update requesting an invalid version and return an error', function () {
     $this->mockProcess()
@@ -116,7 +119,8 @@ it('should run a "forced" update on an existing version', function () {
     $this->mockFile()
         ->mockProcess()
         ->mockCache(['v2.0.0', 'v1.0.0'])
-        ->mockGetAvailableVersions();
+        ->mockGetAvailableVersions()
+        ->mockZipArchive();
     File::shouldReceive('deleteDirectory');
 
     $this->mockGetWebArchive();
@@ -129,7 +133,8 @@ it('should run a "forced" update on the most recent', function () {
     $this->mockFile()
         ->mockProcess()
         ->mockCache(['v2.0.0', 'v1.0.0'], 'v2.0.0')
-        ->mockGetAvailableVersions();
+        ->mockGetAvailableVersions()
+        ->mockZipArchive();
     File::shouldReceive('deleteDirectory');
 
     Config::set('streamline.installed_version', 'v2.0.0');
