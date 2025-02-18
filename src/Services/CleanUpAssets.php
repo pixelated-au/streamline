@@ -51,7 +51,7 @@ class CleanUpAssets
         }
 
         $assets = $this->filter();
-        Event::dispatch(new CommandClassCallback('info', 'DELETING EXPIRED ASSETS: '.($assets->isEmpty() ? 'No matching assets found. Likely because none meet the minimum amount of revisions' : $assets->implode(', '))));
+        Event::dispatch(new CommandClassCallback('info', 'DELETING EXPIRED ASSETS: ' . ($assets->isEmpty() ? 'No matching assets found. Likely because none meet the minimum amount of revisions' : $assets->implode(', '))));
         $result = $this->filesystem->delete($assets->toArray());
 
         if (! $result) {

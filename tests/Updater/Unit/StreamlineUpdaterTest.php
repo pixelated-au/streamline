@@ -2,7 +2,7 @@
 
 use org\bovigo\vfs\vfsStream;
 
-beforeAll(fn () => putenv('IS_TESTING='.StreamlineUpdater::TESTING_ON));
+beforeAll(fn () => putenv('IS_TESTING=' . StreamlineUpdater::TESTING_ON));
 
 it('will fail when it is missing environment variables', function () {
     $this->expectException(InvalidArgumentException::class);
@@ -42,7 +42,7 @@ it('can find the composer autoload file in a different directory', function () {
     setEnv(['LARAVEL_BASE_PATH' => $project->url(), 'IS_TESTING' => StreamlineUpdater::TESTING_SKIP_REQUIRE_AUTOLOAD]);
     $updater = new StreamlineUpdater;
 
-    expect($updater->autoloadFile())->toBe($vendor->url().'/autoload.php');
+    expect($updater->autoloadFile())->toBe($vendor->url() . '/autoload.php');
 });
 
 it('throws an error when it cannot find composer.json file', function () {
@@ -59,7 +59,7 @@ it('throws an error when the composer.json file is invalid', function () {
     $root->addChild($composerFile);
 
     $this->expectException(RuntimeException::class);
-    $this->expectExceptionMessage('The file '.$root->url().'/composer.json file contains invalid JSON');
+    $this->expectExceptionMessage('The file ' . $root->url() . '/composer.json file contains invalid JSON');
 
     setEnv(['LARAVEL_BASE_PATH' => $root->url(), 'IS_TESTING' => StreamlineUpdater::TESTING_SKIP_REQUIRE_AUTOLOAD]);
     (new StreamlineUpdater)->autoloadFile();

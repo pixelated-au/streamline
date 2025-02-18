@@ -33,7 +33,7 @@ class VerifyVersion implements Pipe
             }
         } elseif (version_compare($nextVersion, config('streamline.installed_version'), '<=')) {
             $message = "You are currently using the latest version ($nextVersion)"
-                .($forceUpdate ? ' (Forced update)' : '');
+                . ($forceUpdate ? ' (Forced update)' : '');
             Event::dispatch(new CommandClassCallback('warn', $message));
             if (! $forceUpdate) {
                 return null;

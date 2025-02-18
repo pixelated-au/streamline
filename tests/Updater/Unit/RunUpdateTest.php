@@ -308,8 +308,8 @@ it('outputs a warning when a protected path is not found', function () {
     ]);
 
     $this->expectOutputString(
-        "Preserving protected paths...\n".
-        "Warning: Protected path not found: $deploymentPath/non_existent_path\n".
+        "Preserving protected paths...\n" .
+        "Warning: Protected path not found: $deploymentPath/non_existent_path\n" .
         "Protected paths preserved successfully.\n"
     );
 
@@ -366,7 +366,7 @@ it('throws an exception when the destination directory is not writable during fi
 
     $runUpdate = runUpdateClassFactory();
     $closure = fn (string $source, string $destination) => $this->copyFile($source, $destination);
-    $closure->call($runUpdate, $sourceFile->url(), $destinationDir->url().'/'.$sourceFile->getName());
+    $closure->call($runUpdate, $sourceFile->url(), $destinationDir->url() . '/' . $sourceFile->getName());
     $this->assertTrue(true);
 });
 
@@ -406,7 +406,7 @@ function assertDirectoriesEqual($expected, $actual): void
 
     foreach ($expectedPaths as $path => $expectedFile) {
         $relativePath = substr($path, strlen($expected->url()));
-        $actualPath = $actual->url().$relativePath;
+        $actualPath = $actual->url() . $relativePath;
 
         expect(file_exists($actualPath))->toBeTrue();
 

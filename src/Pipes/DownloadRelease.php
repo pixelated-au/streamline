@@ -15,7 +15,7 @@ class DownloadRelease implements Pipe
     {
         $versionToInstall = $builder->getNextAvailableRepositoryVersion();
         $downloadedArchiveFileName = config('streamline.release_archive_file_name');
-        $downloadedArchivePath = $builder->getWorkTempDir().'/'.$downloadedArchiveFileName;
+        $downloadedArchivePath = $builder->getWorkTempDir() . '/' . $downloadedArchiveFileName;
 
         Event::dispatch(new CommandClassCallback('info', "Downloading archive for version $versionToInstall"));
         GitHubApi::withWebUrl("releases/download/$versionToInstall/$downloadedArchiveFileName")

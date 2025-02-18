@@ -25,7 +25,7 @@ class CheckCommand extends Command
 
         try {
             $nextVersion = $availableVersions->execute($this->option('force'));
-            $this->info('Next available version: '.$nextVersion);
+            $this->info('Next available version: ' . $nextVersion);
         } catch (RuntimeException $e) {
             $this->error($e->getMessage());
 

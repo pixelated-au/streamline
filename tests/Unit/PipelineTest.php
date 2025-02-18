@@ -21,7 +21,7 @@ it('can handle pipe exceptions properly', closure: function () {
             throw new RuntimeException('Test exception');
         }])
         ->catch(function (Throwable $e) {
-            echo 'Caught exception: '.$e->getMessage();
+            echo 'Caught exception: ' . $e->getMessage();
 
             return false;
         })
@@ -48,7 +48,7 @@ it('can handle "then" exceptions properly', closure: function () {
     $result = (new Pipeline(new UpdateBuilder))
         ->through([])
         ->catch(function (Throwable $e) {
-            echo 'Caught exception: '.$e->getMessage();
+            echo 'Caught exception: ' . $e->getMessage();
 
             return false;
         })
@@ -76,7 +76,7 @@ it('will throw an exception but still run the finally function', closure: functi
     $result = (new Pipeline(new UpdateBuilder))
         ->through([fn () => throw new RuntimeException('Test finally exception')])
         ->catch(function (Throwable $e) {
-            echo 'Caught exception: '.$e->getMessage();
+            echo 'Caught exception: ' . $e->getMessage();
 
             return false;
         })

@@ -19,13 +19,13 @@ function fakeOutputStyle(): void
 
 function workbench_path(): string
 {
-    return getcwd().'/workbench';
+    return getcwd() . '/workbench';
 }
 
 function laravel_path(string $path = ''): string
 {
     /** @noinspection PhpPossiblePolymorphicInvocationInspection */
-    return rtrim(test()->deploymentPath()."/$path", '/');
+    return rtrim(test()->deploymentPath() . "/$path", '/');
 }
 
 function working_path(string $path = ''): string
@@ -59,7 +59,7 @@ function deleteDirectory(string $directory): bool
     $files = array_diff(scandir($directory), ['.', '..']);
 
     foreach ($files as $file) {
-        $path = $directory.'/'.$file;
+        $path = $directory . '/' . $file;
 
         // Recursively delete directories
         if (is_dir($path)) {

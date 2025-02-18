@@ -22,8 +22,8 @@ class CheckAvailableVersions
             $nextVersion = $availableVersions[0] ?? null;
 
             if (! $nextVersion) {
-                throw new RuntimeException("Well, this isn't expected! The query to the GitHub repository".
-                    ' appeared successful but no versions have been stored. Please check your Laravel cache or'.
+                throw new RuntimeException("Well, this isn't expected! The query to the GitHub repository" .
+                    ' appeared successful but no versions have been stored. Please check your Laravel cache or' .
                     ' confirm the repository settings are correct in /config/streamline.php');
             }
             Cache::forever(CacheKeysEnum::NEXT_AVAILABLE_VERSION->value, $nextVersion);

@@ -148,14 +148,14 @@ class GitHubApi
 
     public function withApiUrl(string $path): static
     {
-        $this->url = self::GITHUB_API_URL.'/'.$this->githubRepo.'/'.$this->normalisePath($path);
+        $this->url = self::GITHUB_API_URL . '/' . $this->githubRepo . '/' . $this->normalisePath($path);
 
         return $this;
     }
 
     public function withWebUrl(string $path): static
     {
-        $this->url = self::GITHUB_WEB_URL.'/'.$this->githubRepo.'/'.$this->normalisePath($path);
+        $this->url = self::GITHUB_WEB_URL . '/' . $this->githubRepo . '/' . $this->normalisePath($path);
 
         return $this;
     }
@@ -176,7 +176,7 @@ class GitHubApi
     {
         $url = $this->url;
         if (! empty($this->queryParams)) {
-            $url .= '?'.http_build_query($this->queryParams);
+            $url .= '?' . http_build_query($this->queryParams);
         }
 
         return $url;

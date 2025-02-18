@@ -43,7 +43,7 @@ class StreamlineServiceProvider extends PackageServiceProvider implements Deferr
             fn (Application $app) => new CreateArchive(
                 sourceFolder: base_path(),
                 destinationPath: config('streamline.backup_dir'),
-                filename: 'backup-'.date('Ymd_His').'.tgz',
+                filename: 'backup-' . date('Ymd_His') . '.tgz',
             )
         );
 
@@ -70,8 +70,8 @@ class StreamlineServiceProvider extends PackageServiceProvider implements Deferr
 
     protected function getVersionInfo(): string
     {
-        return '<fg=bright-magenta>'.
-            InstalledVersions::getPrettyVersion('pixelated-au/streamline').
+        return '<fg=bright-magenta>' .
+            InstalledVersions::getPrettyVersion('pixelated-au/streamline') .
             '</>';
     }
 

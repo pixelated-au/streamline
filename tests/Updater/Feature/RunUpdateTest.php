@@ -28,7 +28,7 @@ it('can run an update using actual filesystem actions and deletes the backup dir
         fn (Application $app) => new CreateArchive(
             sourceFolder: $disk->path(''),
             destinationPath: config('streamline.backup_dir'),
-            filename: 'backup-'.date('Ymd_His').'.tgz',
+            filename: 'backup-' . date('Ymd_His') . '.tgz',
         )
     );
 
@@ -51,17 +51,17 @@ it('can run an update using actual filesystem actions and deletes the backup dir
 
     $output = [
         'Starting update',
-        'Copying frontend assets. From: '.$disk->path('laravel/public/build').' to: '.$tempDisk->path('unpacked/public/build'),
-        'Chmod file: '.$tempDisk->path('/unpacked/public/build/assets/text-file/existing_file.txt').' to 420',
+        'Copying frontend assets. From: ' . $disk->path('laravel/public/build') . ' to: ' . $tempDisk->path('unpacked/public/build'),
+        'Chmod file: ' . $tempDisk->path('/unpacked/public/build/assets/text-file/existing_file.txt') . ' to 420',
         'Preserving protected paths...',
-        'Copied: '.$disk->path('laravel/.env').' to '.$tempDisk->path('unpacked/.env'),
+        'Copied: ' . $disk->path('laravel/.env') . ' to ' . $tempDisk->path('unpacked/.env'),
         'Protected paths preserved successfully.',
-        'Moving '.$disk->path('laravel').' to '.$disk->path('laravel_old'),
-        'Moving '.$tempDisk->path('unpacked').' to '.$disk->path('laravel'),
-        'Deleting of '.$disk->path('laravel_old')." as it's no longer needed",
+        'Moving ' . $disk->path('laravel') . ' to ' . $disk->path('laravel_old'),
+        'Moving ' . $tempDisk->path('unpacked') . ' to ' . $disk->path('laravel'),
+        'Deleting of ' . $disk->path('laravel_old') . " as it's no longer needed",
         'Setting version number in .env file to: 1.0.0',
         'Version number updated successfully in .env file',
-        'Resetting the CWD to '.$disk->path('laravel'),
+        'Resetting the CWD to ' . $disk->path('laravel'),
         'Running optimisation tasks...',
         'Executing: php artisan optimize:clear',
         'Optimisation tasks completed.',
