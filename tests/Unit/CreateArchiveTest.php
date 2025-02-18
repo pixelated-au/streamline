@@ -12,7 +12,7 @@ it('should create a .tar.gz file with correct structure and contents',
 
         $sourceFolder = 'source';
         $destinationFolder = 'destination';
-        $filename = 'test_archive.tar';
+        $filename = 'test_archive.zip';
 
         // Define expected file structure and contents
         $expectedFiles = [
@@ -33,7 +33,7 @@ it('should create a .tar.gz file with correct structure and contents',
         foreach ($expectedFiles as $file => $dir) {
             $fullDir = "$sourceFolder$dir";
             Storage::makeDirectory($fullDir);
-            Storage::put($fullDir.'/'.$file, "Content of $file");
+            Storage::put($fullDir . '/' . $file, "Content of $file");
         }
 
         Config::set('fake-production-environment', true);
@@ -44,32 +44,44 @@ it('should create a .tar.gz file with correct structure and contents',
         );
         $createArchive->create();
 
-        $expectedTarPath = "$destinationFolder/$filename";
-        Storage::assertExists("$expectedTarPath.gz");
+        $expectedZipPath = "$destinationFolder/$filename";
+        Storage::assertExists($expectedZipPath);
 
-        $expectedGzPath = "$destinationFolder/$filename.gz";
-        Storage::assertExists($expectedGzPath);
-        Storage::assertMissing($expectedTarPath);
+        $zipFile = new ZipArchive;
+        $zipFile->open(Storage::path($expectedZipPath));
 
-        $extractPath = Storage::path("$destinationFolder/extracted");
+        // Iterate through the ZIP archive
+        for ($i = 0; $i < $zipFile->numFiles; $i++) {
+            $stat = $zipFile->statIndex($i);
+            $filename = $stat['name'];
 
-        $decoded = gzdecode(Storage::read("$expectedTarPath.gz"));
-        Storage::write($expectedTarPath, $decoded);
-        $tarPhar = new PharData(Storage::path($expectedTarPath));
-        $tarPhar->extractTo($extractPath, null, true); // true to overwrite
-        unset($tarPhar);
+            // Check if the file exists in our expected files
+            $found = false;
+            foreach ($expectedFiles as $expectedFile => $expectedDir) {
+                if ($filename === ltrim($expectedDir . '/' . $expectedFile, '/')) {
+                    $found = true;
 
-        foreach ($expectedFiles as $file => $dir) {
-            $fullPath = $extractPath.$dir.'/'.$file;
-            // Assert file exists
-            expect(file_exists($fullPath))->toBeTrue("File $dir/$file does not exist in the archive.");
+                    // Assert file content
+                    $actualContent = $zipFile->getFromIndex($i);
+                    $expectedContent = "Content of $expectedFile";
+                    expect($actualContent)->toBe($expectedContent, "Content mismatch for file $filename");
 
-            // Assert file content
-            $actualContent = file_get_contents($fullPath);
-            $expectedContent = "Content of $file";
-            expect($actualContent)->toBe($expectedContent, "Content mismatch for file $dir/$file")
-                ->and($extractPath.$dir)->toBeDirectory("$dir directory does not exist in the archive.");
+                    // Assert directory structure
+                    $dirPath = dirname($filename);
+                    expect($dirPath)->toBe(ltrim($expectedDir, '/'), "Directory structure mismatch for $filename");
+
+                    break;
+                }
+            }
+
+            expect($found)->toBeTrue("Unexpected file $filename found in the archive");
         }
+
+        // Assert that all expected files were found
+        expect(count($expectedFiles))->toBe($zipFile->numFiles, "Number of files in archive doesn't match expected");
+
+        $zipFile->close();
+
         Storage::deleteDirectory($sourceFolder);
         Storage::deleteDirectory($destinationFolder);
     });
