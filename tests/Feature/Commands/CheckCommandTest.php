@@ -18,7 +18,7 @@ it('checks for available updates without a remote request', function () {
 });
 
 it('checks for available updates with a remote request', function () {
-    $this->setDefaults(['nextAvailableVersion' => null])
+    $this->setDefaults(['nextAvailableVersion' => null, 'availableVersions' => ['v2.8.7b', 'v2.8.6', 'v2.8.5']])
         ->mockCache();
     $this->mockHttpReleases();
 
@@ -30,12 +30,13 @@ it('checks for available updates with a remote request', function () {
     );
 
     $this->artisan('streamline:check')
-        ->expectsOutputToContain('Next available version: v2.8.7b')
+        ->expectsOutputToContain('Next available version: v2.8.6')
         ->assertExitCode(0);
 });
 
 it('checks for available updates forcing a remote request', function () {
-    $this->mockCache();
+    $this->setDefaults(['nextAvailableVersion' => '2.8.6', 'availableVersions' => ['v2.8.7b', 'v2.8.6', 'v2.8.5']])
+        ->mockCache();
     $this->mockHttpReleases();
 
     $this->instance(Artisan::class, fn (MockInterface $mock) => $mock
@@ -46,7 +47,7 @@ it('checks for available updates forcing a remote request', function () {
     );
 
     $this->artisan('streamline:check --force')
-        ->expectsOutputToContain('Next available version: v2.8.7b')
+        ->expectsOutputToContain('Next available version: v2.8.6')
         ->assertExitCode(0);
 });
 
