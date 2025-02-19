@@ -12,9 +12,9 @@ it('should set the version to install based on the result of checkAvailableVersi
     $mockCheckAvailableVersions = Mockery::mock(DoCheck::class);
     $mockCheckAvailableVersions->shouldReceive('execute')->once()->with(false)->andReturn('2.0.0');
 
-    $checkAvailableVersions = new GetNextAvailableReleaseVersion($mockCheckAvailableVersions);
+    $nextAvailableReleaseVersion = new GetNextAvailableReleaseVersion($mockCheckAvailableVersions);
 
-    $result = $checkAvailableVersions($mockBuilder);
+    $result = $nextAvailableReleaseVersion($mockBuilder);
 
     expect($result)->toBe($mockBuilder);
 });
@@ -30,10 +30,10 @@ it('should set different version strings based on checkAvailableVersions result'
     $mockCheckAvailableVersions = Mockery::mock(DoCheck::class);
     $mockCheckAvailableVersions->shouldReceive('execute')->andReturn(...$versions);
 
-    $checkAvailableVersions = new GetNextAvailableReleaseVersion($mockCheckAvailableVersions);
+    $nextAvailableReleaseVersion = new GetNextAvailableReleaseVersion($mockCheckAvailableVersions);
 
     foreach ($versions as $version) {
-        $result = $checkAvailableVersions($mockBuilder);
+        $result = $nextAvailableReleaseVersion($mockBuilder);
         expect($result)->toBe($mockBuilder)
             ->and($mockBuilder->getNextAvailableRepositoryVersion())->toBe($version);
     }
