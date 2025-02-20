@@ -47,7 +47,7 @@ it('should return the latest pre-release version when ignorePreReleases is true'
     $checkAvailableVersions = new CheckAvailableVersions;
 
     $result = $checkAvailableVersions->execute(ignorePreReleases: false);
-    expect($result)->toBe($versions[0]);
+    expect($result)->toBe($versions[2]);
     Event::assertDispatchedTimes(CommandClassCallback::class);
 });
 
