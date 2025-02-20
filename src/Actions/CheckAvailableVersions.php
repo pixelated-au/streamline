@@ -2,6 +2,7 @@
 
 namespace Pixelated\Streamline\Actions;
 
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
@@ -11,15 +12,16 @@ use RuntimeException;
 
 class CheckAvailableVersions
 {
-    public function execute(bool $force = false): string
+    public function execute(bool $force = false, bool $ignorePreReleases = true): string
     {
         $nextVersion = Cache::get(CacheKeysEnum::NEXT_AVAILABLE_VERSION->value);
         if (! $nextVersion || $force) {
             Event::dispatch(new CommandClassCallback('warn', 'Checking for available versions...'));
-            Event::dispatch(new CommandClassCallback('call', 'streamline:list'));
+            Artisan::call('streamline:list');
+            //            Event::dispatch(new CommandClassCallback('call', 'streamline:list'));
 
             $availableVersions = Cache::get(CacheKeysEnum::AVAILABLE_VERSIONS->value);
-            $nextVersion = $this->getNextVersion($availableVersions);
+            $nextVersion = $this->getNextVersion($availableVersions, $ignorePreReleases);
 
             if (! $nextVersion) {
                 throw new RuntimeException("Well, this isn't expected! The query to the GitHub repository" .
@@ -32,10 +34,10 @@ class CheckAvailableVersions
         return $nextVersion;
     }
 
-    protected function getNextVersion(mixed $availableVersions): mixed
+    protected function getNextVersion(mixed $availableVersions, bool $ignorePreReleases): mixed
     {
         $nextVersion = $availableVersions[0] ?? null;
-        if (Str::endsWith($nextVersion, ['a', 'b', 'alpha', 'beta'])) {
+        if ($ignorePreReleases || Str::endsWith($nextVersion, ['a', 'b', 'alpha', 'beta'])) {
             // iterate $availableVersions until we find a non-prerelease version
             foreach ($availableVersions as $version) {
                 if (! Str::endsWith($version, ['a', 'b', 'alpha', 'beta'])) {
