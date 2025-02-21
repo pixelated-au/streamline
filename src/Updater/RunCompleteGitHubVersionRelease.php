@@ -101,11 +101,11 @@ readonly class RunCompleteGitHubVersionRelease
 
     protected function copyAsset(string $realSourcePath, string $realDestPath): void
     {
-        if (! is_readable($realSourcePath)) {
+        if (!is_readable($realSourcePath)) {
             throw new RuntimeException("Error: Source file is not readable: $realSourcePath");
         }
 
-        if (! copy($realSourcePath, $realDestPath)) {
+        if (!copy($realSourcePath, $realDestPath)) {
             throw new RuntimeException("Error: Failed to copy file: $realSourcePath to $realDestPath");
         }
         $this->output("Chmod file: $realDestPath to $this->filePermission");
@@ -128,7 +128,7 @@ readonly class RunCompleteGitHubVersionRelease
             subject: $contents
         );
 
-        if (! file_put_contents($envFilePath, $contents)) {
+        if (!file_put_contents($envFilePath, $contents)) {
             throw new RuntimeException("Error: Failed to update version number in Laravel's .env file");
         }
 
@@ -172,10 +172,10 @@ readonly class RunCompleteGitHubVersionRelease
 
     protected function validateDirectoriesExist(string $liveAssetsDir, string $tempWorkingDir): void
     {
-        if (! file_exists($this->laravelBasePath)) {
+        if (!file_exists($this->laravelBasePath)) {
             throw new RuntimeException("Error: Release directory '$this->laravelBasePath' does not exist! This should be the directory that contains your application deployment.");
         }
-        if (! $liveAssetsDir || ! is_dir($liveAssetsDir)) {
+        if (!$liveAssetsDir || !is_dir($liveAssetsDir)) {
             throw new RuntimeException("Error: Invalid old assets directory: $liveAssetsDir");
         }
         $this->makeDir($tempWorkingDir, 'Error: Could not create assets directory: %s');
@@ -222,11 +222,11 @@ readonly class RunCompleteGitHubVersionRelease
 
     protected function copyFile(string $source, string $destination): void
     {
-        if (! file_exists(dirname($destination))) {
+        if (!file_exists(dirname($destination))) {
             $this->makeDir(dirname($destination));
         }
 
-        if (! @copy($source, $destination)) {
+        if (!@copy($source, $destination)) {
             throw new RuntimeException("Failed to copy file: $source to $destination");
         }
 
@@ -240,14 +240,14 @@ readonly class RunCompleteGitHubVersionRelease
      */
     protected function deleteDirectory($directory, $preserve = false): bool
     {
-        if (! file_exists($directory)) {
+        if (!file_exists($directory)) {
             return true; // Directory does not exist. No need to delete it.
         }
         $items = new FilesystemIterator($directory);
 
         /** @var \SplFileInfo $item */
         foreach ($items as $item) {
-            if ($item->isDir() && ! $item->isLink()) {
+            if ($item->isDir() && !$item->isLink()) {
                 $this->deleteDirectory($item->getPathname());
 
                 continue;
@@ -258,7 +258,7 @@ readonly class RunCompleteGitHubVersionRelease
 
         unset($items);
 
-        if (! $preserve) {
+        if (!$preserve) {
             @rmdir($directory);
         }
 
@@ -278,7 +278,7 @@ readonly class RunCompleteGitHubVersionRelease
 
     public function makeDir(string $targetPath, string $errorMessage = 'Directory "%s" was not created'): void
     {
-        if (! @is_dir($targetPath) && ! @mkdir($targetPath, $this->dirPermission, true) && ! @is_dir($targetPath)) {
+        if (!@is_dir($targetPath) && !@mkdir($targetPath, $this->dirPermission, true) && !@is_dir($targetPath)) {
             throw new RuntimeException(sprintf($errorMessage, $targetPath));
         }
     }

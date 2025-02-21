@@ -77,12 +77,12 @@ class Pipeline
         return function ($stack, $pipe) {
             return function ($passable) use ($stack, $pipe) {
                 try {
-                    if (! is_callable($pipe)) {
+                    if (!is_callable($pipe)) {
                         $pipe = app()->make($pipe);
                     }
                     $result = $pipe($passable);
 
-                    if (! $result instanceof UpdateBuilderInterface) {
+                    if (!$result instanceof UpdateBuilderInterface) {
                         return ($this->destination)($result);
                     }
 

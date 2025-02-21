@@ -107,5 +107,5 @@ it('should not add the auth token to the request when not provided', function ()
 
     GitHubApi::withApiUrl('test')->get();
 
-    Http::assertSent(fn (Request $request) => ! $request->hasHeader('Authorization'));
+    Http::assertSent(fn (Request $request) => !$request->hasHeader('Authorization'));
 });

@@ -22,7 +22,7 @@ class ArchiveBuilderIterator extends RecursiveIteratorIterator
             {
                 $current = $this->current();
 
-                return ! $current->isLink();
+                return !$current->isLink();
             }
         };
 

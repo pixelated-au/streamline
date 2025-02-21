@@ -73,7 +73,7 @@ class StreamlineUpdater
     private function env(string $name): string
     {
         $val = getenv($name, true);
-        if (! $val) {
+        if (!$val) {
             $this->envIssues[] = "Environment variable $name needs to be set!";
         }
 
@@ -125,7 +125,7 @@ class StreamlineUpdater
     public function autoloadFile(): string
     {
         $composerJsonPath = rtrim($this->laravelBasePath, '/') . '/composer.json';
-        if (! file_exists($composerJsonPath)) {
+        if (!file_exists($composerJsonPath)) {
             throw new RuntimeException("Cannot locate the base composer file ($composerJsonPath) for autoloading");
         }
 

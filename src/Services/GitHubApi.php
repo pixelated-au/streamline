@@ -124,7 +124,7 @@ class GitHubApi
 
     private function checkHasUrl(): void
     {
-        if (! isset($this->url) || ! $this->url) {
+        if (!isset($this->url) || !$this->url) {
             throw new RuntimeException('Error: No URL set. Set it via getWebUrl() or getApiUrl()');
         }
     }
@@ -175,7 +175,7 @@ class GitHubApi
     protected function buildUrl(): string
     {
         $url = $this->url;
-        if (! empty($this->queryParams)) {
+        if (!empty($this->queryParams)) {
             $url .= '?' . http_build_query($this->queryParams);
         }
 
@@ -194,7 +194,7 @@ class GitHubApi
      */
     private function extractLinkPageNumber(?string $linkHeader, LinkHeader $type): ?int
     {
-        if (! $linkHeader) {
+        if (!$linkHeader) {
             return null;
         }
 
@@ -214,7 +214,7 @@ class GitHubApi
 
     public function setProgressMessage(): void
     {
-        if (! $this->progressMeter) {
+        if (!$this->progressMeter) {
             return;
         }
         $message = $this->defaultProgressMessage;

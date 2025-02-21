@@ -16,9 +16,9 @@ class MakeTempDir implements Pipe
         $tempDir = $builder->getWorkTempDir();
 
         Event::dispatch(new CommandClassCallback('comment', "Creating temporary directory $tempDir"));
-        if (! File::exists($tempDir)
-            && ! File::makeDirectory(path: $tempDir, recursive: true)
-            && ! File::isDirectory($tempDir)) {
+        if (!File::exists($tempDir)
+            && !File::makeDirectory(path: $tempDir, recursive: true)
+            && !File::isDirectory($tempDir)) {
             throw new RuntimeException("Working directory '$tempDir' could not be created");
         }
 

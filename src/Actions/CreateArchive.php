@@ -33,7 +33,7 @@ class CreateArchive
     {
         Event::dispatch(new CommandClassCallback('info', "Backing up the current installation to $this->gzipPath"));
         // check that the source folder exists
-        if (! File::exists($this->sourceFolder)) {
+        if (!File::exists($this->sourceFolder)) {
             throw new RuntimeException("Source folder '$this->sourceFolder' does not exist.");
         }
 
@@ -46,14 +46,14 @@ class CreateArchive
     protected function checkDestinationPath(): void
     {
         if (
-            ! File::isDirectory($this->destinationPath) &&
-            ! File::makeDirectory($this->destinationPath, 0755, true) &&
-            ! File::isDirectory($this->destinationPath)) {
+            !File::isDirectory($this->destinationPath) &&
+            !File::makeDirectory($this->destinationPath, 0755, true) &&
+            !File::isDirectory($this->destinationPath)) {
             throw new RuntimeException(sprintf('Directory "%s" was not created', $this->destinationPath));
         }
 
         // check that the destination path is writable
-        if (! File::isWritable($this->destinationPath)) {
+        if (!File::isWritable($this->destinationPath)) {
             throw new RuntimeException("Destination path '$this->destinationPath' is not writable.");
         }
 

@@ -30,9 +30,9 @@ function laravel_path(string $path = ''): string
 
 function working_path(string $path = ''): string
 {
-    if (! file_exists(laravel_path('mock_deployment'))) {
+    if (!file_exists(laravel_path('mock_deployment'))) {
         /** @noinspection NestedPositiveIfStatementsInspection */
-        if (! mkdir($concurrentDirectory = laravel_path('mock_deployment')) && ! is_dir($concurrentDirectory)) {
+        if (!mkdir($concurrentDirectory = laravel_path('mock_deployment')) && !is_dir($concurrentDirectory)) {
             throw new RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
         }
     }
@@ -46,12 +46,12 @@ function deleteDirectory(string $directory): bool
     // Normalize the directory path and ensure it exists
     $directory = rtrim($directory, '/');
 
-    if (! file_exists($directory)) {
+    if (!file_exists($directory)) {
         return false;
     }
 
     // Ensure the path is a directory
-    if (! is_dir($directory)) {
+    if (!is_dir($directory)) {
         return false;
     }
 
@@ -64,13 +64,13 @@ function deleteDirectory(string $directory): bool
         // Recursively delete directories
         if (is_dir($path)) {
             deleteDirectory($path);
-        } elseif (! unlink($path)) {
+        } elseif (!unlink($path)) {
             return false;
         }
     }
 
     // Remove the now-empty directory
-    if (! rmdir($directory)) {
+    if (!rmdir($directory)) {
         return false;
     }
 

@@ -37,7 +37,7 @@ class RequiredFunctionsCheck
         }
 
         // Check if function exists and is not in disabled functions
-        if (! function_exists('system')) {
+        if (!function_exists('system')) {
             return 'The function_exists("system") check returns false';
         }
 

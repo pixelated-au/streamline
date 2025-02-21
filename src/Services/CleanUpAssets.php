@@ -54,7 +54,7 @@ class CleanUpAssets
         Event::dispatch(new CommandClassCallback('info', 'DELETING EXPIRED ASSETS: ' . ($assets->isEmpty() ? 'No matching assets found. Likely because none meet the minimum amount of revisions' : $assets->implode(', '))));
         $result = $this->filesystem->delete($assets->toArray());
 
-        if (! $result) {
+        if (!$result) {
             throw new RuntimeException('Error: Failed to clean out redundant front-end build assets. Could not execute the cleanup command.');
         }
     }
@@ -74,7 +74,7 @@ class CleanUpAssets
                     callback: static fn (string $ext) => Str::of($ext)
                         // Prefix each extension with a dot if it doesn't already have one
                         ->when(
-                            value: fn (Stringable $ext) => ! $ext->startsWith('.'),
+                            value: fn (Stringable $ext) => !$ext->startsWith('.'),
                             callback: fn (Stringable $ext) => $ext->prepend('.')
                         )
                 )

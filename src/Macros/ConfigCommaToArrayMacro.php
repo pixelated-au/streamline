@@ -21,7 +21,7 @@ class ConfigCommaToArrayMacro
                     return Arr::map(explode(',', $result), static fn ($value) => trim($value));
                 }
 
-                throw_if(! is_array($result), exception: 'Invalid value (' . var_export($result, true) . ") for $key. Expected a comma-separated list or an array.");
+                throw_if(!is_array($result), exception: 'Invalid value (' . var_export($result, true) . ") for $key. Expected a comma-separated list or an array.");
 
                 return $result;
             });
