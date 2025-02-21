@@ -25,7 +25,7 @@ it('should return the latest non-prerelease version', function () {
 
     $result = $checkAvailableVersions->execute();
     expect($result)->toBe($versions[2]);
-    Event::assertDispatchedTimes(CommandClassCallback::class);
+    Event::assertNotDispatched(CommandClassCallback::class);
 });
 
 it('should return the latest pre-release version when ignorePreReleases is true', function () {
@@ -48,7 +48,7 @@ it('should return the latest pre-release version when ignorePreReleases is true'
 
     $result = $checkAvailableVersions->execute(ignorePreReleases: false);
     expect($result)->toBe($versions[2]);
-    Event::assertDispatchedTimes(CommandClassCallback::class);
+    Event::assertNotDispatched(CommandClassCallback::class);
 });
 
 it('should refresh all available versions when there is an existing "next version" when force is used', function () {
