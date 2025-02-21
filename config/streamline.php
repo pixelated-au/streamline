@@ -2,6 +2,7 @@
 
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 use Pixelated\Streamline\Pipes\BackupCurrentInstallation;
+use Pixelated\Streamline\Pipes\Cleanup;
 use Pixelated\Streamline\Pipes\DownloadRelease;
 use Pixelated\Streamline\Pipes\GetNextAvailableReleaseVersion;
 use Pixelated\Streamline\Pipes\MakeTempDir;
@@ -327,7 +328,7 @@ return [
     */
 
     'cleanup' => static function (UpdateBuilderInterface $builder) {
-        //        app()->make(Cleanup::class)->__invoke($builder);
+                app()->make(Cleanup::class)->__invoke($builder);
     },
 
     /*
