@@ -14,22 +14,19 @@ class CheckAvailableVersions
 {
     public function execute(bool $force = false, bool $ignorePreReleases = true): string
     {
-        $nextVersion = Cache::get(CacheKeysEnum::NEXT_AVAILABLE_VERSION->value);
-        if (! $nextVersion || $force) {
+        $availableVersions = Cache::get(CacheKeysEnum::AVAILABLE_VERSIONS->value);
+        if (!$availableVersions || $force) {
             Event::dispatch(new CommandClassCallback('warn', 'Checking for available versions...'));
             Artisan::call('streamline:list');
-            //            Event::dispatch(new CommandClassCallback('call', 'streamline:list'));
-
-            $availableVersions = Cache::get(CacheKeysEnum::AVAILABLE_VERSIONS->value);
-            $nextVersion = $this->getNextVersion($availableVersions, $ignorePreReleases);
-
-            if (! $nextVersion) {
-                throw new RuntimeException("Well, this isn't expected! The query to the GitHub repository" .
-                    ' appeared successful but no versions have been stored. Please check your Laravel cache or' .
-                    ' confirm the repository settings are correct in /config/streamline.php');
-            }
-            Cache::forever(CacheKeysEnum::NEXT_AVAILABLE_VERSION->value, $nextVersion);
         }
+
+        $availableVersions = Cache::get(CacheKeysEnum::AVAILABLE_VERSIONS->value);
+        $nextVersion = $this->getNextVersion($availableVersions, $ignorePreReleases);
+
+        if (!$nextVersion) {
+            throw new RuntimeException('The next available version could not be determined.');
+        }
+        Cache::forever(CacheKeysEnum::NEXT_AVAILABLE_VERSION->value, $nextVersion);
 
         return $nextVersion;
     }
@@ -40,7 +37,7 @@ class CheckAvailableVersions
         if ($ignorePreReleases || Str::endsWith($nextVersion, ['a', 'b', 'alpha', 'beta'])) {
             // iterate $availableVersions until we find a non-prerelease version
             foreach ($availableVersions as $version) {
-                if (! Str::endsWith($version, ['a', 'b', 'alpha', 'beta'])) {
+                if (!Str::endsWith($version, ['a', 'b', 'alpha', 'beta'])) {
                     $nextVersion = $version;
                     break;
                 }
