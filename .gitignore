@@ -33,3 +33,5 @@ _ide_helper_models.php
 /workbench/bootstrap/cache/*.php
 /phpstan.neon
 /temp/
+/.streamline_tmp
+/streamline_backups
