@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use Pixelated\Streamline\Enums\CacheKeysEnum;
 use Pixelated\Streamline\Events\CommandClassCallback;
+use Pixelated\Streamline\Events\NextAvailableVersionUpdated;
 use RuntimeException;
 
 class CheckAvailableVersions
@@ -27,6 +28,9 @@ class CheckAvailableVersions
             throw new RuntimeException('The next available version could not be determined.');
         }
         Cache::forever(CacheKeysEnum::NEXT_AVAILABLE_VERSION->value, $nextVersion);
+
+        // Dispatch the NextAvailableVersionUpdated event
+        NextAvailableVersionUpdated::dispatch($nextVersion);
 
         return $nextVersion;
     }
