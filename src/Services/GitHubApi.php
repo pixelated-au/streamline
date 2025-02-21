@@ -66,7 +66,7 @@ class GitHubApi
                     callback: fn (PendingRequest $request) => $request->withToken($this->authToken)
                 )
                 ->when(
-                    value: (bool) $this->progressMeter,
+                    value: isset($this->progressMeter?->progressCallback),
                     callback: function (PendingRequest $request) {
                         $request->withOptions($request->mergeOptions([
                             RequestOptions::PROGRESS => $this->progressMeter->progressCallback,
