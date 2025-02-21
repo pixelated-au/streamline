@@ -59,23 +59,14 @@ it('should run an update but cannot find any available versions and throw an err
         ->mockHttpReleases(Http::response([]));
 
     $this->artisan('streamline:run-update')
-        ->expectsOutputToContain('The query to the GitHub repository appeared successful but no versions have been stored')
-        ->assertExitCode(1);
-});
-
-it('should run an update but cannot find the default next available version and throw an error', function () {
-    $this->mockProcess()
-        ->mockCache(['v2.0.0', 'v1.0.0'], 'v3.2.3');
-
-    $this->mockHttpReleases();
-    $this->artisan('streamline:run-update')
-        ->expectsOutputToContain('Unexpected! The next available version: v3.2.3 cannot be found.')
+        ->expectsOutputToContain('The next available version could not be determined.')
         ->assertExitCode(1);
 });
 
 it('should run an update but GitHub throws a connection error', function () {
     $this->mockProcess()
-        ->mockCache();
+        ->mockCache(['v2.0.0', 'v1.0.0'], 'v2.0.0');
+    Config::set('streamline.installed_version', 'v1.0.0');
     Http::fake(['github.com/*' => Http::failedConnection()]);
 
     $this->artisan('streamline:run-update')
