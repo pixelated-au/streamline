@@ -6,12 +6,14 @@ use Pixelated\Streamline\Tests\Feature\Traits\HttpMock;
 pest()->use(CheckCommandCommon::class, HttpMock::class);
 
 it('checks for available updates without a remote request', function () {
-    $this->setDefaults(['availableVersions' => null])
-        ->mockCache();
+    $this->setDefaults(['nextAvailableVersion' => null, 'availableVersions' => ['v2.8.7', 'v2.8.6', 'v2.8.5']]);
+    $this->mockCache();
+
+    Http::assertNothingSent();
 
     $this
         ->artisan('streamline:check')
-        ->expectsOutput('Next available version: v2.8.7b')
+        ->expectsOutput('Next available version: v2.8.7')
         ->assertExitCode(0);
 });
 
@@ -41,6 +43,6 @@ it('throws an exception when doing a remote request because a version is missing
     $this->mockHttpReleases();
 
     $this->artisan('streamline:check')
-        ->expectsOutputToContain('The query to the GitHub repository appeared successful but no versions have been stored')
+        ->expectsOutputToContain('The next available version could not be determined')
         ->assertExitCode(1);
 });
