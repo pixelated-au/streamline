@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Pixelated\Streamline\Enums\CacheKeysEnum;
+use Pixelated\Streamline\Events\AvailableVersionsUpdated;
 use Pixelated\Streamline\Tests\Feature\Traits\HttpMock;
 
 pest()->use(HttpMock::class);
@@ -11,9 +12,13 @@ it('lists available updates', function () {
     $this->withPaginationHeader()
         ->mockHttpReleases();
 
+    Event::fake();
     $this->artisan('streamline:list')
         ->expectsOutputToContain('Available versions: v2.8.7b, v2.8.6, ')
         ->assertExitCode(0);
+
+    Event::assertDispatched(fn (AvailableVersionsUpdated $event) => $event->versions
+        ->contains(fn ($value) => in_array($value, ['v2.8.7b', 'v2.8.6', 'v2.8.5'])));
 
     expect(Cache::get(CacheKeysEnum::AVAILABLE_VERSIONS->value))
         ->toBeIterable()

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Cache;
 use Pixelated\Streamline\Actions\CheckAvailableVersions;
 use Pixelated\Streamline\Enums\CacheKeysEnum;
 use Pixelated\Streamline\Events\CommandClassCallback;
+use Pixelated\Streamline\Events\NextAvailableVersionUpdated;
 
 it('should return the latest non-prerelease version', function () {
     $versions = ['v2.1.6b', 'v2.1.5-beta', 'v2.1.4', 'v1.0.0'];
@@ -26,6 +27,7 @@ it('should return the latest non-prerelease version', function () {
     $result = $checkAvailableVersions->execute();
     expect($result)->toBe($versions[2]);
     Event::assertNotDispatched(CommandClassCallback::class);
+    Event::assertDispatched(fn (NextAvailableVersionUpdated $event) => $event->version === $versions[2]);
 });
 
 it('should return the latest pre-release version when ignorePreReleases is true', function () {
