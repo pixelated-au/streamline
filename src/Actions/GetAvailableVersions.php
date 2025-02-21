@@ -6,6 +6,7 @@ namespace Pixelated\Streamline\Actions;
 
 use Illuminate\Support\Facades\Cache;
 use Pixelated\Streamline\Enums\CacheKeysEnum;
+use Pixelated\Streamline\Events\AvailableVersionsUpdated;
 use Pixelated\Streamline\Facades;
 use Pixelated\Streamline\Services\GitHubApi;
 
@@ -22,6 +23,8 @@ class GetAvailableVersions
             ->pluck('tag_name');
 
         Cache::forever(CacheKeysEnum::AVAILABLE_VERSIONS->value, $versions);
+        // Dispatch the AvailableVersionsUpdated event
+        AvailableVersionsUpdated::dispatch($versions);
 
         return $versions->implode(', ');
     }
