@@ -32,7 +32,7 @@ class UpdateCommand extends Command
             ->forceUpdate($this->option('force'));
 
         return (new Pipeline($builder))
-            ->through(config('streamline.update-pipeline'))
+            ->through(config('streamline.pipeline-update'))
             ->catch(function (Throwable $e) {
                 $this->error($e->getFile() . ', #' . $e->getLine() . ': ' . $e->getMessage());
 

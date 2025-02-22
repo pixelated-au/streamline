@@ -306,7 +306,7 @@ return [
     |
     */
 
-    'update-pipeline' => [
+    'pipeline-update' => [
         GetNextAvailableReleaseVersion::class,
         VerifyVersion::class,
         MakeTempDir::class,
