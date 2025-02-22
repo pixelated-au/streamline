@@ -45,6 +45,9 @@
     },
     "scripts": {
         "post-autoload-dump": "@composer run prepare",
+        "post-install-cmd": [
+            "@php artisan streamline:init-installed-version"
+        ],
         "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
         "prepare": "@php vendor/bin/testbench package:discover --ansi",
         "analyse": "vendor/bin/phpstan analyse",
