@@ -60,11 +60,13 @@ trait UpdateCommandCommon
 
     public function mockCache(?array $availableVersions = null, ?string $cachedVersionToInstall = null): self
     {
-        Cache::shouldReceive('forever')->withSomeOfArgs(CacheKeysEnum::NEXT_AVAILABLE_VERSION->value);
-        Cache::shouldReceive('get')->withSomeOfArgs(CacheKeysEnum::NEXT_AVAILABLE_VERSION->value)->andReturn($cachedVersionToInstall);
-        Cache::shouldReceive('forever')->withSomeOfArgs(CacheKeysEnum::AVAILABLE_VERSIONS->value);
+        $cache = Cache::partialMock();
+        $cache->shouldReceive('forever')->withSomeOfArgs(CacheKeysEnum::NEXT_AVAILABLE_VERSION->value);
+        $cache->shouldReceive('get')->withSomeOfArgs(CacheKeysEnum::NEXT_AVAILABLE_VERSION->value)->andReturn($cachedVersionToInstall);
+        $cache->shouldReceive('forever')->withSomeOfArgs(CacheKeysEnum::AVAILABLE_VERSIONS->value);
+        $cache->shouldReceive('put')->withSomeOfArgs(CacheKeysEnum::INSTALLED_VERSION->value);
 
-        Cache::shouldReceive('get')
+        $cache->shouldReceive('get')
             ->withSomeOfArgs(CacheKeysEnum::AVAILABLE_VERSIONS->value)
             ->andReturn(collect($availableVersions ?? ['v0.0.0']));
 
