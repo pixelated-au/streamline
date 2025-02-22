@@ -17,6 +17,6 @@ class SetInstalledVersionFromConfig
 
         Cache::put(CacheKeysEnum::INSTALLED_VERSION->value, $currentVersion);
 
-        event(new InstalledVersionSet($currentVersion));
+        InstalledVersionSet::dispatch();
     }
 }
