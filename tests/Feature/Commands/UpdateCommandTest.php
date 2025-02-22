@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
+use Pixelated\Streamline\Events\InstalledVersionSet;
 use Pixelated\Streamline\Tests\Feature\Traits\HttpMock;
 use Pixelated\Streamline\Tests\Feature\Traits\UpdateCommandCommon;
 
@@ -22,9 +24,13 @@ it('should run an update with no parameters', function () {
     File::shouldReceive('isReadable')->andReturnTrue();
     File::shouldReceive('deleteDirectory');
 
+    Event::fake(InstalledVersionSet::class);
+
     $this->artisan('streamline:run-update')
         ->expectsOutputToContain('Deploying to next available version: v2.8.1')
         ->assertExitCode(0);
+
+    Event::assertDispatched(InstalledVersionSet::class, 1);
 });
 
 it('should run an update with a specific version', function () {
