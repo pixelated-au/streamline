@@ -2,10 +2,13 @@
 
 namespace Pixelated\Streamline\Events;
 
+use Illuminate\Foundation\Events\Dispatchable;
 use Symfony\Component\Console\Output\OutputInterface;
 
 readonly class CommandClassCallback
 {
+    use Dispatchable;
+
     /**
      * @param  'comment'|'info'|'warn'|'error'|'call'  $action
      */
