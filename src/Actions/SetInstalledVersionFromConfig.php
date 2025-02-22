@@ -11,7 +11,9 @@ class SetInstalledVersionFromConfig
 {
     public function execute(): void
     {
-        $currentVersion = Config::get('streamline.installed_version', 'v0.0.0');
+        // Note, this is using ?? instead of setting a default value, because Config::get() can return null even when a
+        // default value has been set.
+        $currentVersion = Config::get('streamline.installed_version') ?? 'v0.0.0';
 
         Cache::put(CacheKeysEnum::INSTALLED_VERSION->value, $currentVersion);
 
