@@ -26,11 +26,21 @@ it('should run an update with no parameters', function () {
 
     Event::fake(InstalledVersionSet::class);
 
+    Config::set('streamline.pipeline-finish', static function () {
+        // This should mock overwriting the installed version to confirm it's called
+        Config::set('streamline.installed_version', 'v2.8.1');
+        InstalledVersionSet::dispatch(config('streamline.installed_version'));
+    });
+
     $this->artisan('streamline:run-update')
         ->expectsOutputToContain('Deploying to next available version: v2.8.1')
         ->assertExitCode(0);
 
-    Event::assertDispatched(InstalledVersionSet::class, 1);
+    // If working correctly, this won't be v0.0.0 which is the default/initial version
+    Event::assertDispatched(
+        InstalledVersionSet::class,
+        fn (InstalledVersionSet $event) => $event->version === 'v2.8.1'
+    );
 });
 
 it('should run an update with a specific version', function () {
