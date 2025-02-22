@@ -1,5 +1,6 @@
 <?php
 
+use Pixelated\Streamline\Events\InstalledVersionSet;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 use Pixelated\Streamline\Pipes\BackupCurrentInstallation;
 use Pixelated\Streamline\Pipes\Cleanup;
@@ -327,8 +328,9 @@ return [
     |
     */
 
-    'cleanup' => static function (UpdateBuilderInterface $builder) {
-                app()->make(Cleanup::class)->__invoke($builder);
+    'pipeline-finish' => static function (UpdateBuilderInterface $builder) {
+        app()->make(Cleanup::class)->__invoke($builder);
+        InstalledVersionSet::dispatch(config('streamline.installed_version'));
     },
 
     /*

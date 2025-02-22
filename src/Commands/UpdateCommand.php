@@ -38,7 +38,7 @@ class UpdateCommand extends Command
 
                 return self::FAILURE;
             })
-            ->finally(config('streamline.cleanup'))
+            ->finally(config('streamline.pipeline-finish'))
             ->then(function () {
                 return self::SUCCESS;
             });
