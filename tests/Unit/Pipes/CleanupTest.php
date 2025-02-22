@@ -15,10 +15,9 @@ it('should dispatch an Event with CommandClassCallback containing info and the d
     $cleanup = new Cleanup;
     $result = $cleanup($mockBuilder);
 
-    Event::assertDispatched(function (CommandClassCallback $event) use ($tempDir) {
-        return $event->action === 'info' &&
-               $event->value === "Deleting the temporary work directory: $tempDir";
-    });
+    Event::assertDispatched(fn (CommandClassCallback $event) => $event
+        ->action === 'info' && $event->value === "Purging the temporary work directory: $tempDir"
+    );
 
     expect($result)->toBe($mockBuilder);
 });

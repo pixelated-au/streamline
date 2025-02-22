@@ -13,7 +13,7 @@ class Cleanup implements Pipe
     public function __invoke(UpdateBuilderInterface $builder): UpdateBuilderInterface
     {
         $tempDir = $builder->getWorkTempDir();
-        Event::dispatch(new CommandClassCallback('info', "Deleting the temporary work directory: $tempDir"));
+        Event::dispatch(new CommandClassCallback('info', "Purging the temporary work directory: $tempDir"));
 
         File::deleteDirectory($tempDir);
 
