@@ -21,3 +21,15 @@ it('sets the installed version in cache and dispatches an event', function () {
         return $event->version === 'v1.0.0';
     });
 });
+
+it('should handle a null version in the config', function () {
+    Event::fake();
+    Config::offsetUnset('streamline.installed_version');
+
+    $action = new SetInstalledVersionFromConfig;
+    $action->execute();
+
+    expect(Cache::get(CacheKeysEnum::INSTALLED_VERSION->value))->toBe('v0.0.0');
+
+    Event::assertDispatched(InstalledVersionSet::class, fn ($event) => $event->version === 'v0.0.0');
+});
