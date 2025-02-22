@@ -10,6 +10,7 @@ use Illuminate\Foundation\Console\AboutCommand;
 use Pixelated\Streamline\Actions\CreateArchive;
 use Pixelated\Streamline\Commands\CheckCommand;
 use Pixelated\Streamline\Commands\CleanAssetsDirectoryCommand;
+use Pixelated\Streamline\Commands\InitInstalledVersionCommand;
 use Pixelated\Streamline\Commands\ListCommand;
 use Pixelated\Streamline\Commands\UpdateCommand;
 use Pixelated\Streamline\Macros\ConfigCommaToArrayMacro;
@@ -31,7 +32,8 @@ class StreamlineServiceProvider extends PackageServiceProvider implements Deferr
                 UpdateCommand::class,
                 ListCommand::class,
                 CheckCommand::class,
-                CleanAssetsDirectoryCommand::class
+                CleanAssetsDirectoryCommand::class,
+                InitInstalledVersionCommand::class,
             )
             ->hasInstallCommand(fn (InstallCommand $command) => $command->publishConfigFile());
     }
