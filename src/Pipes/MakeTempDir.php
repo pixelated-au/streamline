@@ -2,7 +2,6 @@
 
 namespace Pixelated\Streamline\Pipes;
 
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
@@ -15,7 +14,7 @@ class MakeTempDir implements Pipe
     {
         $tempDir = $builder->getWorkTempDir();
 
-        Event::dispatch(new CommandClassCallback('comment', "Creating temporary directory $tempDir"));
+        CommandClassCallback::dispatch('comment', "Creating temporary directory $tempDir");
         if (!File::exists($tempDir)
             && !File::makeDirectory(path: $tempDir, recursive: true)
             && !File::isDirectory($tempDir)) {

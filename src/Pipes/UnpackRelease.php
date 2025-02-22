@@ -2,7 +2,6 @@
 
 namespace Pixelated\Streamline\Pipes;
 
-use Illuminate\Support\Facades\Event;
 use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 use Pixelated\Streamline\Pipeline\Pipe;
@@ -15,7 +14,7 @@ readonly class UnpackRelease implements Pipe
 
     public function __invoke(UpdateBuilderInterface $builder): UpdateBuilderInterface
     {
-        Event::dispatch(new CommandClassCallback('info', 'Unpacking archive'));
+        CommandClassCallback::dispatch('info', 'Unpacking archive');
 
         $downloadedArchivePath = $builder->getDownloadedArchivePath();
         $tempDir = $builder->getWorkTempDir();

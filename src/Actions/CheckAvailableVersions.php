@@ -4,7 +4,6 @@ namespace Pixelated\Streamline\Actions;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use Pixelated\Streamline\Enums\CacheKeysEnum;
 use Pixelated\Streamline\Events\CommandClassCallback;
@@ -17,7 +16,7 @@ class CheckAvailableVersions
     {
         $availableVersions = Cache::get(CacheKeysEnum::AVAILABLE_VERSIONS->value);
         if (!$availableVersions || $force) {
-            Event::dispatch(new CommandClassCallback('warn', 'Checking for available versions...'));
+            CommandClassCallback::dispatch('warn', 'Checking for available versions...');
             Artisan::call('streamline:list');
         }
 

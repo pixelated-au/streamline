@@ -2,7 +2,6 @@
 
 namespace Pixelated\Streamline\Pipes;
 
-use Illuminate\Support\Facades\Event;
 use Pixelated\Streamline\Actions\ProgressMeter;
 use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Facades\GitHubApi;
@@ -17,7 +16,7 @@ class DownloadRelease implements Pipe
         $downloadedArchiveFileName = config('streamline.release_archive_file_name');
         $downloadedArchivePath = $builder->getWorkTempDir() . '/' . $downloadedArchiveFileName;
 
-        Event::dispatch(new CommandClassCallback('info', "Downloading archive for version $versionToInstall"));
+        CommandClassCallback::dispatch('info', "Downloading archive for version $versionToInstall");
         GitHubApi::withWebUrl("releases/download/$versionToInstall/$downloadedArchiveFileName")
             ->withDownloadPath($downloadedArchivePath)
             ->withProgressCallback(resolve(ProgressMeter::class))

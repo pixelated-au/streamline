@@ -2,7 +2,6 @@
 
 namespace Pixelated\Streamline\Pipes;
 
-use Illuminate\Support\Facades\Event;
 use Pixelated\Streamline\Actions\InstantiateStreamlineUpdater;
 use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
@@ -17,11 +16,11 @@ readonly class RunUpdate implements Pipe
     {
         $this->runUpdate->execute($builder->getNextAvailableRepositoryVersion(), function (string $type, string $output) {
             if ($type === 'err') {
-                Event::dispatch(new CommandClassCallback('error', $output));
+                CommandClassCallback::dispatch('error', $output);
                 throw new RuntimeException($output);
             }
 
-            Event::dispatch(new CommandClassCallback('info', $output));
+            CommandClassCallback::dispatch('info', $output);
         });
 
         return $builder;

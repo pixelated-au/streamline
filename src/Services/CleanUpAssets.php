@@ -6,7 +6,6 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
 use Pixelated\Streamline\Events\CommandClassCallback;
@@ -51,7 +50,14 @@ class CleanUpAssets
         }
 
         $assets = $this->filter();
-        Event::dispatch(new CommandClassCallback('info', 'DELETING EXPIRED ASSETS: ' . ($assets->isEmpty() ? 'No matching assets found. Likely because none meet the minimum amount of revisions' : $assets->implode(', '))));
+        CommandClassCallback::dispatch(
+            'info',
+            'DELETING EXPIRED ASSETS: '
+            . ($assets->isEmpty()
+                ? 'No matching assets found. Likely because none meet the minimum amount of revisions'
+                : $assets->implode(', ')
+            )
+        );
         $result = $this->filesystem->delete($assets->toArray());
 
         if (!$result) {

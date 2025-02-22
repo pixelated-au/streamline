@@ -3,7 +3,6 @@
 namespace Pixelated\Streamline\Pipes;
 
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Event;
 use Pixelated\Streamline\Enums\CacheKeysEnum;
 use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
@@ -19,7 +18,7 @@ class VerifyVersion implements Pipe
         $forceUpdate = $builder->isForceUpdate();
 
         if ($requestedVersion) {
-            Event::dispatch(new CommandClassCallback('info', "Changing deployment to version: $requestedVersion"));
+            CommandClassCallback::dispatch('info', "Changing deployment to version: $requestedVersion");
             if (!$this->versionExists($requestedVersion)) {
                 throw new RuntimeException("Version $requestedVersion is not a valid version!");
             }
@@ -29,17 +28,17 @@ class VerifyVersion implements Pipe
                 if (!$forceUpdate) {
                     throw new RuntimeException($message);
                 }
-                Event::dispatch(new CommandClassCallback('warn', "$message (Forced update)"));
+                CommandClassCallback::dispatch('warn', "$message (Forced update)");
             }
         } elseif (version_compare($nextVersion, config('streamline.installed_version'), '<=')) {
             $message = "You are currently using the latest version ($nextVersion)"
                 . ($forceUpdate ? ' (Forced update)' : '');
-            Event::dispatch(new CommandClassCallback('warn', $message));
+            CommandClassCallback::dispatch('warn', $message);
             if (!$forceUpdate) {
                 return null;
             }
         } else {
-            Event::dispatch(new CommandClassCallback('info', "Deploying to next available version: $nextVersion"));
+            CommandClassCallback::dispatch('info', "Deploying to next available version: $nextVersion");
         }
 
         if (!$requestedVersion && !$this->versionExists($nextVersion)) {

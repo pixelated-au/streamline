@@ -4,7 +4,6 @@
 
 namespace Pixelated\Streamline\Actions;
 
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Factories\CompressedArchiveBuilder;
@@ -31,7 +30,7 @@ class CreateArchive
 
     public function create(): void
     {
-        Event::dispatch(new CommandClassCallback('info', "Backing up the current installation to $this->gzipPath"));
+        CommandClassCallback::dispatch('info', "Backing up the current installation to $this->gzipPath");
         // check that the source folder exists
         if (!File::exists($this->sourceFolder)) {
             throw new RuntimeException("Source folder '$this->sourceFolder' does not exist.");
