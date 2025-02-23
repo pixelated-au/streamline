@@ -26,17 +26,10 @@ it('should run an update with no parameters', function () {
 
     Event::fake(InstalledVersionSet::class);
 
-    Config::set('streamline.pipeline-finish', static function () {
-        // This should mock overwriting the installed version to confirm it's called
-        Config::set('streamline.installed_version', 'v2.8.1');
-        InstalledVersionSet::dispatch(config('streamline.installed_version'));
-    });
-
     $this->artisan('streamline:run-update')
         ->expectsOutputToContain('Deploying to next available version: v2.8.1')
         ->assertExitCode(0);
 
-    // If working correctly, this won't be v0.0.0 which is the default/initial version
     Event::assertDispatched(
         InstalledVersionSet::class,
         fn (InstalledVersionSet $event) => $event->version === 'v2.8.1'
@@ -46,15 +39,24 @@ it('should run an update with no parameters', function () {
 it('should run an update with a specific version', function () {
     $this->mockFile()
         ->mockProcess()
-        ->mockCache(['v2.8.1', 'v2.0.0', 'v1.0.0'], 'v2.0.0')
+        ->mockCache(['v2.9.0', 'v2.8.1', 'v2.0.0', 'v1.0.0'], 'v2.0.0')
         ->mockGetAvailableVersions()
         ->mockZipArchive();
     File::shouldReceive('deleteDirectory');
 
+    Event::fake(InstalledVersionSet::class);
+
     $this->mockGetWebArchive();
-    $this->artisan('streamline:run-update --install-version=v2.8.1')
-        ->expectsOutputToContain('Changing deployment to version: v2.8.1')
+
+    $this->artisan('streamline:run-update --install-version=v2.9.0')
+        ->expectsOutputToContain('Changing deployment to version: v2.9.0')
         ->assertExitCode(0);
+
+    Event::assertDispatched(
+        InstalledVersionSet::class,
+        fn (InstalledVersionSet $event) => $event->version === 'v2.9.0'
+    );
+
 });
 
 it('should run an update but notifies there are no new versions', function () {
@@ -68,7 +70,7 @@ it('should run an update but notifies there are no new versions', function () {
         ->assertExitCode(0);
 });
 
-it('should run an update but cannot find any available versions and throw an error', function () {
+it('should run an update but cannot find any available versions and return an error', function () {
     $this->mockProcess()
         ->mockCache([]);
     $this->mockGetWebArchive()
@@ -79,7 +81,7 @@ it('should run an update but cannot find any available versions and throw an err
         ->assertExitCode(1);
 });
 
-it('should run an update but GitHub throws a connection error', function () {
+it('should run an update but GitHub returns a connection error', function () {
     $this->mockProcess()
         ->mockCache(['v2.0.0', 'v1.0.0'], 'v2.0.0');
     Config::set('streamline.installed_version', 'v1.0.0');
