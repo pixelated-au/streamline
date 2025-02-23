@@ -3,6 +3,7 @@
 namespace Pixelated\Streamline\Updater;
 
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
+use Throwable;
 
 class UpdateBuilder implements UpdateBuilderInterface
 {
@@ -15,6 +16,8 @@ class UpdateBuilder implements UpdateBuilderInterface
     private string $workTempDir;
 
     private string $downloadedArchivePath;
+
+    private ?Throwable $error = null;
 
     public function __construct()
     {
@@ -72,5 +75,17 @@ class UpdateBuilder implements UpdateBuilderInterface
     public function getDownloadedArchivePath(): string
     {
         return $this->downloadedArchivePath;
+    }
+
+    public function setError(Throwable $error): self
+    {
+        $this->error = $error;
+
+        return $this;
+    }
+
+    public function getError(): ?Throwable
+    {
+        return $this->error;
     }
 }
