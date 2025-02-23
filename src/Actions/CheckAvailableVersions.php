@@ -15,7 +15,7 @@ class CheckAvailableVersions
     public function execute(bool $force = false, bool $ignorePreReleases = true): string
     {
         $availableVersions = Cache::get(CacheKeysEnum::AVAILABLE_VERSIONS->value);
-        if (!$availableVersions || $force) {
+        if ($force || !$availableVersions || !count($availableVersions)) {
             CommandClassCallback::dispatch('warn', 'Checking for available versions...');
             Artisan::call('streamline:list');
         }
