@@ -330,7 +330,10 @@ return [
 
     'pipeline-finish' => static function (UpdateBuilderInterface $builder) {
         app()->make(Cleanup::class)->__invoke($builder);
-        InstalledVersionSet::dispatch(config('streamline.installed_version'));
+        if ($nextVersion = $builder->getNextAvailableRepositoryVersion()) {
+            // $nextVersion may be falsy if there was a failure
+            InstalledVersionSet::dispatch($nextVersion);
+        }
     },
 
     /*
