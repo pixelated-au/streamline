@@ -31,6 +31,7 @@ php artisan vendor:publish --tag="streamline-config"
 ## Events
 This library emits two events for hooking into updates:
 - `\Pixelated\Streamline\Events\AvailableVersionsUpdated` Emits when it's pulled down the available versions from GitHub
+- `\Pixelated\Streamline\Events\InstalledVersionSet` Emits when the current, installed version has been set
 - `\Pixelated\Streamline\Events\NextAvailableVersionUpdated` Emits when the next available version has been set
 
 # Artisan Console
