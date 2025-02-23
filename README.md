@@ -10,7 +10,7 @@
 
 This specialised tool is designed to help you self-update your Laravel deployment directly from GitHub.
 
-_Unlike other tools, this project assumes your package includes all built assets and composer vendor packages._ 
+_Unlike other tools, this project assumes your package includes all built assets and composer vendor packages._
 
 Using artisan, you can update the package via the CLI or a tool such as Laravel Envoy.
 
@@ -29,18 +29,22 @@ php artisan vendor:publish --tag="streamline-config"
 ```
 
 ## Events
+
 This library emits two events for hooking into updates:
+
 - `\Pixelated\Streamline\Events\AvailableVersionsUpdated` Emits when it's pulled down the available versions from GitHub
 - `\Pixelated\Streamline\Events\InstalledVersionSet` Emits when the current, installed version has been set
 - `\Pixelated\Streamline\Events\NextAvailableVersionUpdated` Emits when the next available version has been set
 
 # Artisan Console
+
 There are several Artisan commands that you can interact with:
+
 - `streamline:check` Check for an available update
-- `streamline:clean-assets` Tidy up the front-end build assets directory. Default values are configured in 
-   config/streamline.php. This can be set using a schedule
+- `streamline:clean-assets` Tidy up the front-end build assets directory. Default values are configured in
+  config/streamline.php. This can be set using a schedule
 - `streamline:list` Retrieves the available updates from GitHub and stores them in the cache
-- `streamline:run-update` CLI update of the software. Make sure to back up first! 
+- `streamline:run-update` CLI update of the software. Make sure to back up first!
 
 ## Common Questions
 
@@ -73,7 +77,6 @@ project.
 memory. This is great except when after an update, Laravel may try to load said classes. Again, not a problem...
 except if those classes have been removed/deprecated! If that happens, the deployment will halt/fail and will require
 manual work. Not good if you want a self-maintainable product!
-
 
 ## Changelog
 
