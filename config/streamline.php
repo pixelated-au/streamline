@@ -3,6 +3,7 @@
 use Pixelated\Streamline\Events\InstalledVersionSet;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 use Pixelated\Streamline\Pipes\BackupCurrentInstallation;
+use Pixelated\Streamline\Pipes\CheckLaravelBasePathWritable;
 use Pixelated\Streamline\Pipes\Cleanup;
 use Pixelated\Streamline\Pipes\DownloadRelease;
 use Pixelated\Streamline\Pipes\GetNextAvailableReleaseVersion;
@@ -197,7 +198,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | During the initial testing phase, it's useful to keep backups of the old
-    | releases. Set to true to keep backups but you'll need to manually clean
+    | releases. Set to true to keep backups, but you'll need to manually clean
     | the backups periodically.
     |
     */
@@ -308,6 +309,7 @@ return [
     */
 
     'pipeline-update' => [
+        CheckLaravelBasePathWritable::class,
         GetNextAvailableReleaseVersion::class,
         VerifyVersion::class,
         MakeTempDir::class,
