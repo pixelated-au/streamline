@@ -4,7 +4,6 @@ namespace Pixelated\Streamline;
 
 use Composer\InstalledVersions;
 use Illuminate\Console\OutputStyle;
-use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Console\AboutCommand;
 use Illuminate\Support\Facades\Config;
@@ -15,14 +14,12 @@ use Pixelated\Streamline\Commands\InitInstalledVersionCommand;
 use Pixelated\Streamline\Commands\ListCommand;
 use Pixelated\Streamline\Commands\UpdateCommand;
 use Pixelated\Streamline\Macros\ConfigCommaToArrayMacro;
-use Pixelated\Streamline\Services\CleanUpAssets;
-use Pixelated\Streamline\Services\GitHubApi;
 use Pixelated\Streamline\Testing\Mocks\UpdateRunnerFake;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
-class StreamlineServiceProvider extends PackageServiceProvider implements DeferrableProvider
+class StreamlineServiceProvider extends PackageServiceProvider
 {
     public function configurePackage(Package $package): void
     {
@@ -83,15 +80,5 @@ class StreamlineServiceProvider extends PackageServiceProvider implements Deferr
         return '<fg=bright-magenta>' .
             InstalledVersions::getPrettyVersion('pixelated-au/streamline') .
             '</>';
-    }
-
-    public function provides(): array
-    {
-        // @codeCoverageIgnoreStart
-        return [
-            GitHubApi::class,
-            CleanUpAssets::class,
-        ];
-        // @codeCoverageIgnoreEnd
     }
 }
