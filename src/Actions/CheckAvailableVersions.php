@@ -2,6 +2,7 @@
 
 namespace Pixelated\Streamline\Actions;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -20,7 +21,7 @@ class CheckAvailableVersions
             Artisan::call('streamline:list');
         }
 
-        $availableVersions = Cache::get(CacheKeysEnum::AVAILABLE_VERSIONS->value);
+        $availableVersions = collect(Cache::get(CacheKeysEnum::AVAILABLE_VERSIONS->value));
         $nextVersion = $this->getNextVersion($availableVersions, $ignorePreReleases);
 
         if (!$nextVersion) {
@@ -34,8 +35,12 @@ class CheckAvailableVersions
         return $nextVersion;
     }
 
-    protected function getNextVersion(mixed $availableVersions, bool $ignorePreReleases): mixed
+    protected function getNextVersion(?Collection $availableVersions, bool $ignorePreReleases): ?string
     {
+        if (is_null($availableVersions)) {
+            return null;
+        }
+
         $nextVersion = $availableVersions[0] ?? null;
         if ($ignorePreReleases || Str::endsWith($nextVersion, ['a', 'b', 'alpha', 'beta'])) {
             // iterate $availableVersions until we find a non-prerelease version
