@@ -1,7 +1,7 @@
 <?php
 
-use Pixelated\Streamline\Actions\Cleanup;
-use Pixelated\Streamline\Events\InstalledVersionSet;
+use Illuminate\Support\Facades\Process;
+use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 use Pixelated\Streamline\Pipes\BackupCurrentInstallation;
 use Pixelated\Streamline\Pipes\CheckLaravelBasePathWritable;
@@ -103,7 +103,7 @@ return [
     |
     */
 
-    'work_temp_dir' => env('STREAMLINE_WORK_TEMP_DIR', dirname(base_path()) . '/.streamline_tmp'),
+    'work_temp_dir' => env('STREAMLINE_WORK_TEMP_DIR', dirname(base_path()).'/.streamline_tmp'),
 
     /*
     |--------------------------------------------------------------------------
@@ -115,7 +115,7 @@ return [
     |
     */
 
-    'backup_dir' => env('STREAMLINE_BACKUP_DIR', dirname(base_path()) . '/streamline_backups'),
+    'backup_dir' => env('STREAMLINE_BACKUP_DIR', dirname(base_path()).'/streamline_backups'),
 
     /*
     |--------------------------------------------------------------------------
@@ -219,7 +219,9 @@ return [
     |
     */
 
-    'web_assets_filterable_file_types' => env('STREAMLINE_WEB_ASSET_FILE_TYPES', ['json', 'js', 'css', 'svg', 'png', 'jpg', 'jpeg', 'gif', 'avif', 'webp', 'pdf', 'woff', 'woff2', 'ttf', 'eot']),
+    'web_assets_filterable_file_types' => env('STREAMLINE_WEB_ASSET_FILE_TYPES', [
+        'json', 'js', 'css', 'svg', 'png', 'jpg', 'jpeg', 'gif', 'avif', 'webp', 'pdf', 'woff', 'woff2', 'ttf', 'eot',
+    ]),
 
     /*
     |--------------------------------------------------------------------------
@@ -324,18 +326,22 @@ return [
     | Pipeline Cleanup
     |--------------------------------------------------------------------------
     |
-    | Any classes (that extend Pixelated\Streamline\Pipeline\Pipe) in this
-    | array will be executed after all pipeline steps have completed.
-    | Even if an error occurs during the pipeline execution.
+    | Anything in this function will be executed after all pipeline steps have
+    | completed. Even if an error occurs during the pipeline execution.
     |
     */
 
     'pipeline-finish' => static function (UpdateBuilderInterface $builder) {
-        app()->make(Cleanup::class)->__invoke($builder);
-
-        if ($nextVersion = $builder->getNextAvailableRepositoryVersion()) {
-            // $nextVersion may be falsy if there was a failure
-            InstalledVersionSet::dispatch($nextVersion);
+        $process = Process::run([
+            PHP_BINARY,
+            base_path('artisan'),
+            'streamline:finish-update',
+            $builder->getWorkTempDir(),
+        ]);
+        if ($process->successful()) {
+            CommandClassCallback::dispatch('info', $process->output());
+        } else {
+            CommandClassCallback::dispatch('error', $process->errorOutput());
         }
     },
 
