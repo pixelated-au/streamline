@@ -102,6 +102,16 @@ it('should run an update requesting a version but it is older than the installed
             ->assertExitCode(1);
     });
 
+it('should run an update requesting a pre-release version and fail', function (string $version) {
+    $this->mockProcess()
+        ->mockCache(availableVersions: [$version, 'v1.0.0']);
+    $this->mockHttpReleases();
+
+    $this->artisan("streamline:run-update --install-version=$version")
+        ->expectsOutputToContain("Version $version is a pre-release version, use --force to install it.")
+        ->assertExitCode(1);
+})->with(['v1.0.1-alpha', 'v1.0.1-beta', 'v1.0.1a', 'v1.0.1b']);
+
 it('should run an update requesting an invalid version and return an error', function () {
     $this->mockProcess()
         ->mockCache();
