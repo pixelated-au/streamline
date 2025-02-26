@@ -13,13 +13,13 @@ use ZipArchive;
 trait UpdateCommandCommon
 {
     /**
-     * @param array{
+     * @param  array{
      *     stubContent: string,
      *     deployPath: string,
      *     cachedVersionToInstall: string|null,
      *     requestedVersionToInstallByUser: string|null,
      *     doForceUpdate: bool,
-     * } $options
+     * }  $options
      *
      * @deprecated
      */
@@ -51,9 +51,7 @@ trait UpdateCommandCommon
 
     public function mockProcess(): self
     {
-        Process::shouldReceive('path')->andReturnSelf();
-        Process::shouldReceive('env')->andReturnSelf();
-        Process::shouldReceive('run')->withSomeOfArgs(['php', base_path('.env')]);
+        Process::preventStrayProcesses();
 
         return $this;
     }
