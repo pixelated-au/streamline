@@ -31,7 +31,7 @@ it('should return the latest non-prerelease version', function () {
 });
 
 it('should return the latest pre-release version when ignorePreReleases is true', function () {
-    $versions = ['v2.1.6b', 'v2.1.5-beta', 'v2.1.4', 'v1.0.0'];
+    $versions = ['v2.1.6b', 'v2.1.5-beta', 'v2.1.4a', 'v2.1.3-alpha', 'v2.1.2', 'v1.0.0'];
 
     $cacheMock = Cache::partialMock();
     $cacheMock->shouldReceive('get')
@@ -49,7 +49,7 @@ it('should return the latest pre-release version when ignorePreReleases is true'
     $checkAvailableVersions = new CheckAvailableVersions;
 
     $result = $checkAvailableVersions->execute(ignorePreReleases: false);
-    expect($result)->toBe($versions[2]);
+    expect($result)->toBe($versions[4]);
     Event::assertNotDispatched(CommandClassCallback::class);
 });
 
@@ -74,4 +74,24 @@ it('should refresh all available versions when there is an existing "next versio
     $result = $checkAvailableVersions->execute(force: true);
     expect($result)->toBe($versions[1]);
     Event::assertDispatchedTimes(CommandClassCallback::class);
+});
+
+it('throws an exception when availableVersions are not in the cache', function () {
+    $cacheMock = Cache::partialMock();
+    $cacheMock->shouldReceive('get')
+        ->with(CacheKeysEnum::NEXT_AVAILABLE_VERSION->value)
+        ->andReturnNull();
+    $cacheMock->shouldReceive('get')
+        ->with(CacheKeysEnum::AVAILABLE_VERSIONS->value)
+        ->andReturn([]);
+
+    Artisan::shouldReceive('call')->with('streamline:list')->andReturn(1);
+
+    $this->expectException(RuntimeException::class);
+    $this->expectExceptionMessage('The next available version could not be determined.');
+
+    $checkAvailableVersions = new CheckAvailableVersions;
+
+    $result = $checkAvailableVersions->execute(force: true);
+    expect($result)->toBeNull();
 });
