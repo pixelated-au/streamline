@@ -3,7 +3,8 @@
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
-use Pixelated\Streamline\Events\InstalledVersionSet;
+use Illuminate\Support\Facades\Process;
+use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Tests\Feature\Traits\HttpMock;
 use Pixelated\Streamline\Tests\Feature\Traits\UpdateCommandCommon;
 
@@ -24,15 +25,20 @@ it('should run an update with no parameters', function () {
     File::shouldReceive('isReadable')->andReturnTrue();
     File::shouldReceive('deleteDirectory');
 
-    Event::fake(InstalledVersionSet::class);
+    Event::fake(CommandClassCallback::class);
+    Process::fake([
+        '* artisan streamline:finish-update' => Process::result('test output'),
+    ]);
 
     $this->artisan('streamline:run-update')
-        ->expectsOutputToContain('Deploying to next available version: v2.8.1')
         ->assertExitCode(0);
 
+    Process::assertRan(PHP_BINARY . ' artisan streamline:finish-update');
+
     Event::assertDispatched(
-        InstalledVersionSet::class,
-        fn (InstalledVersionSet $event) => $event->version === 'v2.8.1'
+        CommandClassCallback::class,
+        fn (CommandClassCallback $event) => $event->action === 'info' &&
+            Str::startsWith($event->value, 'test output')
     );
 });
 
@@ -44,19 +50,11 @@ it('should run an update with a specific version', function () {
         ->mockZipArchive();
     File::shouldReceive('deleteDirectory');
 
-    Event::fake(InstalledVersionSet::class);
-
     $this->mockGetWebArchive();
 
     $this->artisan('streamline:run-update --install-version=v2.9.0')
         ->expectsOutputToContain('Changing deployment to version: v2.9.0')
         ->assertExitCode(0);
-
-    Event::assertDispatched(
-        InstalledVersionSet::class,
-        fn (InstalledVersionSet $event) => $event->version === 'v2.9.0'
-    );
-
 });
 
 it('should run an update but notifies there are no new versions', function () {
