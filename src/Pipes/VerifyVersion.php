@@ -3,6 +3,7 @@
 namespace Pixelated\Streamline\Pipes;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Pixelated\Streamline\Enums\CacheKeysEnum;
 use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
@@ -19,12 +20,18 @@ class VerifyVersion implements Pipe
 
         if ($requestedVersion) {
             CommandClassCallback::dispatch('info', "Changing deployment to version: $requestedVersion");
+
             if (!$this->versionExists($requestedVersion)) {
                 throw new RuntimeException("Version $requestedVersion is not a valid version!");
             }
 
+            if (!$forceUpdate && Str::endsWith($requestedVersion, ['alpha', 'beta', 'a', 'b'])) {
+                throw new RuntimeException("Version $requestedVersion is a pre-release version, use --force to install it.");
+            }
+
             if (version_compare($requestedVersion, $nextVersion, '<')) {
                 $message = "Version $requestedVersion is not greater than the current version ($nextVersion)";
+
                 if (!$forceUpdate) {
                     throw new RuntimeException($message);
                 }
@@ -34,6 +41,7 @@ class VerifyVersion implements Pipe
             $message = "You are currently using the latest version ($nextVersion)"
                 . ($forceUpdate ? ' (Forced update)' : '');
             CommandClassCallback::dispatch('warn', $message);
+
             if (!$forceUpdate) {
                 return null;
             }
