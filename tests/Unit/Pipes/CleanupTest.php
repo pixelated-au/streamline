@@ -2,22 +2,37 @@
 
 use Pixelated\Streamline\Actions\Cleanup;
 use Pixelated\Streamline\Events\CommandClassCallback;
-use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 
-it('should dispatch an Event with CommandClassCallback containing info and the directory path', function () {
-    $mockBuilder = Mockery::mock(UpdateBuilderInterface::class);
+it('should dispatch proper events', function () {
     $tempDir = '/path/to/temp/dir';
-    $mockBuilder->shouldReceive('getWorkTempDir')->once()->andReturn($tempDir);
 
     Event::fake();
-    File::shouldReceive('deleteDirectory')->once()->with($tempDir);
+    File::shouldReceive('deleteDirectory')->once()->with($tempDir)->andReturnTrue();
 
     $cleanup = new Cleanup;
-    $result = $cleanup($mockBuilder);
+    $cleanup($tempDir);
 
     Event::assertDispatched(fn (CommandClassCallback $event) => $event
         ->action === 'info' && $event->value === "Purging the temporary work directory: $tempDir"
     );
+    Event::assertDispatched(fn (CommandClassCallback $event) => $event
+        ->action === 'success' && $event->value === "Temporary work directory purged successfully: $tempDir"
+    );
+});
 
-    expect($result)->toBe($mockBuilder);
+it('should dispatch an failed event when it could not delete the temp dir', function () {
+    $tempDir = '/path/to/temp/dir';
+
+    Event::fake();
+    File::shouldReceive('deleteDirectory')->once()->with($tempDir)->andReturnFalse();
+
+    $cleanup = new Cleanup;
+    $cleanup($tempDir);
+
+    Event::assertDispatched(fn (CommandClassCallback $event) => $event
+        ->action === 'info' && $event->value === "Purging the temporary work directory: $tempDir"
+    );
+    Event::assertDispatched(fn (CommandClassCallback $event) => $event
+        ->action === 'error' && $event->value === "Failed to purge temporary work directory: $tempDir"
+    );
 });
