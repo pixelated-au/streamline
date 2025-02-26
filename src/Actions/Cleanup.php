@@ -12,6 +12,8 @@ class Cleanup
         CommandClassCallback::dispatch('info', "Purging the temporary work directory: $tempDir");
         if (File::deleteDirectory($tempDir)) {
             CommandClassCallback::dispatch('success', "Temporary work directory purged successfully: $tempDir");
+        } else {
+            CommandClassCallback::dispatch('error', "Failed to purge temporary work directory: $tempDir");
         }
     }
 }
