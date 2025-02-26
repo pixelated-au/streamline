@@ -23,52 +23,74 @@ it('should throw RuntimeException when requested version does not exist', functi
         ->toThrow(RuntimeException::class, 'Version v1.0.0 is not a valid version!');
 });
 
-it('should throw RuntimeException when requested version is not greater than current version and force update is false', function () {
-    $builder = Mockery::mock(UpdateBuilderInterface::class);
-    $builder->shouldReceive('getRequestedVersion')->andReturn('v1.0.0');
-    $builder->shouldReceive('getNextAvailableRepositoryVersion')->andReturn('v2.0.0');
-    $builder->shouldReceive('isForceUpdate')->andReturn(false);
+it('should throw RuntimeException when requested version is pre-release and force is not enabled',
+    function (string $version) {
+        $builder = Mockery::mock(UpdateBuilderInterface::class);
+        $builder->shouldReceive('getRequestedVersion')->andReturn($version);
+        $builder->shouldReceive('getNextAvailableRepositoryVersion')->andReturn('v2.0.0');
+        $builder->shouldReceive('isForceUpdate')->andReturn(false);
 
-    Event::shouldReceive('dispatch')->once()->with(Mockery::type(CommandClassCallback::class));
+        Event::shouldReceive('dispatch')->once()->with(Mockery::type(CommandClassCallback::class));
 
-    Cache::shouldReceive('get')
-        ->with(CacheKeysEnum::AVAILABLE_VERSIONS->value)
-        ->andReturn(collect(['v1.0.0', 'v2.0.0']));
+        Cache::shouldReceive('get')
+            ->with(CacheKeysEnum::AVAILABLE_VERSIONS->value)
+            ->andReturn(collect([$version, 'v2.0.0']));
 
-    $verifyVersion = new VerifyVersion;
+        $verifyVersion = new VerifyVersion;
 
-    expect(fn () => $verifyVersion->__invoke($builder))
-        ->toThrow(RuntimeException::class, 'Version v1.0.0 is not greater than the current version (v2.0.0)');
-});
+        expect(fn () => $verifyVersion->__invoke($builder))
+            ->toThrow(RuntimeException::class, "Version $version is a pre-release version, use --force to install it.");
+    })->with(['v3.0.0-alpha', 'v3.0.0-beta', 'v3.0.0a', 'v3.0.0b']);
 
-it('should warn but not throw exception when requested version is not greater than current version and force update is true', function () {
-    $builder = Mockery::mock(UpdateBuilderInterface::class);
-    $builder->shouldReceive('getRequestedVersion')->andReturn('v1.0.0');
-    $builder->shouldReceive('getNextAvailableRepositoryVersion')->andReturn('v2.0.0');
-    $builder->shouldReceive('isForceUpdate')->andReturnTrue();
+it('should throw RuntimeException when requested version is not greater than current version and force update is false',
+    function () {
+        $builder = Mockery::mock(UpdateBuilderInterface::class);
+        $builder->shouldReceive('getRequestedVersion')->andReturn('v1.0.0');
+        $builder->shouldReceive('getNextAvailableRepositoryVersion')->andReturn('v2.0.0');
+        $builder->shouldReceive('isForceUpdate')->andReturn(false);
 
-    Event::fake();
-    Cache::shouldReceive('get')
-        ->with(CacheKeysEnum::AVAILABLE_VERSIONS->value)
-        ->andReturn(collect(['v1.0.0', 'v2.0.0']));
+        Event::shouldReceive('dispatch')->once()->with(Mockery::type(CommandClassCallback::class));
 
-    $verifyVersion = new VerifyVersion;
+        Cache::shouldReceive('get')
+            ->with(CacheKeysEnum::AVAILABLE_VERSIONS->value)
+            ->andReturn(collect(['v1.0.0', 'v2.0.0']));
 
-    expect(fn () => $verifyVersion->__invoke($builder))->not->toThrow(RuntimeException::class);
+        $verifyVersion = new VerifyVersion;
 
-    Event::assertDispatchedTimes(CommandClassCallback::class, 2);
-
-    Event::assertDispatched(CommandClassCallback::class, function (CommandClassCallback $event) {
-        if ($event->action === 'info') {
-            return $event->value === 'hanging deployment to version: v1.0.0';
-        }
-        if ($event->action === 'warn') {
-            return $event->value === 'Version v1.0.0 is not greater than the current version (v2.0.0) (Forced update)';
-        }
-
-        return false;
+        expect(fn () => $verifyVersion->__invoke($builder))
+            ->toThrow(RuntimeException::class, 'Version v1.0.0 is not greater than the current version (v2.0.0)');
     });
-});
+
+it('should warn but not throw exception when requested version is not greater than current version and force update is true',
+    function () {
+        $builder = Mockery::mock(UpdateBuilderInterface::class);
+        $builder->shouldReceive('getRequestedVersion')->andReturn('v1.0.0');
+        $builder->shouldReceive('getNextAvailableRepositoryVersion')->andReturn('v2.0.0');
+        $builder->shouldReceive('isForceUpdate')->andReturnTrue();
+
+        Event::fake();
+        Cache::shouldReceive('get')
+            ->with(CacheKeysEnum::AVAILABLE_VERSIONS->value)
+            ->andReturn(collect(['v1.0.0', 'v2.0.0']));
+
+        $verifyVersion = new VerifyVersion;
+
+        expect(fn () => $verifyVersion->__invoke($builder))->not->toThrow(RuntimeException::class);
+
+        Event::assertDispatchedTimes(CommandClassCallback::class, 2);
+
+        Event::assertDispatched(CommandClassCallback::class, function (CommandClassCallback $event) {
+            if ($event->action === 'info') {
+                return $event->value === 'hanging deployment to version: v1.0.0';
+            }
+
+            if ($event->action === 'warn') {
+                return $event->value === 'Version v1.0.0 is not greater than the current version (v2.0.0) (Forced update)';
+            }
+
+            return false;
+        });
+    });
 
 it('should return null when next version is the same as the installed version', function () {
     $builder = Mockery::mock(UpdateBuilderInterface::class);
@@ -163,6 +185,7 @@ it('should dispatch appropriate info and warning events based on version compari
         if ($event->action === 'info') {
             return $event->value === 'Changing deployment to version: v1.0.0';
         }
+
         if ($event->action === 'warn') {
             return $event->value === 'Version v12.0.0 is not greater than the current version (v1.5.0) (Forced update)';
         }
