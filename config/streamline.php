@@ -1,10 +1,10 @@
 <?php
 
+use Pixelated\Streamline\Actions\Cleanup;
 use Pixelated\Streamline\Events\InstalledVersionSet;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 use Pixelated\Streamline\Pipes\BackupCurrentInstallation;
 use Pixelated\Streamline\Pipes\CheckLaravelBasePathWritable;
-use Pixelated\Streamline\Pipes\Cleanup;
 use Pixelated\Streamline\Pipes\DownloadRelease;
 use Pixelated\Streamline\Pipes\GetNextAvailableReleaseVersion;
 use Pixelated\Streamline\Pipes\MakeTempDir;
@@ -332,6 +332,7 @@ return [
 
     'pipeline-finish' => static function (UpdateBuilderInterface $builder) {
         app()->make(Cleanup::class)->__invoke($builder);
+
         if ($nextVersion = $builder->getNextAvailableRepositoryVersion()) {
             // $nextVersion may be falsy if there was a failure
             InstalledVersionSet::dispatch($nextVersion);
