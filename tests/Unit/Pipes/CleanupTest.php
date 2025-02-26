@@ -1,8 +1,8 @@
 <?php
 
+use Pixelated\Streamline\Actions\Cleanup;
 use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
-use Pixelated\Streamline\Pipes\Cleanup;
 
 it('should dispatch an Event with CommandClassCallback containing info and the directory path', function () {
     $mockBuilder = Mockery::mock(UpdateBuilderInterface::class);
