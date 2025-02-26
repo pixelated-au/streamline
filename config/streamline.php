@@ -1,5 +1,7 @@
 <?php
 
+/** @noinspection PhpUnusedParameterInspection */
+
 use Illuminate\Support\Facades\Process;
 use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
@@ -103,7 +105,7 @@ return [
     |
     */
 
-    'work_temp_dir' => env('STREAMLINE_WORK_TEMP_DIR', dirname(base_path()).'/.streamline_tmp'),
+    'work_temp_dir' => env('STREAMLINE_WORK_TEMP_DIR', dirname(base_path()) . '/.streamline_tmp'),
 
     /*
     |--------------------------------------------------------------------------
@@ -115,7 +117,7 @@ return [
     |
     */
 
-    'backup_dir' => env('STREAMLINE_BACKUP_DIR', dirname(base_path()).'/streamline_backups'),
+    'backup_dir' => env('STREAMLINE_BACKUP_DIR', dirname(base_path()) . '/streamline_backups'),
 
     /*
     |--------------------------------------------------------------------------
@@ -332,12 +334,9 @@ return [
     */
 
     'pipeline-finish' => static function (UpdateBuilderInterface $builder) {
-        $process = Process::run([
-            PHP_BINARY,
-            base_path('artisan'),
-            'streamline:finish-update',
-            $builder->getWorkTempDir(),
-        ]);
+        $process = Process::path(base_path())
+            ->run(PHP_BINARY . ' artisan streamline:finish-update');
+
         if ($process->successful()) {
             CommandClassCallback::dispatch('info', $process->output());
         } else {
