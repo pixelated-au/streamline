@@ -21,7 +21,7 @@ class CreateArchive
         private readonly string $filename,
     ) {
         $this->gzipPath = "$this->destinationPath/$this->filename";
-        $tarPath = File::dirname($this->gzipPath) . '/' . File::name($this->gzipPath) . '.zip';
+        $tarPath        = File::dirname($this->gzipPath) . '/' . File::name($this->gzipPath) . '.zip';
         $this->archiver = app()->make(
             abstract: CompressedArchiveBuilder::class,
             parameters: ['zipArchivePath' => $tarPath]
@@ -46,9 +46,7 @@ class CreateArchive
     protected function checkDestinationPath(): void
     {
         if (
-            !File::isDirectory($this->destinationPath) &&
-            !File::makeDirectory($this->destinationPath, 0755, true) &&
-            !File::isDirectory($this->destinationPath)) {
+            !File::isDirectory($this->destinationPath) && !File::makeDirectory($this->destinationPath, 0755, true) && !File::isDirectory($this->destinationPath)) {
             throw new RuntimeException(sprintf('Directory "%s" was not created', $this->destinationPath));
         }
 

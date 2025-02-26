@@ -20,11 +20,11 @@ trait OutputSubProcessCalls
                 }
                 match ($event->action) {
                     'comment' => $this->comment($event->value),
-                    'info' => $this->info($event->value),
-                    'warn' => $this->warn($event->value),
-                    'error' => $this->error($event->value),
-                    'call' => $this->call($event->value),
-                    default => null,
+                    'info'    => $this->info($event->value),
+                    'warn'    => $this->warn($event->value),
+                    'error'   => $this->error($event->value),
+                    'call'    => $this->call($event->value),
+                    default   => null,
                 };
             }
         );

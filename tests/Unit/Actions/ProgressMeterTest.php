@@ -9,7 +9,7 @@ it('can run the progress meter with a known download total',
     /** @throws \JsonException */
     function () {
         $resource = fopen('php://memory', 'a+b');
-        $output = new OutputStyle(
+        $output   = new OutputStyle(
             new StringInput(''),
             new StreamOutput($resource),
         );
@@ -48,7 +48,7 @@ it('can run the progress meter with an unknown download total',
     /** @throws \JsonException */
     function () {
         $resource = fopen('php://memory', 'a+b');
-        $output = new OutputStyle(
+        $output   = new OutputStyle(
             new StringInput(''),
             new StreamOutput($resource),
         );
@@ -98,7 +98,7 @@ it(
      */
     function () {
         $resource = fopen('php://memory', 'a+b');
-        $output = new OutputStyle(
+        $output   = new OutputStyle(
             new StringInput(''),
             new StreamOutput($resource)
         );

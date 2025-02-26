@@ -36,10 +36,10 @@ class CleanUpAssets
         //        private int             $numRevisions
     ) {
         // TODO restore these after upgrading to Laravel 11
-        $this->numRevisions = config('streamline.web_assets_build_num_revisions');
-        $assetDir = config('streamline.laravel_asset_dir_name');
-        $this->filesystem = Facades\Storage::disk(config('streamline.laravel_public_disk_name'));
-        $buildDir = config('streamline.laravel_build_dir_name');
+        $this->numRevisions  = config('streamline.web_assets_build_num_revisions');
+        $assetDir            = config('streamline.laravel_asset_dir_name');
+        $this->filesystem    = Facades\Storage::disk(config('streamline.laravel_public_disk_name'));
+        $buildDir            = config('streamline.laravel_build_dir_name');
         $this->filesToDelete = collect($this->filesystem->files("$buildDir/$assetDir"));
     }
 
@@ -93,7 +93,7 @@ class CleanUpAssets
 
                     return [$baseName => [
                         'filename' => $file,
-                        'mtime' => $this->filesystem->lastModified($file),
+                        'mtime'    => $this->filesystem->lastModified($file),
                     ]];
                 }
             )
@@ -105,7 +105,7 @@ class CleanUpAssets
                 ->when(
                     $meta->count() > $this->numRevisions,
                     fn (Collection $meta) => $meta->take($meta->count() - $this->numRevisions),
-                    fn () => collect(),
+                    fn ()                 => collect(),
                 )
                 ->map(fn (array $meta) => $meta['filename'])
             )

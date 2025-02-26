@@ -10,9 +10,9 @@ it('should create a .tar.gz file with correct structure and contents',
     function () {
         Storage::fake('local');
 
-        $sourceFolder = 'source';
+        $sourceFolder      = 'source';
         $destinationFolder = 'destination';
-        $filename = 'test_archive.zip';
+        $filename          = 'test_archive.zip';
 
         // Define expected file structure and contents
         $expectedFiles = [
@@ -52,7 +52,7 @@ it('should create a .tar.gz file with correct structure and contents',
 
         // Iterate through the ZIP archive
         for ($i = 0; $i < $zipFile->numFiles; $i++) {
-            $stat = $zipFile->statIndex($i);
+            $stat     = $zipFile->statIndex($i);
             $filename = $stat['name'];
 
             // Check if the file exists in our expected files
@@ -63,7 +63,7 @@ it('should create a .tar.gz file with correct structure and contents',
                     $found = true;
 
                     // Assert file content
-                    $actualContent = $zipFile->getFromIndex($i);
+                    $actualContent   = $zipFile->getFromIndex($i);
                     $expectedContent = "Content of $expectedFile";
                     expect($actualContent)->toBe($expectedContent, "Content mismatch for file $filename");
 
@@ -135,7 +135,7 @@ it('should throw an exception when the destination path is not writable', functi
 
 it('should throw an exception when the archive file already exists', function () {
     $destinationPath = '/path/to/destination';
-    $filename = 'test_archive.tgz';
+    $filename        = 'test_archive.tgz';
 
     File::shouldReceive('dirname')->andReturn('');
     File::shouldReceive('exists')->andReturn([true, false]);

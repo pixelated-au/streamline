@@ -27,7 +27,7 @@ trait UpdateCommandCommon
         foreach ($options as $key => $option) {
             // check to see if the variable exists on this instance and then set the default value
             if (property_exists($this, "_$key")) {
-                $key = "_$key";
+                $key        = "_$key";
                 $this->$key = $option;
             }
         }

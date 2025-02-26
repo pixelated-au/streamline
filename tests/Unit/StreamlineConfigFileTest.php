@@ -6,9 +6,9 @@ use Pixelated\Streamline\Updater\UpdateBuilder;
 it('outputs an info message when the cleanup process fails', function () {
     Process::preventStrayProcesses();
 
-//    Process::fake([
-//        Process::result(output: 'Test success message'),
-//    ]);
+    //    Process::fake([
+    //        Process::result(output: 'Test success message'),
+    //    ]);
 
     $this->app->bind(
         \Symfony\Component\Process\Process::class,
@@ -21,6 +21,7 @@ it('outputs an info message when the cleanup process fails', function () {
                 ->andReturnTrue();
             $mock->shouldReceive('getOutput')
                 ->andReturn('Test success message');
+
             return $mock;
         }
     );
@@ -34,17 +35,16 @@ it('outputs an info message when the cleanup process fails', function () {
 
     Event::assertDispatched(
         CommandClassCallback::class,
-        fn(CommandClassCallback $callback) => $callback->action === 'info' &&
-            Str::startsWith($callback->value, 'Test success message')
+        fn (CommandClassCallback $callback) => $callback->action === 'info' && Str::startsWith($callback->value, 'Test success message')
     );
 });
 
 it('outputs an error when the cleanup process fails', function () {
     Process::preventStrayProcesses();
 
-//    Process::fake([
-//        Process::result(errorOutput: 'Test error message', exitCode: 1),
-//    ]);
+    //    Process::fake([
+    //        Process::result(errorOutput: 'Test error message', exitCode: 1),
+    //    ]);
 
     $this->app->bind(
         \Symfony\Component\Process\Process::class,
@@ -57,6 +57,7 @@ it('outputs an error when the cleanup process fails', function () {
                 ->andReturnFalse();
             $mock->shouldReceive('getErrorOutput')
                 ->andReturn('Test error message');
+
             return $mock;
         }
     );
@@ -69,7 +70,6 @@ it('outputs an error when the cleanup process fails', function () {
 
     Event::assertDispatched(
         CommandClassCallback::class,
-        fn(CommandClassCallback $callback) => $callback->action === 'error' &&
-            Str::startsWith($callback->value, 'Test error message')
+        fn (CommandClassCallback $callback) => $callback->action === 'error' && Str::startsWith($callback->value, 'Test error message')
     );
 });

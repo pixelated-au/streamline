@@ -11,16 +11,14 @@ it('should successfully create the temporary directory if it does not exist', fu
     $builder->shouldReceive('getWorkTempDir')->once()->andReturn($tempDir);
 
     Event::shouldReceive('dispatch')->once()->with(Mockery::on(function ($event) use ($tempDir) {
-        return $event instanceof CommandClassCallback &&
-               $event->action === 'comment' &&
-               $event->value === "Creating temporary directory $tempDir";
+        return $event instanceof CommandClassCallback && $event->action === 'comment' && $event->value === "Creating temporary directory $tempDir";
     }));
 
     File::shouldReceive('exists')->once()->with($tempDir)->andReturn(false);
     File::shouldReceive('makeDirectory')->once()->andReturn(true);
 
     $makeTempDir = new MakeTempDir;
-    $result = $makeTempDir($builder);
+    $result      = $makeTempDir($builder);
 
     expect($result)->toBe($builder);
 });
@@ -52,11 +50,10 @@ it('should dispatch an Event with the correct CommandClassCallback', function ()
     File::shouldReceive('exists')->once()->with($tempDir)->andReturn(true);
 
     $makeTempDir = new MakeTempDir;
-    $result = $makeTempDir($builder);
+    $result      = $makeTempDir($builder);
 
     expect($result)->toBe($builder);
     Event::assertDispatched(CommandClassCallback::class, function (CommandClassCallback $event) use ($tempDir) {
-        return $event->action === 'comment' &&
-               $event->value === "Creating temporary directory $tempDir";
+        return $event->action === 'comment' && $event->value === "Creating temporary directory $tempDir";
     });
 });

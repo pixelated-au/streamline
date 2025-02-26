@@ -38,23 +38,23 @@ it('should run an update with no parameters', function () {
                 ->andReturnTrue();
             $mock->shouldReceive('getOutput')
                 ->andReturn('test output');
+
             return $mock;
         }
     );
 
-//    Process::fake([
-//        '* artisan streamline:finish-update' => Process::result('test output'),
-//    ]);
+    //    Process::fake([
+    //        '* artisan streamline:finish-update' => Process::result('test output'),
+    //    ]);
 
     $this->artisan('streamline:run-update')
         ->assertExitCode(0);
 
-//    Process::assertRan(PHP_BINARY . ' artisan streamline:finish-update');
+    //    Process::assertRan(PHP_BINARY . ' artisan streamline:finish-update');
 
     Event::assertDispatched(
         CommandClassCallback::class,
-        fn(CommandClassCallback $event) => $event->action === 'info' &&
-            Str::startsWith($event->value, 'test output')
+        fn (CommandClassCallback $event) => $event->action === 'info' && Str::startsWith($event->value, 'test output')
     );
 });
 

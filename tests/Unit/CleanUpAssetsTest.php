@@ -9,13 +9,13 @@ it('can clean up assets with multiple revisions', function () {
     Storage::fake();
 
     storeFiles([
-        'app.123abc.js' => 1,
-        'app.456def_keep.js' => 2,
-        'app.789ghi_keep.js' => 2,
-        'app.101jkl.js' => 1,
-        'style.111aaa.css' => 1,
+        'app.123abc.js'         => 1,
+        'app.456def_keep.js'    => 2,
+        'app.789ghi_keep.js'    => 2,
+        'app.101jkl.js'         => 1,
+        'style.111aaa.css'      => 1,
         'style.222bbb_keep.css' => 2,
-        'style.333ccc.css' => 1,
+        'style.333ccc.css'      => 1,
         'style.444ddd_keep.css' => 2,
     ]);
 
@@ -57,13 +57,13 @@ it('ignores files with non-matching extensions', function () {
     Storage::fake();
 
     storeFiles([
-        'app.123abc.foo' => 1,
-        'app.456def_keep.js' => 2,
-        'app.789ghi_keep.js' => 2,
-        'app.101jkl.js' => 1,
-        'style.111aaa.css' => 1,
+        'app.123abc.foo'        => 1,
+        'app.456def_keep.js'    => 2,
+        'app.789ghi_keep.js'    => 2,
+        'app.101jkl.js'         => 1,
+        'style.111aaa.css'      => 1,
         'style.222bbb_keep.css' => 2,
-        'style.333ccc.bar' => 1,
+        'style.333ccc.bar'      => 1,
         'style.444ddd_keep.css' => 1,
     ]);
 
@@ -108,14 +108,14 @@ it('overrides the number of revisions in config allowing only 1', function () {
     Storage::fake();
 
     storeFiles([
-        'app.123abc.js' => 1,
-        'app.456def_keep.js' => 4,
-        'app.789ghi.js' => 3,
-        'app.101jkl.js' => 2,
-        'style.111aaa.css' => 1,
+        'app.123abc.js'         => 1,
+        'app.456def_keep.js'    => 4,
+        'app.789ghi.js'         => 3,
+        'app.101jkl.js'         => 2,
+        'style.111aaa.css'      => 1,
         'style.222bbb_keep.css' => 4,
-        'style.333ccc.css' => 3,
-        'style.444ddd.css' => 2,
+        'style.333ccc.css'      => 3,
+        'style.444ddd.css'      => 2,
     ]);
 
     Config::set('streamline.build_dir', Storage::getConfig()['root']);
@@ -141,11 +141,11 @@ it('overrides the number of revisions in config allowing only 3', function () {
     Storage::fake();
 
     storeFiles([
-        'app.123abc_keep.js' => 2,
-        'app.456def_keep.js' => 4,
-        'app.789ghi_keep.js' => 3,
-        'app.101jkl.js' => 1,
-        'style.111aaa.css' => 1,
+        'app.123abc_keep.js'    => 2,
+        'app.456def_keep.js'    => 4,
+        'app.789ghi_keep.js'    => 3,
+        'app.101jkl.js'         => 1,
+        'style.111aaa.css'      => 1,
         'style.222bbb_keep.css' => 4,
         'style.333ccc_keep.css' => 3,
         'style.444ddd_keep.css' => 2,
@@ -173,15 +173,15 @@ it('files are not deleted if there are less files available than the number of r
     Storage::fake();
 
     storeFiles([
-        'app.123abc_keep.js' => 2,
-        'app.456def_keep.js' => 4,
-        'app.789ghi_keep.js' => 3,
-        'app.101jkl_keep.js' => 1,
+        'app.123abc_keep.js'    => 2,
+        'app.456def_keep.js'    => 4,
+        'app.789ghi_keep.js'    => 3,
+        'app.101jkl_keep.js'    => 1,
         'style.111aaa_keep.css' => 5,
         'style.222bbb_keep.css' => 4,
         'style.333ccc_keep.css' => 3,
         'style.444ddd_keep.css' => 2,
-        'style.555eee.css' => 1, // this one should be deleted
+        'style.555eee.css'      => 1, // this one should be deleted
     ]);
 
     Config::set('streamline.build_dir', Storage::getConfig()['root']);

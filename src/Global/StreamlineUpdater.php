@@ -41,17 +41,17 @@ class StreamlineUpdater
      */
     public function __construct()
     {
-        $this->tempDir = $this->env('TEMP_DIR');
-        $this->laravelBasePath = $this->env('LARAVEL_BASE_PATH');
-        $this->publicDirName = $this->env('PUBLIC_DIR_NAME');
-        $this->frontEndBuildDir = $this->env('FRONT_END_BUILD_DIR');
-        $this->installingVersion = $this->env('INSTALLING_VERSION');
-        $this->protectedPaths = $this->jsonEnv('PROTECTED_PATHS');
-        $this->dirPermission = (int) $this->env('DIR_PERMISSION');
-        $this->filePermission = (int) $this->env('FILE_PERMISSION');
+        $this->tempDir               = $this->env('TEMP_DIR');
+        $this->laravelBasePath       = $this->env('LARAVEL_BASE_PATH');
+        $this->publicDirName         = $this->env('PUBLIC_DIR_NAME');
+        $this->frontEndBuildDir      = $this->env('FRONT_END_BUILD_DIR');
+        $this->installingVersion     = $this->env('INSTALLING_VERSION');
+        $this->protectedPaths        = $this->jsonEnv('PROTECTED_PATHS');
+        $this->dirPermission         = (int) $this->env('DIR_PERMISSION');
+        $this->filePermission        = (int) $this->env('FILE_PERMISSION');
         $this->oldReleaseArchivePath = $this->env('OLD_RELEASE_ARCHIVE_PATH');
-        $this->doRetainOldRelease = (bool) $this->env('DO_RETAIN_OLD_RELEASE');
-        $this->isTesting = (int) (getenv('IS_TESTING') ?: self::TESTING_OFF);
+        $this->doRetainOldRelease    = (bool) $this->env('DO_RETAIN_OLD_RELEASE');
+        $this->isTesting             = (int) (getenv('IS_TESTING') ?: self::TESTING_OFF);
 
         if (count($this->envIssues)) {
             throw new InvalidArgumentException(implode("\n", $this->envIssues));
@@ -135,7 +135,7 @@ class StreamlineUpdater
 
         try {
             $composer = json_decode(file_get_contents($composerJsonPath), true, 512, JSON_THROW_ON_ERROR);
-            $dir = $composer['config']['vendor-dir'] ?? 'vendor';
+            $dir      = $composer['config']['vendor-dir'] ?? 'vendor';
 
             return "$dir/autoload.php";
         } catch (JsonException) {

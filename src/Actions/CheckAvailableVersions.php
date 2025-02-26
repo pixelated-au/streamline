@@ -23,7 +23,7 @@ class CheckAvailableVersions
         }
 
         $availableVersions = collect(Cache::get(CacheKeysEnum::AVAILABLE_VERSIONS->value));
-        $nextVersion = $this->getNextVersion($availableVersions, $ignorePreReleases);
+        $nextVersion       = $this->getNextVersion($availableVersions, $ignorePreReleases);
 
         if (!$nextVersion) {
             throw new RuntimeException('The next available version could not be determined.');

@@ -18,7 +18,7 @@ class CleanAssetsDirectoryCommand extends Command
 
     public function handle(CleanUpAssets $cleanUpAssets): int
     {
-        $force = $this->option('force');
+        $force     = $this->option('force');
         $revisions = $this->option('revisions');
 
         $this->listenForSubProcessEvents();

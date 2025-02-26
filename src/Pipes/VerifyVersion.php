@@ -15,8 +15,8 @@ class VerifyVersion implements Pipe
     public function __invoke(UpdateBuilderInterface $builder): ?UpdateBuilderInterface
     {
         $requestedVersion = $builder->getRequestedVersion();
-        $nextVersion = $builder->getNextAvailableRepositoryVersion();
-        $forceUpdate = $builder->isForceUpdate();
+        $nextVersion      = $builder->getNextAvailableRepositoryVersion();
+        $forceUpdate      = $builder->isForceUpdate();
 
         if ($requestedVersion) {
             CommandClassCallback::dispatch('info', "Changing deployment to version: $requestedVersion");

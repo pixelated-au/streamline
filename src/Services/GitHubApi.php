@@ -51,7 +51,7 @@ class GitHubApi
     ) {
         // TODO restore this after upgrading to Laravel 11
         $this->githubRepo = config('streamline.github_repo');
-        $this->authToken = config('streamline.github_auth_token');
+        $this->authToken  = config('streamline.github_auth_token');
     }
 
     public function get(): Response
@@ -93,17 +93,17 @@ class GitHubApi
     public function paginate(): Collection
     {
         $this->checkHasUrl();
-        $allData = collect();
-        $this->page = 1;
-        $perPage = config('streamline.github_api_pagination_limit');
+        $allData          = collect();
+        $this->page       = 1;
+        $perPage          = config('streamline.github_api_pagination_limit');
         $this->totalPages = null;
 
         do {
             $this->withQueryParams(['page' => $this->page, 'per_page' => $perPage]);
 
             $response = $this->get();
-            $data = $response->collect();
-            $allData = $allData->merge($data);
+            $data     = $response->collect();
+            $allData  = $allData->merge($data);
 
             $linkHeader = $response->header('Link');
 
@@ -113,7 +113,7 @@ class GitHubApi
             }
 
             // Check if there are more pages
-            $nextPage = $this->extractLinkPageNumber($linkHeader, LinkHeader::NEXT);
+            $nextPage    = $this->extractLinkPageNumber($linkHeader, LinkHeader::NEXT);
             $hasNextPage = $nextPage !== null && $nextPage > $this->page;
             $this->page++;
         } while ($hasNextPage);

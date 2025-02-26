@@ -25,7 +25,7 @@ return [
     |
     */
 
-    'installed_version' => env('STREAMLINE_APPLICATION_VERSION_INSTALLED'),
+    'installed_version'                => env('STREAMLINE_APPLICATION_VERSION_INSTALLED'),
 
     /*
     |--------------------------------------------------------------------------
@@ -43,7 +43,7 @@ return [
     |
     */
 
-    'protected_files' => env('STREAMLINE_PROTECTED_PATHS', '.env'),
+    'protected_files'                  => env('STREAMLINE_PROTECTED_PATHS', '.env'),
 
     /*
     |--------------------------------------------------------------------------
@@ -55,7 +55,7 @@ return [
     |
     */
 
-    'github_repo' => env('STREAMLINE_GITHUB_RELEASE_REPOSITORY'),
+    'github_repo'                      => env('STREAMLINE_GITHUB_RELEASE_REPOSITORY'),
 
     /*
     |--------------------------------------------------------------------------
@@ -69,7 +69,7 @@ return [
     |
     */
 
-    'github_auth_token' => env('STREAMLINE_GITHUB_AUTH_TOKEN'),
+    'github_auth_token'                => env('STREAMLINE_GITHUB_AUTH_TOKEN'),
 
     /*
     |--------------------------------------------------------------------------
@@ -81,7 +81,7 @@ return [
     |
     */
 
-    'github_api_pagination_limit' => env('STREAMLINE_GITHUB_API_PAGINATION_LIMIT', 30),
+    'github_api_pagination_limit'      => env('STREAMLINE_GITHUB_API_PAGINATION_LIMIT', 30),
 
     /*
     |--------------------------------------------------------------------------
@@ -93,7 +93,7 @@ return [
     |
     */
 
-    'release_archive_file_name' => env('STREAMLINE_GITHUB_RELEASE_ARCHIVE_FILENAME', 'release.zip'),
+    'release_archive_file_name'        => env('STREAMLINE_GITHUB_RELEASE_ARCHIVE_FILENAME', 'release.zip'),
 
     /*
     |--------------------------------------------------------------------------
@@ -106,7 +106,7 @@ return [
     |
     */
 
-    'work_temp_dir' => env('STREAMLINE_WORK_TEMP_DIR', dirname(base_path()) . '/.streamline_tmp'),
+    'work_temp_dir'                    => env('STREAMLINE_WORK_TEMP_DIR', dirname(base_path()) . '/.streamline_tmp'),
 
     /*
     |--------------------------------------------------------------------------
@@ -118,7 +118,7 @@ return [
     |
     */
 
-    'backup_dir' => env('STREAMLINE_BACKUP_DIR', dirname(base_path()) . '/streamline_backups'),
+    'backup_dir'                       => env('STREAMLINE_BACKUP_DIR', dirname(base_path()) . '/streamline_backups'),
 
     /*
     |--------------------------------------------------------------------------
@@ -132,7 +132,7 @@ return [
     |
     */
 
-    'updater_file_prefix' => env('STREAMLINE_UPDATER_FILE_PREFIX', 'streamline'),
+    'updater_file_prefix'              => env('STREAMLINE_UPDATER_FILE_PREFIX', 'streamline'),
 
     /*
     |--------------------------------------------------------------------------
@@ -144,7 +144,7 @@ return [
     |
     */
 
-    'laravel_public_disk_name' => env('STREAMLINE_WEB_ASSET_PUBLIC_DISK_NAME', 'public'),
+    'laravel_public_disk_name'         => env('STREAMLINE_WEB_ASSET_PUBLIC_DISK_NAME', 'public'),
 
     /*
     |--------------------------------------------------------------------------
@@ -157,7 +157,7 @@ return [
     |
     */
 
-    'laravel_build_dir_name' => env('STREAMLINE_WEB_ASSET_BUILD_DIR_NAME', 'build'),
+    'laravel_build_dir_name'           => env('STREAMLINE_WEB_ASSET_BUILD_DIR_NAME', 'build'),
 
     /*
     |--------------------------------------------------------------------------
@@ -169,7 +169,7 @@ return [
     |
     */
 
-    'laravel_asset_dir_name' => 'assets',
+    'laravel_asset_dir_name'           => 'assets',
 
     /*
     |--------------------------------------------------------------------------
@@ -181,7 +181,7 @@ return [
     |
     */
 
-    'directory_permissions' => (int) env('STREAMLINE_DIRECTORY_PERMISSIONS', 0755),
+    'directory_permissions'            => (int) env('STREAMLINE_DIRECTORY_PERMISSIONS', 0755),
 
     /*
     |--------------------------------------------------------------------------
@@ -193,7 +193,7 @@ return [
     |
     */
 
-    'file_permissions' => (int) env('STREAMLINE_FILE_PERMISSIONS', 0644),
+    'file_permissions'                 => (int) env('STREAMLINE_FILE_PERMISSIONS', 0644),
 
     /*
     |--------------------------------------------------------------------------
@@ -206,7 +206,7 @@ return [
     |
     */
 
-    'retain_old_releases' => env('STREAMLINE_RETAIN_OLD_RELEASES', true),
+    'retain_old_releases'              => env('STREAMLINE_RETAIN_OLD_RELEASES', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -242,7 +242,7 @@ return [
     |
     */
 
-    'web_assets_build_num_revisions' => env('STREAMLINE_WEB_ASSET_HISTORY_NUM', 5),
+    'web_assets_build_num_revisions'   => env('STREAMLINE_WEB_ASSET_HISTORY_NUM', 5),
 
     /*
     |--------------------------------------------------------------------------
@@ -254,7 +254,7 @@ return [
     |
     */
 
-    'web_assets_relative_dir' => env('STREAMLINE_WEB_ASSET_RELATIVE_DIR', 'public/build'),
+    'web_assets_relative_dir'          => env('STREAMLINE_WEB_ASSET_RELATIVE_DIR', 'public/build'),
 
     /*
     |--------------------------------------------------------------------------
@@ -267,7 +267,7 @@ return [
     |
     */
 
-    'web_assets_max_file_size' => env('STREAMLINE_WEB_ASSET_MAX_FILE_SIZE', 1024 * 1024 * 5),
+    'web_assets_max_file_size'         => env('STREAMLINE_WEB_ASSET_MAX_FILE_SIZE', 1024 * 1024 * 5),
 
     /*
     |--------------------------------------------------------------------------
@@ -282,7 +282,7 @@ return [
     |
     */
 
-    'external_process_class' => PhpProcess::class,
+    'external_process_class'           => PhpProcess::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -301,7 +301,7 @@ return [
     |
     */
 
-    'runner_class' => StreamlineUpdater::class,
+    'runner_class'                     => StreamlineUpdater::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -313,7 +313,7 @@ return [
     |
     */
 
-    'pipeline-update' => [
+    'pipeline-update'                  => [
         CheckLaravelBasePathWritable::class,
         GetNextAvailableReleaseVersion::class,
         VerifyVersion::class,
@@ -334,10 +334,10 @@ return [
     |
     */
 
-    'pipeline-finish' => static function (UpdateBuilderInterface $builder) {
+    'pipeline-finish'                  => static function (UpdateBuilderInterface $builder) {
         $process = resolve(\Symfony\Component\Process\Process::class, [
             'command' => [(new PhpExecutableFinder)->find(), 'artisan', 'streamline:finish-update'],
-            'cwd' => base_path(),
+            'cwd'     => base_path(),
         ]);
         $process->run();
 
@@ -358,7 +358,7 @@ return [
     |
     */
 
-    'logging' => [
+    'logging'                          => [
         'driver' => 'single',
         'path'   => storage_path('logs/streamline.log'),
         'level'  => env('LOG_LEVEL', 'debug'),

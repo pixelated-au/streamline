@@ -18,7 +18,7 @@ afterEach(function () {
 });
 
 it('can run an update using actual filesystem actions and deletes the backup directory from the previous release', function () {
-    $disk = Storage::fake('local');
+    $disk     = Storage::fake('local');
     $tempDisk = Storage::fake('temp');
 
     $tempDisk->makeDirectory('zip_temp');

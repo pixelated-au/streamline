@@ -4,12 +4,12 @@ use org\bovigo\vfs\vfsStream;
 use Pixelated\Streamline\Updater\RunCompleteGitHubVersionRelease;
 
 beforeEach(function () {
-    $this->ns = 'Pixelated\\Streamline\\Updater';
-    $this->rootFs = vfsStream::setup('streamline');
+    $this->ns            = 'Pixelated\\Streamline\\Updater';
+    $this->rootFs        = vfsStream::setup('streamline');
     $this->deploymentDir = vfsStream::newDirectory('mock_deployment');
 
     $this->rootFs->addChild($this->deploymentDir);
-    $this->rootPath = $this->rootFs->url();
+    $this->rootPath       = $this->rootFs->url();
     $this->deploymentPath = $this->deploymentDir->url();
     vfsStream::copyFromFileSystem(workbench_path(), $this->deploymentDir);
 });
@@ -19,7 +19,7 @@ it('throws an exception that the laravel base directory cannot be found', functi
     $this->expectException(RuntimeException::class);
 
     $runUpdate = runUpdateClassFactory(['laravelBasePath' => 'non-existent-directory']);
-    $closure = fn ($liveAssetsDir, $oldAssetsDir) => $this->validateDirectoriesExist($liveAssetsDir, $oldAssetsDir);
+    $closure   = fn ($liveAssetsDir, $oldAssetsDir) => $this->validateDirectoriesExist($liveAssetsDir, $oldAssetsDir);
     $closure->call($runUpdate, "$this->deploymentPath/public/build", "$this->rootPath/temp/public/build");
 });
 
@@ -27,7 +27,7 @@ it('throws an exception that the live/old assets directory cannot be found', fun
     $this->expectExceptionMessage("Error: Invalid old assets directory: $this->deploymentPath/invalid");
     $this->expectException(RuntimeException::class);
     $runUpdate = runUpdateClassFactory();
-    $closure = fn ($liveAssetsDir, $oldAssetsDir) => $this->validateDirectoriesExist($liveAssetsDir, $oldAssetsDir);
+    $closure   = fn ($liveAssetsDir, $oldAssetsDir) => $this->validateDirectoriesExist($liveAssetsDir, $oldAssetsDir);
     $closure->call($runUpdate, "$this->deploymentPath/invalid", "$this->deploymentPath/temp/public/build");
 });
 
@@ -38,7 +38,7 @@ it('throws an exception that the temp assets directory cannot be found', functio
     $this->expectException(RuntimeException::class);
 
     $runUpdate = runUpdateClassFactory();
-    $closure = fn ($liveAssetsDir, $oldAssetsDir) => $this->validateDirectoriesExist($liveAssetsDir, $oldAssetsDir);
+    $closure   = fn ($liveAssetsDir, $oldAssetsDir) => $this->validateDirectoriesExist($liveAssetsDir, $oldAssetsDir);
     $closure->call($runUpdate, "$this->deploymentPath/public/build", "$this->rootPath/temp/public/build");
 });
 
@@ -52,7 +52,7 @@ it('throws an exception when the destination directory is not writeable', functi
     $this->expectExceptionMessage("Directory \"$this->deploymentPath/public/build/assets/NEW_DIRECTORY\" was not created");
 
     $runUpdate = runUpdateClassFactory();
-    $closure = fn ($source, $destination) => $this->recursiveCopyOldBuildFilesToNewDir($source, $destination);
+    $closure   = fn ($source, $destination) => $this->recursiveCopyOldBuildFilesToNewDir($source, $destination);
     $closure->call($runUpdate, "$this->rootPath/backup_dir/public/build/assets", "$this->deploymentPath/public/build/assets");
 });
 
@@ -74,7 +74,7 @@ it('outputs a notice that the backup directory could not be deleted despite it b
 
     $runUpdate = runUpdateClassFactory(
         [
-            'laravelBasePath' => $this->rootPath,
+            'laravelBasePath'       => $this->rootPath,
             'oldReleaseArchivePath' => "$this->rootPath/backup_test/archive.zip",
         ]
     );
@@ -96,7 +96,7 @@ it('throws an exception that the source file cannot be read when copying assets'
     $this->expectException(RuntimeException::class);
 
     $runUpdate = runUpdateClassFactory();
-    $closure = fn (string $realSourcePath, string $realDestPath) => $this->copyAsset($realSourcePath, $realDestPath);
+    $closure   = fn (string $realSourcePath, string $realDestPath) => $this->copyAsset($realSourcePath, $realDestPath);
     $closure->call($runUpdate, $file->url(), 'unused_destination');
 });
 
@@ -111,7 +111,7 @@ it('throws an exception that the source file cannot be copied for an unknown rea
     $this->expectException(RuntimeException::class);
 
     $runUpdate = runUpdateClassFactory();
-    $closure = fn (string $realSourcePath, string $realDestPath) => $this->copyAsset($realSourcePath, $realDestPath);
+    $closure   = fn (string $realSourcePath, string $realDestPath) => $this->copyAsset($realSourcePath, $realDestPath);
     $closure->call($runUpdate, $file->url(), $this->rootPath);
 });
 
@@ -144,7 +144,7 @@ it('cannot save the .env file when setting the current version number', function
 
 it('fails to delete a missing directory', function () {
     $runUpdate = runUpdateClassFactory();
-    $result = (fn ($directory) => $this->deleteDirectory($directory))
+    $result    = (fn ($directory) => $this->deleteDirectory($directory))
         ->call($runUpdate, "$this->rootPath/missing_dir");
 
     expect($result)->toBeTrue();
@@ -155,7 +155,7 @@ it('calls delete and will return false when the file does not exist', function (
 
     $this->disableErrorHandling();
     $runUpdate = runUpdateClassFactory();
-    $result = (fn ($path) => $this->delete($path))->call($runUpdate, $nonExistentFile);
+    $result    = (fn ($path) => $this->delete($path))->call($runUpdate, $nonExistentFile);
 
     expect($result)->toBeFalse();
 });
@@ -164,14 +164,14 @@ it('should return false when the file exists but cannot be deleted due to permis
     $this->disableErrorHandling();
 
     $file = vfsStream::newFile('bad_permissions.txt');
-    $dir = vfsStream::newDirectory('temp', 0400);
+    $dir  = vfsStream::newDirectory('temp', 0400);
     $dir->addChild($file);
 
     $this->rootFs->addChild($dir);
 
     $runUpdate = runUpdateClassFactory();
-    $closure = fn (string $path) => $this->delete($path);
-    $result = $closure->call($runUpdate, $file->url());
+    $closure   = fn (string $path) => $this->delete($path);
+    $result    = $closure->call($runUpdate, $file->url());
 
     expect($result)->toBeFalse()
         ->and($file->url())->toBeReadableFile();
@@ -188,11 +188,11 @@ it('should handle multiple protected paths with wildcards correctly', function (
     ]);
 
     $testCases = [
-        'config/app.php' => true,
-        'storage/logs/laravel.log' => true,
-        'public/uploads/image.jpg' => true,
-        'resources/views/welcome.blade.php' => true,
-        'app/Http/Controllers/Controller.php' => false,
+        'config/app.php'                                               => true,
+        'storage/logs/laravel.log'                                     => true,
+        'public/uploads/image.jpg'                                     => true,
+        'resources/views/welcome.blade.php'                            => true,
+        'app/Http/Controllers/Controller.php'                          => false,
         'database/migrations/2023_01_01_000000_create_users_table.php' => false,
     ];
 
@@ -231,9 +231,9 @@ it('should return false for an empty relative path', function () {
 });
 
 it('should preserve protected paths', function () {
-    $this->rootFs = vfsStream::setup();
+    $this->rootFs   = vfsStream::setup();
     $this->rootPath = vfsStream::url('root');
-    $protectedDir = vfsStream::newDirectory('protected_dir/sub');
+    $protectedDir   = vfsStream::newDirectory('protected_dir/sub');
 
     /** @noinspection PhpPossiblePolymorphicInvocationInspection */
     $protectedDir->getChild('sub')?->addChild(vfsStream::newFile('protected_by_parent_file.txt'));
@@ -250,8 +250,8 @@ it('should preserve protected paths', function () {
 
     $runUpdate = runUpdateClassFactory([
         'laravelBasePath' => $this->rootPath,
-        'tempDirName' => "$this->rootPath/temp",
-        'protectedPaths' => ['protected_dir/sub', 'protected_file.txt', 'sub/directory/protected_child_file.txt'],
+        'tempDirName'     => "$this->rootPath/temp",
+        'protectedPaths'  => ['protected_dir/sub', 'protected_file.txt', 'sub/directory/protected_child_file.txt'],
     ]);
 
     (fn () => $this->preserveProtectedPaths())->call($runUpdate);
@@ -268,11 +268,11 @@ it('should preserve protected paths', function () {
 });
 
 it('should preserve protected paths when they exist as files', function () {
-    $this->rootFs = vfsStream::setup();
+    $this->rootFs   = vfsStream::setup();
     $this->rootPath = vfsStream::url('root');
 
     $laravel = vfsStream::newDirectory('laravel');
-    $temp = vfsStream::newDirectory('temp');
+    $temp    = vfsStream::newDirectory('temp');
     $this->rootFs->addChild($laravel);
     $this->rootFs->addChild($temp);
     vfsStream::newFile('protected.txt')->at($laravel)->setContent('Protected content');
@@ -280,14 +280,14 @@ it('should preserve protected paths when they exist as files', function () {
     vfsStream::newFile('new.txt')->at($temp)->setContent('New content');
 
     $runUpdate = runUpdateClassFactory([
-        'tempDirName' => $temp->url(),
-        'laravelBasePath' => $laravel->url(),
-        'protectedPaths' => ['protected.txt'],
-        'dirPermission' => 0755,
-        'filePermission' => 0644,
+        'tempDirName'           => $temp->url(),
+        'laravelBasePath'       => $laravel->url(),
+        'protectedPaths'        => ['protected.txt'],
+        'dirPermission'         => 0755,
+        'filePermission'        => 0644,
         'oldReleaseArchivePath' => 'archive.zip',
         'doRetainOldReleaseDir' => true,
-        'doOutput' => false,
+        'doOutput'              => false,
     ]);
 
     (fn () => $this->preserveProtectedPaths())->call($runUpdate);
@@ -305,8 +305,8 @@ it('outputs a warning when a protected path is not found', function () {
 
     $runUpdate = runUpdateClassFactory([
         'laravelBasePath' => $deploymentPath,
-        'protectedPaths' => ['non_existent_path'],
-        'doOutput' => true,
+        'protectedPaths'  => ['non_existent_path'],
+        'doOutput'        => true,
     ]);
 
     $this->expectOutputString(
@@ -319,15 +319,15 @@ it('outputs a warning when a protected path is not found', function () {
 });
 
 it('throws an exception when the destination directory is not writable during directory copy', function () {
-    $this->rootFs = vfsStream::setup();
+    $this->rootFs   = vfsStream::setup();
     $this->rootPath = vfsStream::url('root');
     $this->rootFs->addChild(vfsStream::newDirectory('source'));
     $this->rootFs->addChild(vfsStream::newDirectory('destination')->chmod(0444));
 
     $runUpdate = runUpdateClassFactory([
         'laravelBasePath' => "$this->rootPath/source",
-        'tempDirName' => "$this->rootPath/destination",
-        'protectedPaths' => ['protected_dir'],
+        'tempDirName'     => "$this->rootPath/destination",
+        'protectedPaths'  => ['protected_dir'],
     ]);
 
     $this->expectException(RuntimeException::class);
@@ -341,13 +341,13 @@ it('should handle large directories with many nested subdirectories', function (
     $this->startOutputBuffer();
     $this->expectsOutput();
     $this->rootFs = vfsStream::setup('streamline');
-    $source = vfsStream::newDirectory('source')->at($this->rootFs);
-    $destination = vfsStream::newDirectory('destination')->at($this->rootFs);
+    $source       = vfsStream::newDirectory('source')->at($this->rootFs);
+    $destination  = vfsStream::newDirectory('destination')->at($this->rootFs);
 
     createNestedDirectories($source, 2, 3);
 
     $runUpdate = runUpdateClassFactory();
-    $closure = fn ($src, $dest) => $this->copyDirectory($src, $dest);
+    $closure   = fn ($src, $dest) => $this->copyDirectory($src, $dest);
     $closure->call($runUpdate, $source->url(), $destination->url());
 
     assertDirectoriesEqual($source, $destination);
@@ -356,7 +356,7 @@ it('should handle large directories with many nested subdirectories', function (
 it('throws an exception when the destination directory is not writable during file copy', function () {
     $this->disableErrorHandling();
     $this->rootFs = vfsStream::setup('streamline');
-    $sourceDir = vfsStream::newDirectory('source');
+    $sourceDir    = vfsStream::newDirectory('source');
     $this->rootFs->addChild($sourceDir);
     $destinationDir = vfsStream::newDirectory('destination');
     $this->rootFs->addChild($destinationDir);
@@ -367,7 +367,7 @@ it('throws an exception when the destination directory is not writable during fi
     $this->expectExceptionMessage("Failed to copy file: {$sourceFile->url()} to {$destinationDir->url()}");
 
     $runUpdate = runUpdateClassFactory();
-    $closure = fn (string $source, string $destination) => $this->copyFile($source, $destination);
+    $closure   = fn (string $source, string $destination) => $this->copyFile($source, $destination);
     $closure->call($runUpdate, $sourceFile->url(), $destinationDir->url() . '/' . $sourceFile->getName());
     $this->assertTrue(true);
 });
@@ -384,7 +384,7 @@ function createNestedDirectories($dir, $depth, $filesPerDir, $currentDepth = 0):
 
     for ($i = 0; $i < $filesPerDir; $i++) {
         $dirDepth = $currentDepth + 1;
-        $subdir = vfsStream::newDirectory("subdir_{$dirDepth}_$i")->at($dir);
+        $subdir   = vfsStream::newDirectory("subdir_{$dirDepth}_$i")->at($dir);
         createNestedDirectories($subdir, $depth, $filesPerDir, $currentDepth + 1);
     }
 }
@@ -402,13 +402,13 @@ function assertDirectoriesEqual($expected, $actual): void
     );
 
     $expectedPaths = iterator_to_array($expectedIterator);
-    $actualPaths = iterator_to_array($actualIterator);
+    $actualPaths   = iterator_to_array($actualIterator);
 
     expect(count($expectedPaths))->toBe(count($actualPaths));
 
     foreach ($expectedPaths as $path => $expectedFile) {
         $relativePath = substr($path, strlen($expected->url()));
-        $actualPath = $actual->url() . $relativePath;
+        $actualPath   = $actual->url() . $relativePath;
 
         expect(file_exists($actualPath))->toBeTrue();
 
@@ -443,18 +443,18 @@ function runUpdateClassFactory(array $options = []): RunCompleteGitHubVersionRel
 {
     $options = array_merge(
         [
-            'tempDirName' => 'temp',
-            'laravelBasePath' => laravel_path(),
-            'publicDirName' => 'public',
-            'frontendBuildDir' => 'build',
-            'installingVersion' => '1.0.0',
-            'protectedPaths' => ['.env'],
-            'dirPermission' => 0755,
-            'filePermission' => 0644,
+            'tempDirName'           => 'temp',
+            'laravelBasePath'       => laravel_path(),
+            'publicDirName'         => 'public',
+            'frontendBuildDir'      => 'build',
+            'installingVersion'     => '1.0.0',
+            'protectedPaths'        => ['.env'],
+            'dirPermission'         => 0755,
+            'filePermission'        => 0644,
             'oldReleaseArchivePath' => laravel_path('archive.zip'),
             'doRetainOldReleaseDir' => false,
             'downloadedArchivePath' => laravel_path('archive.zip'),
-            'doOutput' => true,
+            'doOutput'              => true,
         ],
         $options);
 

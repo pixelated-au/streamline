@@ -23,7 +23,7 @@ it('should correctly set the downloaded archive path on the builder', function (
     GitHubApi::shouldReceive('get');
 
     $downloadRelease = new DownloadRelease;
-    $result = $downloadRelease($builder);
+    $result          = $downloadRelease($builder);
 
     expect($result)->toBe($builder);
 });
@@ -39,7 +39,7 @@ it('should dispatch an Event with the correct version information', function () 
     Event::shouldReceive('dispatch')->once()->withArgs(function ($event) {
         return $event instanceof CommandClassCallback
             && $event->action === 'info'
-            && $event->value === 'Downloading archive for version v1.2.3';
+            && $event->value  === 'Downloading archive for version v1.2.3';
     });
 
     $this->app->bind(ProgressMeter::class, fn () => null);
@@ -49,7 +49,7 @@ it('should dispatch an Event with the correct version information', function () 
     GitHubApi::shouldReceive('get');
 
     $downloadRelease = new DownloadRelease;
-    $result = $downloadRelease($builder);
+    $result          = $downloadRelease($builder);
 
     expect($result)->toBe($builder);
 });

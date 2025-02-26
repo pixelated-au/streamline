@@ -12,8 +12,8 @@ it('returns next non symlink file when current is symlink', function () {
     $iterator = new ArchiveBuilderIterator($disk->path(''));
 
     $matchedFiles = [
-        'file1.txt' => false,
-        'file2.txt' => false,
+        'file1.txt'   => false,
+        'file2.txt'   => false,
         'symlink.txt' => false,
     ];
 
@@ -53,7 +53,7 @@ it('should return the same SplFileInfo object when the current file is not a sym
     $disk = Storage::fake('local');
     $disk->put('file.txt', 'contents');
 
-    $iterator = new ArchiveBuilderIterator($disk->path(''));
+    $iterator        = new ArchiveBuilderIterator($disk->path(''));
     $originalCurrent = $iterator->current();
     $returnedCurrent = $iterator->current();
 

@@ -17,7 +17,7 @@ readonly class UnpackRelease implements Pipe
         CommandClassCallback::dispatch('info', 'Unpacking archive');
 
         $downloadedArchivePath = $builder->getDownloadedArchivePath();
-        $tempDir = $builder->getWorkTempDir();
+        $tempDir               = $builder->getWorkTempDir();
 
         if ($this->zip->open($downloadedArchivePath) === true) {
             $this->zip->extractTo($tempDir);

@@ -58,7 +58,7 @@ readonly class RunCompleteGitHubVersionRelease
         /** @var \SplFileInfo $item */
         foreach ($iterator as $item) {
             $sourcePath = $item->isLink() ? $item->getLinkTarget() : $item->getPathname();
-            $destPath = $destination . DIRECTORY_SEPARATOR . $item->getFilename();
+            $destPath   = $destination . DIRECTORY_SEPARATOR . $item->getFilename();
 
             if ($item->isDir()) {
                 $this->makeDir($destPath);
@@ -190,7 +190,7 @@ readonly class RunCompleteGitHubVersionRelease
         $this->output('Preserving protected paths...');
 
         foreach ($this->protectedPaths as $protectedPath) {
-            $sourcePath = $this->laravelBasePath . '/' . ltrim($protectedPath, '/');
+            $sourcePath      = $this->laravelBasePath . '/' . ltrim($protectedPath, '/');
             $destinationPath = $this->tempDirName . '/' . ltrim($protectedPath, '/');
 
             if (is_dir($sourcePath)) {

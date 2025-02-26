@@ -110,16 +110,16 @@ function setEnv(array $overrides = []): void
 function getEnvVars(): array
 {
     return [
-        'TEMP_DIR' => '/path/to/temp',
-        'LARAVEL_BASE_PATH' => './workbench',
-        'PUBLIC_DIR_NAME' => 'public',
-        'FRONT_END_BUILD_DIR' => 'build',
-        'INSTALLING_VERSION' => '1.0.0',
-        'PROTECTED_PATHS' => '["protected.txt"]',
-        'DIR_PERMISSION' => '0755',
-        'FILE_PERMISSION' => '0644',
+        'TEMP_DIR'                 => '/path/to/temp',
+        'LARAVEL_BASE_PATH'        => './workbench',
+        'PUBLIC_DIR_NAME'          => 'public',
+        'FRONT_END_BUILD_DIR'      => 'build',
+        'INSTALLING_VERSION'       => '1.0.0',
+        'PROTECTED_PATHS'          => '["protected.txt"]',
+        'DIR_PERMISSION'           => '0755',
+        'FILE_PERMISSION'          => '0644',
         'OLD_RELEASE_ARCHIVE_PATH' => '/path/to/old/release.zip',
-        'DO_RETAIN_OLD_RELEASE' => 'true',
-        'IS_TESTING' => StreamlineUpdater::TESTING_ON,
+        'DO_RETAIN_OLD_RELEASE'    => 'true',
+        'IS_TESTING'               => StreamlineUpdater::TESTING_ON,
     ];
 }

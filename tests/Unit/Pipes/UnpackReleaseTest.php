@@ -17,7 +17,7 @@ it('should dispatch an Event with CommandClassCallback when invoked', function (
     Event::fake();
 
     $unpackRelease = new UnpackRelease($zip);
-    $result = $unpackRelease($builder);
+    $result        = $unpackRelease($builder);
 
     expect($result)->toBe($builder);
     Event::assertDispatched(CommandClassCallback::class, function (CommandClassCallback $event) {
