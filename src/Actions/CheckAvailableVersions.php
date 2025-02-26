@@ -16,6 +16,7 @@ class CheckAvailableVersions
     public function execute(bool $force = false, bool $ignorePreReleases = true): string
     {
         $availableVersions = Cache::get(CacheKeysEnum::AVAILABLE_VERSIONS->value);
+
         if ($force || !$availableVersions || !count($availableVersions)) {
             CommandClassCallback::dispatch('warn', 'Checking for available versions...');
             Artisan::call('streamline:list');
@@ -35,18 +36,16 @@ class CheckAvailableVersions
         return $nextVersion;
     }
 
-    protected function getNextVersion(?Collection $availableVersions, bool $ignorePreReleases): ?string
+    protected function getNextVersion(Collection $availableVersions, bool $ignorePreReleases): ?string
     {
-        if (is_null($availableVersions)) {
-            return null;
-        }
-
         $nextVersion = $availableVersions[0] ?? null;
+
         if ($ignorePreReleases || Str::endsWith($nextVersion, ['a', 'b', 'alpha', 'beta'])) {
             // iterate $availableVersions until we find a non-prerelease version
             foreach ($availableVersions as $version) {
                 if (!Str::endsWith($version, ['a', 'b', 'alpha', 'beta'])) {
                     $nextVersion = $version;
+
                     break;
                 }
             }
