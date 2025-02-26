@@ -9,6 +9,7 @@ it('outputs an info message when the cleanup process fails', function () {
 //    Process::fake([
 //        Process::result(output: 'Test success message'),
 //    ]);
+
     $this->app->bind(
         \Symfony\Component\Process\Process::class,
         function () {
@@ -33,7 +34,7 @@ it('outputs an info message when the cleanup process fails', function () {
 
     Event::assertDispatched(
         CommandClassCallback::class,
-        fn (CommandClassCallback $callback) => $callback->action === 'info' &&
+        fn(CommandClassCallback $callback) => $callback->action === 'info' &&
             Str::startsWith($callback->value, 'Test success message')
     );
 });
@@ -58,7 +59,8 @@ it('outputs an error when the cleanup process fails', function () {
                 ->andReturn('Test error message');
             return $mock;
         }
-    );    Event::fake(CommandClassCallback::class);
+    );
+    Event::fake(CommandClassCallback::class);
 
     $callback = Config::get('streamline.pipeline-finish');
     $callback(new UpdateBuilder);
@@ -67,7 +69,7 @@ it('outputs an error when the cleanup process fails', function () {
 
     Event::assertDispatched(
         CommandClassCallback::class,
-        fn (CommandClassCallback $callback) => $callback->action === 'error' &&
+        fn(CommandClassCallback $callback) => $callback->action === 'error' &&
             Str::startsWith($callback->value, 'Test error message')
     );
 });
