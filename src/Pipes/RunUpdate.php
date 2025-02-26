@@ -17,6 +17,7 @@ readonly class RunUpdate implements Pipe
         $this->runUpdate->execute($builder->getNextAvailableRepositoryVersion(), function (string $type, string $output) {
             if ($type === 'err') {
                 CommandClassCallback::dispatch('error', $output);
+
                 throw new RuntimeException($output);
             }
 

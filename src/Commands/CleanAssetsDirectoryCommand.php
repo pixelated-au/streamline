@@ -34,6 +34,7 @@ class CleanAssetsDirectoryCommand extends Command
 
         if (!$force) {
             $response = $this->confirm('Are you sure you want to the assets directory?');
+
             if (!$response) {
                 $this->info('Cleaning aborted.');
 
@@ -42,6 +43,7 @@ class CleanAssetsDirectoryCommand extends Command
         }
 
         $this->info('Cleaning up the front-end build assets directory...');
+
         if ($revisions) {
             $this->info("Retaining $revisions revisions");
         }

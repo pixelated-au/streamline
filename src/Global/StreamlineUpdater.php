@@ -73,6 +73,7 @@ class StreamlineUpdater
     private function env(string $name): string
     {
         $val = getenv($name, true);
+
         if (!$val) {
             $this->envIssues[] = "Environment variable $name needs to be set!";
         }
@@ -86,6 +87,7 @@ class StreamlineUpdater
         $env = $this->env($name);
 
         $val = [];
+
         try {
             $val = json_decode($env, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
@@ -114,6 +116,7 @@ class StreamlineUpdater
             doRetainOldReleaseDir: $this->doRetainOldRelease,
             doOutput: true,
         );
+
         // @codeCoverageIgnoreStart
         if ($this->isTesting & self::TESTING_ON) {
             return;
@@ -125,6 +128,7 @@ class StreamlineUpdater
     public function autoloadFile(): string
     {
         $composerJsonPath = rtrim($this->laravelBasePath, '/') . '/composer.json';
+
         if (!file_exists($composerJsonPath)) {
             throw new RuntimeException("Cannot locate the base composer file ($composerJsonPath) for autoloading");
         }

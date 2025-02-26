@@ -28,6 +28,7 @@ it('can find the composer autoload file in a different directory', function () {
 
     $root = vfsStream::setup('streamline');
     $root->addChild(vfsStream::newDirectory($projectPath));
+
     /** @var \org\bovigo\vfs\vfsStreamDirectory $project */
     $project = $root->getChild($projectPath);
 

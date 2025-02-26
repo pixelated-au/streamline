@@ -30,6 +30,7 @@ trait GitHubApi
     public function setGitHubAuthToken(): void
     {
         $token = $this->option('gh-token');
+
         if (empty($token)) {
             return;
         }

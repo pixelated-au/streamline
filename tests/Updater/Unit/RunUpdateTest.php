@@ -234,6 +234,7 @@ it('should preserve protected paths', function () {
     $this->rootFs = vfsStream::setup();
     $this->rootPath = vfsStream::url('root');
     $protectedDir = vfsStream::newDirectory('protected_dir/sub');
+
     /** @noinspection PhpPossiblePolymorphicInvocationInspection */
     $protectedDir->getChild('sub')?->addChild(vfsStream::newFile('protected_by_parent_file.txt'));
     $this->rootFs->addChild($protectedDir);
@@ -242,6 +243,7 @@ it('should preserve protected paths', function () {
     $this->rootFs->addChild($subDir);
     $this->rootFs->addChild(vfsStream::newFile('protected_file.txt'));
     $this->rootFs->addChild(vfsStream::newFile('un-protected_file.txt'));
+
     /** @noinspection PhpPossiblePolymorphicInvocationInspection */
     $subDir->getChild('directory')?->addChild(vfsStream::newFile('protected_child_file.txt'));
     $this->rootFs->addChild(vfsStream::newDirectory('temp'));

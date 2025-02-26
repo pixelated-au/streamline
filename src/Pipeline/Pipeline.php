@@ -91,6 +91,7 @@ class Pipeline
                     if ($this->exceptionHandler) {
                         return ($this->exceptionHandler)($e, $passable);
                     }
+
                     throw $e;
                 }
             };
@@ -106,6 +107,7 @@ class Pipeline
                 if ($this->exceptionHandler) {
                     return ($this->exceptionHandler)($e, $passable);
                 }
+
                 throw $e;
             }
         };

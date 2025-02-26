@@ -62,6 +62,7 @@ it('should warn but not throw exception when requested version is not greater th
         if ($event->action === 'info') {
             return $event->value === 'hanging deployment to version: v1.0.0';
         }
+
         if ($event->action === 'warn') {
             return $event->value === 'Version v1.0.0 is not greater than the current version (v2.0.0) (Forced update)';
         }
@@ -163,6 +164,7 @@ it('should dispatch appropriate info and warning events based on version compari
         if ($event->action === 'info') {
             return $event->value === 'Changing deployment to version: v1.0.0';
         }
+
         if ($event->action === 'warn') {
             return $event->value === 'Version v12.0.0 is not greater than the current version (v1.5.0) (Forced update)';
         }
