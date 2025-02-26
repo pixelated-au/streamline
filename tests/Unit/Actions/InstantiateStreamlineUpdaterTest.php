@@ -16,6 +16,7 @@ it('should throw a RuntimeException when given a non-existent class name', funct
 
     // TODO remove this after upgrading to Laravel 11
     Config::set('streamline.runner_class', $nonExistentClassName);
+
     try {
         // TODO restore this after upgrading to Laravel 11
         //        (new InstantiateStreamlineUpdater($process, $nonExistentClassName))
@@ -29,6 +30,7 @@ it('should throw a RuntimeException when given a non-existent class name', funct
 it('should return the file path when a valid class is passed in', function () {
     $classPath = sys_get_temp_dir() . '/ValidTestClass.php';
     $x = File::put($classPath, '<?php class ValidTestClass {}');
+
     include $classPath;
 
     $process = Mockery::mock(ProcessFactory::class);

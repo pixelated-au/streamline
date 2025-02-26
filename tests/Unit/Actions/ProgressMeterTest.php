@@ -23,6 +23,7 @@ it('can run the progress meter with a known download total',
         $meter->finish();
 
         rewind($resource);
+
         /** @var string $output
          *  Output should resemble this:
          *    0/100 [░░░░░░░░░░░░░░░░░░░░░░░░░░░░]   0%
@@ -61,6 +62,7 @@ it('can run the progress meter with an unknown download total',
         $meter->finish();
 
         rewind($resource);
+
         /** @var string $output
          *  Output should resemble this:
          *  0 [░░░░░░░░░░░░░░░░░░░░░░░░░░░░]

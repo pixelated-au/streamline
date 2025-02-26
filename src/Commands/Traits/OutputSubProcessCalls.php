@@ -14,6 +14,7 @@ trait OutputSubProcessCalls
             CommandClassCallback::class,
             function (CommandClassCallback $event) {
                 $verbosity = $this->output->getVerbosity();
+
                 if ($verbosity < $event->verbosity) {
                     return;
                 }

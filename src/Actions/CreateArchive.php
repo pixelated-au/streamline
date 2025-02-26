@@ -31,6 +31,7 @@ class CreateArchive
     public function create(): void
     {
         CommandClassCallback::dispatch('info', "Backing up the current installation to $this->gzipPath");
+
         // check that the source folder exists
         if (!File::exists($this->sourceFolder)) {
             throw new RuntimeException("Source folder '$this->sourceFolder' does not exist.");

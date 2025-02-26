@@ -61,9 +61,11 @@ class ProgressMeter
     public function init(bool $hasContentLength): void
     {
         $this->progressBar = $this->output->createProgressBar($hasContentLength ? 100 : 0);
+
         if (!is_null($this->minSecondsBetweenRedraws)) {
             $this->progressBar->minSecondsBetweenRedraws($this->minSecondsBetweenRedraws);
         }
+
         if ($this->message) {
             $this->progressBar->setFormat('custom');
             $this->progressBar->setMessage($this->message);

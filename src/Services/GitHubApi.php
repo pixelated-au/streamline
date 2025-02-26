@@ -57,6 +57,7 @@ class GitHubApi
     public function get(): Response
     {
         $this->checkHasUrl();
+
         try {
             $this->setProgressMessage();
 
@@ -175,6 +176,7 @@ class GitHubApi
     protected function buildUrl(): string
     {
         $url = $this->url;
+
         if (!empty($this->queryParams)) {
             $url .= '?' . http_build_query($this->queryParams);
         }
@@ -218,9 +220,11 @@ class GitHubApi
             return;
         }
         $message = $this->defaultProgressMessage;
+
         if ($this->page > 0) {
             $message .= " - Page $this->page";
         }
+
         if ($this->totalPages !== null && $this->totalPages > 0) {
             $message .= " of $this->totalPages";
         }

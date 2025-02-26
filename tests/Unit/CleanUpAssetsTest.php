@@ -209,6 +209,7 @@ it('files are not deleted if there are less files available than the number of r
 function storeFiles(array $files): void
 {
     Storage::fake();
+
     foreach ($files as $file => $offset) {
         test()->travelTo(now()->subYear()->addDays($offset));
         Storage::put($file, 'content');

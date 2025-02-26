@@ -17,6 +17,7 @@ class ConfigCommaToArrayMacro
             macro: function (array|string $key, mixed $default = null): array {
                 // @phpstan-ignore variable.undefined
                 $result = $this->get($key, $default);
+
                 if (is_string($result)) {
                     return Arr::map(explode(',', $result), static fn ($value) => trim($value));
                 }

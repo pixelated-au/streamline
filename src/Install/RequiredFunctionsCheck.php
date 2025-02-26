@@ -14,6 +14,7 @@ class RequiredFunctionsCheck
         $io = $event->getIO();
 
         $value = self::isSystemFunctionEnabled();
+
         if ($value !== null) {
             $io->warning(
                 "The PHP system() (https://www.php.net/system) function is disabled on your PHP configuration.\n" .
@@ -42,6 +43,7 @@ class RequiredFunctionsCheck
         }
 
         $value = self::canExecuteSystemCommands();
+
         /** @noinspection NullCoalescingOperatorCanBeUsedInspection */
         if ($value !== null) {
             return $value;

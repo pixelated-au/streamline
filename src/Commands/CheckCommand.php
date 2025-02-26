@@ -23,6 +23,7 @@ class CheckCommand extends Command
     {
         $this->setGitHubAuthToken();
         $this->listenForSubProcessEvents();
+
         try {
             $nextVersion = $availableVersions->execute($this->option('force'), $this->option('pre-releases'));
             $this->info('Next available version: ' . $nextVersion);

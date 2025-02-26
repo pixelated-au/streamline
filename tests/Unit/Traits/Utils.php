@@ -27,6 +27,7 @@ trait Utils
             ob_end_clean();
             $this->hasOutput = false;
         }
+
         if ($this->hasDisabledErrorHandling) {
             restore_error_handler();
             $this->hasDisabledErrorHandling = false;

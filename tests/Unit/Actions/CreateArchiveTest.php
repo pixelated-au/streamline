@@ -57,6 +57,7 @@ it('should create a .tar.gz file with correct structure and contents',
 
             // Check if the file exists in our expected files
             $found = false;
+
             foreach ($expectedFiles as $expectedFile => $expectedDir) {
                 if ($filename === ltrim($expectedDir . '/' . $expectedFile, '/')) {
                     $found = true;

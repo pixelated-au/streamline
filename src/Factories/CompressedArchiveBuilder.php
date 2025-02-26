@@ -18,6 +18,7 @@ readonly class CompressedArchiveBuilder
     {
         CommandClassCallback::dispatch('comment', 'Initializing Zip archive');
         $result = $this->zip->open($this->zipArchivePath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+
         if ($result !== true) {
             throw new RuntimeException('Failed to create zip file: ' . $this->zipArchivePath);
         }
@@ -39,10 +40,12 @@ readonly class CompressedArchiveBuilder
 
             $filePath = $file->getPathname();
             $relativePath = substr($filePath, $basePathLength);
+
             if ($this->zip->addFile($filePath, $relativePath) === false) {
                 throw new RuntimeException('Failed to add file to zip: ' . $filePath);
             }
         }
+
         if ($this->zip->close() === false) {
             throw new RuntimeException('Failed to close zip file');
         }

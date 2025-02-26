@@ -54,6 +54,7 @@ readonly class RunCompleteGitHubVersionRelease
     protected function recursiveCopyOldBuildFilesToNewDir(string $source, string $destination): void
     {
         $iterator = new FilesystemIterator($source);
+
         /** @var \SplFileInfo $item */
         foreach ($iterator as $item) {
             $sourcePath = $item->isLink() ? $item->getLinkTarget() : $item->getPathname();
@@ -85,6 +86,7 @@ readonly class RunCompleteGitHubVersionRelease
     protected function terminateBackupArchive(): void
     {
         $filename = pathinfo($this->oldReleaseArchivePath)['basename'];
+
         if ($this->doRetainOldReleaseDir) {
             $this->output("Retaining old release backup ($filename). Make sure you clean it up manually.");
 
@@ -148,6 +150,7 @@ readonly class RunCompleteGitHubVersionRelease
     private function runCommand(string $command): void
     {
         $this->output("Executing: $command");
+
         // @codeCoverageIgnoreStart
         if (defined('IS_TESTING')) {
             return; // Do not execute commands in tests. We only want to simulate them.
@@ -175,6 +178,7 @@ readonly class RunCompleteGitHubVersionRelease
         if (!file_exists($this->laravelBasePath)) {
             throw new RuntimeException("Error: Release directory '$this->laravelBasePath' does not exist! This should be the directory that contains your application deployment.");
         }
+
         if (!$liveAssetsDir || !is_dir($liveAssetsDir)) {
             throw new RuntimeException("Error: Invalid old assets directory: $liveAssetsDir");
         }
@@ -188,6 +192,7 @@ readonly class RunCompleteGitHubVersionRelease
         foreach ($this->protectedPaths as $protectedPath) {
             $sourcePath = $this->laravelBasePath . '/' . ltrim($protectedPath, '/');
             $destinationPath = $this->tempDirName . '/' . ltrim($protectedPath, '/');
+
             if (is_dir($sourcePath)) {
                 $this->copyDirectory($sourcePath, $destinationPath);
             } elseif (file_exists($sourcePath)) {
@@ -288,6 +293,7 @@ readonly class RunCompleteGitHubVersionRelease
         foreach ($this->protectedPaths as $protectedPath) {
             if (str_ends_with($protectedPath, '*')) {
                 $wildcardPath = rtrim($protectedPath, '*');
+
                 if (str_starts_with($relativePath, $wildcardPath)) {
                     return true;
                 }

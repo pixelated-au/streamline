@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Default Concurrency Driver
@@ -16,5 +15,4 @@ return [
     */
 
     'default' => env('CONCURRENCY_DRIVER', 'process'),
-
 ];

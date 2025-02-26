@@ -39,6 +39,7 @@ it('should handle a directory containing only symlinks', function () {
     $iterator = new ArchiveBuilderIterator($disk->path(''));
 
     $fileCount = 0;
+
     foreach ($iterator as $item) {
         $fileCount++;
         $this->assertFalse($item->isLink(), "Item {$item->getFilename()} should not be a symlink");
