@@ -4,7 +4,6 @@ namespace Pixelated\Streamline\Tests\Feature\Traits;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Process;
 use Mockery\MockInterface;
 use Pixelated\Streamline\Actions\GetAvailableVersions;
 use Pixelated\Streamline\Enums\CacheKeysEnum;
@@ -45,13 +44,6 @@ trait UpdateCommandCommon
         File::shouldReceive('put');
         File::shouldReceive('dirname')->andReturnUsing(fn (string $value) => dirname($value));
         File::shouldReceive('name')->andReturnUsing(fn (string $value) => pathinfo($value, PATHINFO_FILENAME));
-
-        return $this;
-    }
-
-    public function mockProcess(): self
-    {
-        Process::preventStrayProcesses();
 
         return $this;
     }

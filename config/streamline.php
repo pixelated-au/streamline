@@ -2,7 +2,6 @@
 
 /** @noinspection PhpUnusedParameterInspection */
 
-use Illuminate\Support\Facades\Process;
 use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 use Pixelated\Streamline\Pipes\BackupCurrentInstallation;
@@ -13,6 +12,8 @@ use Pixelated\Streamline\Pipes\MakeTempDir;
 use Pixelated\Streamline\Pipes\RunUpdate;
 use Pixelated\Streamline\Pipes\UnpackRelease;
 use Pixelated\Streamline\Pipes\VerifyVersion;
+use Symfony\Component\Process\PhpExecutableFinder;
+use Symfony\Component\Process\PhpProcess;
 
 return [
     /*
@@ -281,7 +282,7 @@ return [
     |
     */
 
-    'external_process_class' => \Symfony\Component\Process\PhpProcess::class,
+    'external_process_class' => PhpProcess::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -334,13 +335,16 @@ return [
     */
 
     'pipeline-finish' => static function (UpdateBuilderInterface $builder) {
-        $process = Process::path(base_path())
-            ->run(PHP_BINARY . ' artisan streamline:finish-update');
+        $process = resolve(\Symfony\Component\Process\Process::class, [
+            'command' => [(new PhpExecutableFinder)->find(), 'artisan', 'streamline:finish-update'],
+            'cwd'     => base_path(),
+        ]);
+        $process->run();
 
-        if ($process->successful()) {
-            CommandClassCallback::dispatch('info', $process->output());
+        if ($process->isSuccessful()) {
+            CommandClassCallback::dispatch('info', $process->getOutput());
         } else {
-            CommandClassCallback::dispatch('error', $process->errorOutput());
+            CommandClassCallback::dispatch('error', $process->getErrorOutput());
         }
     },
 
@@ -356,7 +360,7 @@ return [
 
     'logging' => [
         'driver' => 'single',
-        'path' => storage_path('logs/streamline.log'),
-        'level' => env('LOG_LEVEL', 'debug'),
+        'path'   => storage_path('logs/streamline.log'),
+        'level'  => env('LOG_LEVEL', 'debug'),
     ],
 ];

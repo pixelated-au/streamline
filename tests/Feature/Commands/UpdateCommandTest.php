@@ -11,8 +11,9 @@ use Pixelated\Streamline\Tests\Feature\Traits\UpdateCommandCommon;
 pest()->uses(UpdateCommandCommon::class, HttpMock::class);
 
 it('should run an update with no parameters', function () {
+    Process::preventStrayProcesses();
+
     $this->mockFile()
-        ->mockProcess()
         ->mockCache(['v2.8.1', 'v2.0.0', 'v1.0.0'], 'v2.8.1')
         ->mockZipArchive();
 
@@ -26,25 +27,39 @@ it('should run an update with no parameters', function () {
     File::shouldReceive('deleteDirectory');
 
     Event::fake(CommandClassCallback::class);
-    Process::fake([
-        '* artisan streamline:finish-update' => Process::result('test output'),
-    ]);
+    $this->app->bind(
+        \Symfony\Component\Process\Process::class,
+        function () {
+            // For some reason, $this->mock(...) isn't working as expected, so I'm mocking it manually
+            $mock = Mockery::mock(\Symfony\Component\Process\Process::class);
+            $mock->shouldReceive('run')
+                ->andReturn(0);
+            $mock->shouldReceive('isSuccessful')
+                ->andReturnTrue();
+            $mock->shouldReceive('getOutput')
+                ->andReturn('test output');
+            return $mock;
+        }
+    );
+
+//    Process::fake([
+//        '* artisan streamline:finish-update' => Process::result('test output'),
+//    ]);
 
     $this->artisan('streamline:run-update')
         ->assertExitCode(0);
 
-    Process::assertRan(PHP_BINARY . ' artisan streamline:finish-update');
+//    Process::assertRan(PHP_BINARY . ' artisan streamline:finish-update');
 
     Event::assertDispatched(
         CommandClassCallback::class,
-        fn (CommandClassCallback $event) => $event->action === 'info' &&
+        fn(CommandClassCallback $event) => $event->action === 'info' &&
             Str::startsWith($event->value, 'test output')
     );
 });
 
 it('should run an update with a specific version', function () {
     $this->mockFile()
-        ->mockProcess()
         ->mockCache(['v2.9.0', 'v2.8.1', 'v2.0.0', 'v1.0.0'], 'v2.0.0')
         ->mockGetAvailableVersions()
         ->mockZipArchive();
@@ -58,8 +73,7 @@ it('should run an update with a specific version', function () {
 });
 
 it('should run an update but notifies there are no new versions', function () {
-    $this->mockProcess()
-        ->mockCache(['v2.0.0', 'v1.0.0'], 'v2.0.0');
+    $this->mockCache(['v2.0.0', 'v1.0.0'], 'v2.0.0');
     $this->mockGetWebArchive();
     Config::set('streamline.installed_version', 'v2.0.0');
 
@@ -69,8 +83,7 @@ it('should run an update but notifies there are no new versions', function () {
 });
 
 it('should run an update but cannot find any available versions and return an error', function () {
-    $this->mockProcess()
-        ->mockCache([]);
+    $this->mockCache([]);
     $this->mockGetWebArchive()
         ->mockHttpReleases(Http::response([]));
 
@@ -80,8 +93,7 @@ it('should run an update but cannot find any available versions and return an er
 });
 
 it('should run an update but GitHub returns a connection error', function () {
-    $this->mockProcess()
-        ->mockCache(['v2.0.0', 'v1.0.0'], 'v2.0.0');
+    $this->mockCache(['v2.0.0', 'v1.0.0'], 'v2.0.0');
     Config::set('streamline.installed_version', 'v1.0.0');
     Http::fake(['github.com/*' => Http::failedConnection()]);
 
@@ -92,8 +104,7 @@ it('should run an update but GitHub returns a connection error', function () {
 
 it('should run an update requesting a version but it is older than the installed version and then throw an error',
     function () {
-        $this->mockProcess()
-            ->mockCache(['v2.0.0', 'v1.0.0'])
+        $this->mockCache(['v2.0.0', 'v1.0.0'])
             ->mockGetAvailableVersions();
         $this->mockHttpReleases();
 
@@ -103,8 +114,7 @@ it('should run an update requesting a version but it is older than the installed
     });
 
 it('should run an update requesting a pre-release version and fail', function (string $version) {
-    $this->mockProcess()
-        ->mockCache(availableVersions: [$version, 'v1.0.0']);
+    $this->mockCache(availableVersions: [$version, 'v1.0.0']);
     $this->mockHttpReleases();
 
     $this->artisan("streamline:run-update --install-version=$version")
@@ -113,8 +123,7 @@ it('should run an update requesting a pre-release version and fail', function (s
 })->with(['v1.0.1-alpha', 'v1.0.1-beta', 'v1.0.1a', 'v1.0.1b']);
 
 it('should run an update requesting an invalid version and return an error', function () {
-    $this->mockProcess()
-        ->mockCache();
+    $this->mockCache();
     $this->mockHttpReleases();
 
     $this->artisan('streamline:run-update --install-version=hello')
@@ -123,8 +132,7 @@ it('should run an update requesting an invalid version and return an error', fun
 });
 
 it('should run a "forced" update requesting an invalid version and return an error', function () {
-    $this->mockProcess()
-        ->mockCache();
+    $this->mockCache();
     $this->mockHttpReleases();
 
     $this->artisan('streamline:run-update --install-version=hello --force')
@@ -134,7 +142,6 @@ it('should run a "forced" update requesting an invalid version and return an err
 
 it('should run a "forced" update on an existing version', function () {
     $this->mockFile()
-        ->mockProcess()
         ->mockCache(['v2.0.0', 'v1.0.0'])
         ->mockGetAvailableVersions()
         ->mockZipArchive();
@@ -148,7 +155,6 @@ it('should run a "forced" update on an existing version', function () {
 
 it('should run a "forced" update on the most recent', function () {
     $this->mockFile()
-        ->mockProcess()
         ->mockCache(['v2.0.0', 'v1.0.0'], 'v2.0.0')
         ->mockGetAvailableVersions()
         ->mockZipArchive();
