@@ -37,9 +37,11 @@ class VerifyVersion implements Pipe
                 }
                 CommandClassCallback::dispatch('warn', "$message (Forced update)");
             }
+
+            CommandClassCallback::dispatch('info', "Version: $requestedVersion will be installed");
         } elseif (version_compare($nextVersion, config('streamline.installed_version'), '<=')) {
-            $message = "You are currently using the latest version ($nextVersion)"
-                . ($forceUpdate ? ' (Forced update)' : '');
+            $message = "You are currently using the latest version ($nextVersion)";
+            $message .= $forceUpdate ? ' (Forced update)' : '';
             CommandClassCallback::dispatch('warn', $message);
 
             if (!$forceUpdate) {
