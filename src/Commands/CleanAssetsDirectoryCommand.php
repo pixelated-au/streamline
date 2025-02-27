@@ -33,7 +33,7 @@ class CleanAssetsDirectoryCommand extends Command
         $this->warn('This command will remove old revisions of the front-end build assets directory. It may be wise to do a backup of your assets first. Proceed with caution!');
 
         if (!$force) {
-            $response = $this->confirm('Are you sure you want to the assets directory?');
+            $response = $this->confirm('Are you sure you want to clean the assets directory?');
 
             if (!$response) {
                 $this->info('Cleaning aborted.');
