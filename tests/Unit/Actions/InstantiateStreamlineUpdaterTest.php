@@ -4,47 +4,38 @@ use Illuminate\Support\Facades\Config;
 use Pixelated\Streamline\Actions\InstantiateStreamlineUpdater;
 use Pixelated\Streamline\Factories\ProcessFactory;
 
-it('should throw a RuntimeException when given a non-existent class name', function () {
-    $classPath = sys_get_temp_dir() . '/BrokenClass.php';
-    File::put($classPath, 'invalid class file');
-
-    $process              = Mockery::mock(ProcessFactory::class);
-    $nonExistentClassName = $classPath;
-
-    $this->expectException(RuntimeException::class);
-    $this->expectExceptionMessage("Error instantiating updater class '$nonExistentClassName': Class \"$nonExistentClassName\" does not exist");
-
-    // TODO remove this after upgrading to Laravel 11
-    Config::set('streamline.runner_class', $nonExistentClassName);
-
-    try {
-        // TODO restore this after upgrading to Laravel 11
-        //        (new InstantiateStreamlineUpdater($process, $nonExistentClassName))
-        (new InstantiateStreamlineUpdater($process))
-            ->execute('1.0.0', fn () => null);
-    } finally {
-        File::delete($classPath);
-    }
-});
-
-it('should return the file path when a valid class is passed in', function () {
-    $classPath = sys_get_temp_dir() . '/ValidTestClass.php';
-    $x         = File::put($classPath, '<?php class ValidTestClass {}');
-
-    include $classPath;
+it('should throw a RuntimeException when given an invalid class', function () {
+    $filename = 'BrokenClass.php';
 
     $process = Mockery::mock(ProcessFactory::class);
 
-    try {
-        /** @noinspection PhpUndefinedClassInspection */
-        Config::set('streamline.runner_class', ValidTestClass::class);
-        $updater = new InstantiateStreamlineUpdater($process);
+    $this->expectException(RuntimeException::class);
+    $this->expectExceptionMessage("Error instantiating updater class '$filename': Class \"$filename\" does not exist");
 
-        $pathInvokable = Closure::bind(fn () => $this->getClassFilePath(), $updater, $updater);
-        $this->assertSame(realpath($classPath), $pathInvokable());
-    } finally {
-        File::delete($classPath);
-    }
+    // TODO remove this after upgrading to Laravel 11
+    Config::set('streamline.runner_class', $filename);
+
+    // TODO restore this after upgrading to Laravel 11
+    //        (new InstantiateStreamlineUpdater($process, $nonExistentClassName))
+    (new InstantiateStreamlineUpdater($process))
+        ->execute('1.0.0', fn () => null);
+});
+
+it('should return the file path when a valid class is passed in', function () {
+    $filename = 'ValidTestClass.php';
+    Storage::fake();
+    Storage::put($filename, '<?php class ValidTestClass {}');
+
+    include Storage::path($filename);
+
+    $process = Mockery::mock(ProcessFactory::class);
+
+    /** @noinspection PhpUndefinedClassInspection */
+    Config::set('streamline.runner_class', ValidTestClass::class);
+    $updater = new InstantiateStreamlineUpdater($process);
+
+    $pathInvokable = Closure::bind(fn () => $this->getClassFilePath(), $updater, $updater);
+    $this->assertSame(Storage::path($filename), $pathInvokable());
 });
 
 it('can properly parse an array and string values', function () {
