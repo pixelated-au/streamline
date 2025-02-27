@@ -15,7 +15,6 @@ readonly class UnpackRelease implements Pipe
     public function __invoke(UpdateBuilderInterface $builder): UpdateBuilderInterface
     {
         CommandClassCallback::dispatch('info', 'Unpacking archive');
-
         $downloadedArchivePath = $builder->getDownloadedArchivePath();
         $tempDir               = $builder->getWorkTempDir();
 
