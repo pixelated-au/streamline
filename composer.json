@@ -21,10 +21,11 @@
         "mikey179/vfsstream": "^1.6",
         "mockery/mockery": "^1.6",
         "orchestra/testbench": ">=8 <10",
-        "pestphp/pest": ">=1 <4",
-        "pestphp/pest-plugin-arch": "* <4",
-        "pestphp/pest-plugin-laravel": ">=1 <4",
+        "pestphp/pest": "^3",
+        "pestphp/pest-plugin-arch": "^3",
+        "pestphp/pest-plugin-laravel": "^3",
         "php-mock/php-mock-mockery": "^1.4",
+        "roave/security-advisories": "dev-latest",
         "spatie/laravel-ray": "^1.35"
     },
     "autoload": {
