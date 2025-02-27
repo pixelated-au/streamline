@@ -16,20 +16,19 @@ readonly class CompressedArchiveBuilder
 
     public function init(): static
     {
-        CommandClassCallback::dispatch('comment', 'Initializing Zip archive');
+        CommandClassCallback::dispatch('comment', 'Creating zip backup of existing release');
         $result = $this->zip->open($this->zipArchivePath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
         if ($result !== true) {
             throw new RuntimeException('Failed to create zip file: ' . $this->zipArchivePath);
         }
-        CommandClassCallback::dispatch('comment', 'Zip archive initialized');
 
         return $this;
     }
 
     public function makeArchive(string $source): static
     {
-        CommandClassCallback::dispatch('comment', "Building Zip file from $source");
+        CommandClassCallback::dispatch('comment', "Building backup zip file from $source");
         $iterator       = app()->make(ArchiveBuilderIterator::class, ['path' => $source]);
         $basePathLength = strlen($source) + 1; // +1 for the trailing slash
 
