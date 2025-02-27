@@ -18,7 +18,7 @@
     "require-dev": {
         "composer/composer": "^2.8",
         "laravel/pint": "^1.20",
-        "mikey179/vfsstream": "^1.6",
+        "mikey179/vfsstream": "^1.6.12",
         "mockery/mockery": "^1.6",
         "orchestra/testbench": ">=8 <10",
         "pestphp/pest": "^3",
