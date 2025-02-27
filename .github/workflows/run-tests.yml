@@ -24,13 +24,13 @@ jobs:
         include:
           - laravel: 11.*
             testbench: 9.*
-            carbon: ^3.*
+            carbon: 3.*
           - laravel: 10.*
             testbench: 8.*
-            carbon: ^2.*
+            carbon: 2.*
           - laravel: 9.*
             testbench: 7.*
-            carbon: ^2.*
+            carbon: 2.*
     env:
       extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, fileinfo
 
