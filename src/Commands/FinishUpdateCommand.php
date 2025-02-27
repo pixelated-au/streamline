@@ -1,6 +1,6 @@
 <?php
 
-namespace Pixelated\Streamline\Console\Commands;
+namespace Pixelated\Streamline\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
