@@ -110,7 +110,7 @@ readonly class RunCompleteGitHubVersionRelease
         if (!copy($realSourcePath, $realDestPath)) {
             throw new RuntimeException("Error: Failed to copy file: $realSourcePath to $realDestPath");
         }
-        $this->output("Chmod file: $realDestPath to $this->filePermission");
+        $this->output("Chmod file: $realDestPath to $this->filePermission", '');
         chmod($realDestPath, $this->filePermission);
     }
 
@@ -165,10 +165,10 @@ readonly class RunCompleteGitHubVersionRelease
         // @codeCoverageIgnoreEnd
     }
 
-    protected function output(string $message): void
+    protected function output(string $message, string $newLine = "\n"): void
     {
         if ($this->doOutput) {
-            printf("$message\n");
+            printf("$message $newLine");
             flush();
         }
     }
