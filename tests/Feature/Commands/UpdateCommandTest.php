@@ -122,6 +122,47 @@ it('should run an update requesting a pre-release version and fail', function (s
         ->assertExitCode(1);
 })->with(['v1.0.1-alpha', 'v1.0.1-beta', 'v1.0.1a', 'v1.0.1b']);
 
+it('should run an update requesting a pre-release version with --force and succeed', function (string $version) {
+    Process::preventStrayProcesses();
+
+    $this->mockFile()
+        ->mockCache(availableVersions: [$version, 'v1.0.0'])
+        ->mockGetAvailableVersions()
+        ->mockZipArchive();
+
+    File::shouldReceive('deleteDirectory');
+
+    Http::preventStrayRequests();
+    Http::fake(['github.com/*' => Http::response([])]);
+
+    $this->app->bind(
+        \Symfony\Component\Process\Process::class,
+        function () {
+            // For some reason, $this->mock(...) isn't working as expected, so I'm mocking it manually
+            $mock = Mockery::mock(\Symfony\Component\Process\Process::class);
+            $mock->shouldReceive('run')
+                ->andReturn(0);
+            $mock->shouldReceive('isSuccessful')
+                ->andReturnTrue();
+            $mock->shouldReceive('getOutput')
+                ->andReturn('test output');
+
+            return $mock;
+        }
+    );
+    //    Process::fake([
+    //        '* artisan streamline:finish-update' => Process::result('test output'),
+    //    ]);
+
+    //    $this->withoutMockingConsoleOutput();
+    //    $this->artisan("streamline:run-update --install-version=$version --force");
+    $this->artisan("streamline:run-update --install-version=$version --force")
+        ->expectsOutputToContain("Version: $version will be installed")
+        ->expectsOutputToContain("Downloading archive for version $version")
+        ->assertExitCode(0);
+    //        Process::assertRan(PHP_BINARY . ' artisan streamline:finish-update');
+})->with(['v1.0.1-alpha', 'v1.0.1-beta', 'v1.0.1a', 'v1.0.1b']);
+
 it('should run an update requesting an invalid version and return an error', function () {
     $this->mockCache();
     $this->mockHttpReleases();
