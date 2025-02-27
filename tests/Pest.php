@@ -12,12 +12,14 @@ $_ENV['TEST_DIR'] = __DIR__;
  */
 pest()
     ->extends(LaravelTestCase::class)
+    ->beforeEach(fn () => Mockery::close())
     ->afterEach(fn () => Mockery::close())
     ->group('feature', 'core')
     ->in('Feature');
 
 pest()
     ->extends(LaravelTestCase::class)
+    ->afterEach(fn () => Mockery::close())
     ->use(Utils::class)
     ->group('feature', 'core')
     ->in('Updater/Feature');
@@ -30,8 +32,11 @@ pest()
 
 pest()
     ->extends(TestCase::class)
+    ->afterEach(function () {
+        Mockery::close();
+        $this->cleanUp(); // Utils::cleanUp()
+    })
     ->use(Utils::class)
-    ->afterEach(fn () => $this->cleanUp())
     ->group('unit', 'core')
     ->in('Updater/Unit');
 
