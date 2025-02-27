@@ -8,6 +8,7 @@ use Pixelated\Streamline\Pipes\DownloadRelease;
 
 it('should correctly set the downloaded archive path on the builder', function () {
     $builder = Mockery::mock(UpdateBuilderInterface::class);
+    $builder->shouldReceive('getRequestedVersion')->andReturnNull();
     $builder->shouldReceive('getNextAvailableRepositoryVersion')->andReturn('v1.0.0');
     $builder->shouldReceive('getWorkTempDir')->andReturn('/tmp/streamline');
     $builder->shouldReceive('setDownloadedArchivePath')->once()->with('/tmp/streamline/release.zip');
@@ -30,6 +31,7 @@ it('should correctly set the downloaded archive path on the builder', function (
 
 it('should dispatch an Event with the correct version information', function () {
     $builder = Mockery::mock(UpdateBuilderInterface::class);
+    $builder->shouldReceive('getRequestedVersion')->andReturnNull();
     $builder->shouldReceive('getNextAvailableRepositoryVersion')->andReturn('v1.2.3');
     $builder->shouldReceive('getWorkTempDir')->andReturn('/tmp/streamline');
     $builder->shouldReceive('setDownloadedArchivePath')->once();

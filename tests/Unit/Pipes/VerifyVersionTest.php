@@ -77,7 +77,7 @@ it('should warn but not throw exception when requested version is not greater th
 
         expect(fn () => $verifyVersion->__invoke($builder))->not->toThrow(RuntimeException::class);
 
-        Event::assertDispatchedTimes(CommandClassCallback::class, 2);
+        Event::assertDispatchedTimes(CommandClassCallback::class, 3);
 
         Event::assertDispatched(CommandClassCallback::class, function (CommandClassCallback $event) {
             if ($event->action === 'info') {
@@ -180,7 +180,7 @@ it('should dispatch appropriate info and warning events based on version compari
 
     expect($verifyVersion->__invoke($builder))->toBe($builder);
 
-    Event::assertDispatchedTimes(CommandClassCallback::class, 2);
+    Event::assertDispatchedTimes(CommandClassCallback::class, 3);
     Event::assertDispatched(CommandClassCallback::class, function (CommandClassCallback $event) {
         if ($event->action === 'info') {
             return $event->value === 'Changing deployment to version: v1.0.0';
