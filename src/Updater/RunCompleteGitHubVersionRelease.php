@@ -88,7 +88,7 @@ readonly class RunCompleteGitHubVersionRelease
         $filename = pathinfo($this->oldReleaseArchivePath)['basename'];
 
         if ($this->doRetainOldReleaseDir) {
-            $this->output("Retaining old release backup ($filename). Make sure you clean it up manually.");
+            $this->output("Retaining old release backup ($this->oldReleaseArchivePath). Make sure you clean it up manually.");
 
             return;
         }
