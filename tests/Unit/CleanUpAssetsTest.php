@@ -101,7 +101,8 @@ it('throws exception when storage operation fails', function () {
     Storage::set('public', $mock);
 
     expect(static fn () => CleanUpAssets::run())
-        ->toThrow(RuntimeException::class, 'Error: Failed to clean out redundant front-end build assets. Could not execute the cleanup command.');
+        ->toThrow(RuntimeException::class,
+            'Error: Failed to clean out redundant front-end build assets. Could not execute the cleanup command.');
 });
 
 it('overrides the number of revisions in config allowing only 1', function () {
@@ -205,7 +206,7 @@ it('files are not deleted if there are less files available than the number of r
     Storage::assertMissing('style.555eee.css');
 });
 
-/** @param array<string, int> $files */
+/** @param  array<string, int>  $files */
 function storeFiles(array $files): void
 {
     Storage::fake();
