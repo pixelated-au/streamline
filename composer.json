@@ -12,21 +12,19 @@
         "php": "^8.3",
         "ext-zip": "*",
         "spatie/laravel-package-tools": "^1.16",
-        "symfony/console": "* <8",
-        "symfony/process": "* <8"
+        "symfony/console": ">=6 <8",
+        "symfony/process": ">=6 <8"
     },
     "require-dev": {
         "composer/composer": "^2.8",
         "laravel/pint": "^1.20",
         "mikey179/vfsstream": "^1.6",
         "mockery/mockery": "^1.6",
-        "nunomaduro/collision": "* <9",
-        "orchestra/testbench": ">=7 <10",
-        "pestphp/pest": "* <4",
+        "orchestra/testbench": ">=8 <10",
+        "pestphp/pest": ">=1 <4",
         "pestphp/pest-plugin-arch": "* <4",
-        "pestphp/pest-plugin-laravel": "* <4",
+        "pestphp/pest-plugin-laravel": ">=1 <4",
         "php-mock/php-mock-mockery": "^1.4",
-        "roave/security-advisories": "dev-latest",
         "spatie/laravel-ray": "^1.35"
     },
     "autoload": {
