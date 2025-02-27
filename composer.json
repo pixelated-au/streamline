@@ -28,6 +28,9 @@
         "roave/security-advisories": "dev-latest",
         "spatie/laravel-ray": "^1.35"
     },
+    "conflict": {
+        "laravel/framework": "<11.32.*"
+    },
     "autoload": {
         "psr-4": {
             "Pixelated\\Streamline\\": "src/"
