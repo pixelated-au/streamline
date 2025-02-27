@@ -36,8 +36,8 @@ class InstantiateStreamlineUpdater
         $script = "<?php require_once '$path'; (new $this->runnerClass())->run(); ?>";
 
         $protectedPaths = $this->parseArray([
-                ...Config::commaToArray('streamline.protected_files'),
-            ]);
+            ...Config::commaToArray('streamline.protected_files'),
+        ]);
 
         $this->process
             ->invoke($script)
