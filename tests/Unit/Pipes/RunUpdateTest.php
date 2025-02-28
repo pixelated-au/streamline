@@ -7,6 +7,7 @@ use Pixelated\Streamline\Pipes\RunUpdate;
 
 it('should dispatch an info event when the update executes successfully', function () {
     $builder = $this->mock(UpdateBuilderInterface::class);
+    $builder->expects('getRequestedVersion')->andReturnNull();
     $builder->expects('getNextAvailableRepositoryVersion')->andReturn('1.0.0');
 
     $this->mock(InstantiateStreamlineUpdater::class)
@@ -29,6 +30,7 @@ it('should dispatch an info event when the update executes successfully', functi
 
 it('should dispatch an error event when the update encounters an error', function () {
     $builder = $this->mock(UpdateBuilderInterface::class);
+    $builder->expects('getRequestedVersion')->andReturnNull();
     $builder->expects('getNextAvailableRepositoryVersion')->andReturn('1.0.0');
 
     $this->mock(InstantiateStreamlineUpdater::class)
@@ -55,6 +57,7 @@ it('should dispatch an error event when the update encounters an error', functio
 
 it('should throw a RuntimeException with the error output when an error occurs', function () {
     $builder = $this->mock(UpdateBuilderInterface::class);
+    $builder->expects('getRequestedVersion')->andReturnNull();
     $builder->expects('getNextAvailableRepositoryVersion')->andReturn('1.0.0');
 
     $this->mock(InstantiateStreamlineUpdater::class)

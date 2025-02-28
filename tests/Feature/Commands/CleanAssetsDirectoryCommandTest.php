@@ -6,7 +6,7 @@ it('should delete without setting the number of revisions using a "Y" prompt', f
     CleanUpAssets::shouldReceive('run')->with(null);
 
     $this->artisan('streamline:clean-assets')
-        ->expectsConfirmation('Are you sure you want to the assets directory?', 'yes')
+        ->expectsConfirmation('Are you sure you want to clean the assets directory?', 'yes')
         ->expectsOutputToContain('Cleaning up the front-end build assets directory')
         ->doesntExpectOutputToContain('Retaining')
         ->assertExitCode(0);
@@ -16,7 +16,7 @@ it('should not delete without setting the number of revisions using a "N" prompt
     CleanUpAssets::shouldReceive('run')->with(null);
 
     $this->artisan('streamline:clean-assets')
-        ->expectsConfirmation('Are you sure you want to the assets directory?')
+        ->expectsConfirmation('Are you sure you want to clean the assets directory?')
         ->expectsOutputToContain('Cleaning aborted.')
         ->doesntExpectOutputToContain('Cleaning up the front-end build assets directory')
         ->assertExitCode(1);
@@ -34,7 +34,7 @@ it('should delete by setting the number of revisions using a "Y" prompt', functi
     CleanUpAssets::shouldReceive('run')->with(5);
 
     $this->artisan('streamline:clean-assets --revisions=5')
-        ->expectsConfirmation('Are you sure you want to the assets directory?', 'yes')
+        ->expectsConfirmation('Are you sure you want to clean the assets directory?', 'yes')
         ->expectsOutputToContain('Cleaning up the front-end build assets directory')
         ->expectsOutputToContain('Retaining 5 revisions')
         ->assertExitCode(0);
@@ -44,7 +44,7 @@ it('should not delete by setting the number of revisions using a "N" prompt', fu
     CleanUpAssets::shouldReceive('run')->with(null);
 
     $this->artisan('streamline:clean-assets --revisions=5')
-        ->expectsConfirmation('Are you sure you want to the assets directory?')
+        ->expectsConfirmation('Are you sure you want to clean the assets directory?')
         ->expectsOutputToContain('Cleaning aborted.')
         ->doesntExpectOutputToContain('Cleaning up the front-end build assets directory')
         ->doesntExpectOutputToContain('Retaining 5 revisions')
