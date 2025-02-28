@@ -41,7 +41,7 @@ it('should dispatch an Event with the correct version information', function () 
     Event::shouldReceive('dispatch')->once()->withArgs(function ($event) {
         return $event instanceof CommandClassCallback
             && $event->action === 'info'
-            && $event->value  === 'Downloading archive for version v1.2.3';
+            && $event->value  === 'Downloading archive for version v1.2.3 from releases/download/v1.2.3/release.zip';
     });
 
     $this->app->bind(ProgressMeter::class, fn () => null);

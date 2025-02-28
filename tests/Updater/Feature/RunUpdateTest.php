@@ -68,6 +68,9 @@ it('can run an update using actual filesystem actions and deletes the backup dir
             'Running optimisation tasks...',
             'Executing: php artisan optimize:clear',
             'Optimisation tasks completed.',
+            'Running database migrations...',
+            'Executing: php artisan migrate --force',
+            'Migrations completed.',
             'Deleting old release backup: oldArchive.tgz',
             "Update completed\n",
         ];
