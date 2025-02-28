@@ -48,12 +48,15 @@ readonly class RunCompleteGitHubVersionRelease
         $this->output("Copying frontend assets. From: $existingReleaseBuildDir to: $incomingReleaseBuildDir");
         $this->validateDirectoriesExist($existingReleaseBuildDir, $incomingReleaseBuildDir);
 
-        $this->recursiveCopyOldBuildFilesToNewDir($existingReleaseBuildDir, $incomingReleaseBuildDir);
+        $log = $this->recursiveCopyOldBuildFilesToNewDir($existingReleaseBuildDir, $incomingReleaseBuildDir);
+        $this->output(implode(PHP_EOL, $log));
     }
 
-    protected function recursiveCopyOldBuildFilesToNewDir(string $source, string $destination): void
+    protected function recursiveCopyOldBuildFilesToNewDir(string $source, string $destination): array
     {
         $iterator = new FilesystemIterator($source);
+
+        $log = [];
 
         /** @var \SplFileInfo $item */
         foreach ($iterator as $item) {
@@ -61,12 +64,14 @@ readonly class RunCompleteGitHubVersionRelease
             $destPath   = $destination . DIRECTORY_SEPARATOR . $item->getFilename();
 
             if ($item->isDir()) {
-                $this->makeDir($destPath);
-                $this->recursiveCopyOldBuildFilesToNewDir($sourcePath, $destPath);
+                $log[] = $this->makeDir($destPath);
+                $log   = [...$log, ...$this->recursiveCopyOldBuildFilesToNewDir($sourcePath, $destPath)];
             } else {
-                $this->copyAsset($sourcePath, $destPath);
+                $log[] = $this->copyFile($sourcePath, $destPath);
             }
         }
+
+        return $log;
     }
 
     protected function moveNewReleaseIntoDeployment(): void
@@ -110,7 +115,7 @@ readonly class RunCompleteGitHubVersionRelease
         if (!copy($realSourcePath, $realDestPath)) {
             throw new RuntimeException("Error: Failed to copy file: $realSourcePath to $realDestPath");
         }
-        $this->output("Chmod file: $realDestPath to $this->filePermission", '');
+        $this->output("Copy file from: $realSourcePath to $realDestPath (permissions: $this->filePermission)");
         chmod($realDestPath, $this->filePermission);
     }
 
@@ -165,10 +170,10 @@ readonly class RunCompleteGitHubVersionRelease
         // @codeCoverageIgnoreEnd
     }
 
-    protected function output(string $message, string $newLine = "\n"): void
+    protected function output(string $message): void
     {
         if ($this->doOutput) {
-            printf("$message $newLine");
+            printf("$message\n");
             flush();
         }
     }
@@ -189,23 +194,26 @@ readonly class RunCompleteGitHubVersionRelease
     {
         $this->output('Preserving protected paths...');
 
+        $log = [];
+
         foreach ($this->protectedPaths as $protectedPath) {
             $sourcePath      = $this->laravelBasePath . '/' . ltrim($protectedPath, '/');
             $destinationPath = $this->tempDirName . '/' . ltrim($protectedPath, '/');
 
             if (is_dir($sourcePath)) {
-                $this->copyDirectory($sourcePath, $destinationPath);
+                $log = [...$log, ...$this->copyDirectory($sourcePath, $destinationPath)];
             } elseif (file_exists($sourcePath)) {
-                $this->copyFile($sourcePath, $destinationPath);
+                $log[] = $this->copyFile($sourcePath, $destinationPath);
             } else {
-                $this->output("Warning: Protected path not found: $sourcePath");
+                $log[] = "Warning: Protected path not found: $sourcePath";
             }
         }
+        $this->output(implode(PHP_EOL, $log));
 
         $this->output('Protected paths preserved successfully.');
     }
 
-    protected function copyDirectory(string $source, string $destination): void
+    protected function copyDirectory(string $source, string $destination): array
     {
         $this->makeDir($destination);
 
@@ -214,21 +222,32 @@ readonly class RunCompleteGitHubVersionRelease
             RecursiveIteratorIterator::SELF_FIRST
         );
 
+        $log = [];
+
         foreach ($iterator as $item) {
             $targetPath = str_replace($source, $destination, $item->getPathname());
 
             if ($item->isDir()) {
-                $this->makeDir($targetPath);
+                $log[] = $this->makeDir($targetPath);
             } else {
-                $this->copyFile($item->getPathname(), $targetPath);
+                $log[] = $this->copyFile($item->getPathname(), $targetPath);
             }
         }
+
+        return $log;
     }
 
-    protected function copyFile(string $source, string $destination): void
+    protected function copyFile(string $source, string $destination): string
     {
         if (!file_exists(dirname($destination))) {
+            if (!is_readable(dirname($source))) {
+                throw new RuntimeException('Error: ' . dirname($destination) . ' cannot be copied as it cannot be read from. Please check permissions.');
+            }
             $this->makeDir(dirname($destination));
+        }
+
+        if (!is_readable($source)) {
+            throw new RuntimeException("Error: Source file is not readable: $source");
         }
 
         if (!@copy($source, $destination)) {
@@ -236,7 +255,8 @@ readonly class RunCompleteGitHubVersionRelease
         }
 
         chmod($destination, $this->filePermission);
-        $this->output("Copied: $source to $destination");
+
+        return "  - Copied: $source to $destination (permission: $this->filePermission)";
     }
 
     /**
@@ -281,11 +301,15 @@ readonly class RunCompleteGitHubVersionRelease
         return false;
     }
 
-    public function makeDir(string $targetPath, string $errorMessage = 'Directory "%s" was not created'): void
+    public function makeDir(string $targetPath, string $errorMessage = 'Directory "%s" was not created'): string
     {
         if (!@is_dir($targetPath) && !@mkdir($targetPath, $this->dirPermission, true) && !@is_dir($targetPath)) {
             throw new RuntimeException(sprintf($errorMessage, $targetPath));
         }
+
+        chmod($targetPath, $this->dirPermission);
+
+        return "  - Directory created: $targetPath (permission: $this->dirPermission)";
     }
 
     protected function isProtectedWildcardPath(string $relativePath): bool
