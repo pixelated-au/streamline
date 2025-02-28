@@ -14,15 +14,17 @@ readonly class RunUpdate implements Pipe
 
     public function __invoke($builder): UpdateBuilderInterface
     {
-        $this->runUpdate->execute($builder->getNextAvailableRepositoryVersion(), function (string $type, string $output) {
-            if ($type === 'err') {
-                CommandClassCallback::dispatch('error', $output);
+        $this->runUpdate->execute(
+            $builder->getRequestedVersion() ?? $builder->getNextAvailableRepositoryVersion(),
+            function (string $type, string $output) {
+                if ($type === 'err') {
+                    CommandClassCallback::dispatch('error', $output);
 
-                throw new RuntimeException($output);
-            }
+                    throw new RuntimeException($output);
+                }
 
-            CommandClassCallback::dispatch('info', $output);
-        });
+                CommandClassCallback::dispatch('info', $output);
+            });
 
         return $builder;
     }
