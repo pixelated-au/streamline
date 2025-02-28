@@ -149,6 +149,9 @@ readonly class RunCompleteGitHubVersionRelease
         $this->output('Running optimisation tasks...');
         $this->runCommand('php artisan optimize:clear');
         $this->output('Optimisation tasks completed.');
+        $this->output('Running database migrations...');
+        $this->runCommand('php artisan migrate --force');
+        $this->output('Migrations completed.');
     }
 
     /** @noinspection PhpSameParameterValueInspection */
