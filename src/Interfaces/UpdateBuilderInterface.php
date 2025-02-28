@@ -6,6 +6,10 @@ use Throwable;
 
 interface UpdateBuilderInterface
 {
+    public function setCurrentlyInstalledVersion(string $version): UpdateBuilderInterface;
+
+    public function getCurrentlyInstalledVersion(): ?string;
+
     public function setRequestedVersion(string $version): UpdateBuilderInterface;
 
     public function getRequestedVersion(): ?string;

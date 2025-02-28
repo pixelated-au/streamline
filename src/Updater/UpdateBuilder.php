@@ -7,6 +7,8 @@ use Throwable;
 
 class UpdateBuilder implements UpdateBuilderInterface
 {
+    private string $currentlyInstalledVersion;
+
     private ?string $requestedVersion = null;
 
     private ?string $versionToInstall = null;
@@ -22,6 +24,18 @@ class UpdateBuilder implements UpdateBuilderInterface
     public function __construct()
     {
         $this->workTempDir = config('streamline.work_temp_dir');
+    }
+
+    public function setCurrentlyInstalledVersion(?string $version): UpdateBuilderInterface
+    {
+        $this->currentlyInstalledVersion = $version;
+
+        return $this;
+    }
+
+    public function getCurrentlyInstalledVersion(): ?string
+    {
+        return $this->currentlyInstalledVersion;
     }
 
     public function setRequestedVersion(?string $version): UpdateBuilderInterface
