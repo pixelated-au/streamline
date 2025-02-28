@@ -20,7 +20,7 @@
         "laravel/pint": "^1.20",
         "mikey179/vfsstream": "^1.6.12",
         "mockery/mockery": "^1.6",
-        "orchestra/testbench": ">=8 <10",
+        "orchestra/testbench": ">=7 <10",
         "pestphp/pest": "^3",
         "pestphp/pest-plugin-arch": "^3",
         "pestphp/pest-plugin-laravel": "^3",
