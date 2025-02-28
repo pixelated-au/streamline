@@ -10,6 +10,24 @@ use Pixelated\Streamline\Tests\Feature\Traits\UpdateCommandCommon;
 
 pest()->uses(UpdateCommandCommon::class, HttpMock::class);
 
+beforeEach(function () {
+    $this->app->bind(
+        \Symfony\Component\Process\Process::class,
+        function () {
+            // For some reason, $this->mock(...) isn't working as expected, so I'm mocking it manually
+            $mock = Mockery::mock(\Symfony\Component\Process\Process::class);
+            $mock->shouldReceive('run')
+                ->andReturn(0);
+            $mock->shouldReceive('isSuccessful')
+                ->andReturnTrue();
+            $mock->shouldReceive('getOutput')
+                ->andReturn('Test success message');
+
+            return $mock;
+        }
+    );
+});
+
 it('should run an update with no parameters', function () {
     Process::preventStrayProcesses();
 
@@ -64,7 +82,7 @@ it('should run an update with a specific version', function () {
         ->mockGetAvailableVersions()
         ->mockZipArchive();
     File::shouldReceive('deleteDirectory');
-
+    Config::set('streamline.installed_version', 'v2.8.1');
     $this->mockGetWebArchive();
 
     $this->artisan('streamline:run-update --install-version=v2.9.0')
@@ -107,6 +125,8 @@ it('should run an update requesting a version but it is older than the installed
         $this->mockCache(['v2.0.0', 'v1.0.0'])
             ->mockGetAvailableVersions();
         $this->mockHttpReleases();
+
+        Config::set('streamline.installed_version', 'v2.0.0');
 
         $this->artisan('streamline:run-update --install-version=v1.0.0')
             ->expectsOutputToContain('Version v1.0.0 is not greater than the current version (v2.0.0)')
@@ -187,6 +207,7 @@ it('should run a "forced" update on an existing version', function () {
         ->mockGetAvailableVersions()
         ->mockZipArchive();
     File::shouldReceive('deleteDirectory');
+    Config::set('streamline.installed_version', 'v2.0.0');
 
     $this->mockGetWebArchive();
     $this->artisan('streamline:run-update --force --install-version=v1.0.0')
