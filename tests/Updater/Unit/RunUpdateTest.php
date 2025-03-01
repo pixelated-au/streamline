@@ -53,7 +53,8 @@ it('throws an exception when the destination directory is not writeable', functi
 
     $runUpdate = runUpdateClassFactory();
     $closure   = fn ($source, $destination) => $this->recursiveCopyOldBuildFilesToNewDir($source, $destination);
-    $closure->call($runUpdate, "$this->rootPath/backup_dir/public/build/assets", "$this->deploymentPath/public/build/assets");
+    $closure->call($runUpdate, "$this->rootPath/backup_dir/public/build/assets",
+        "$this->deploymentPath/public/build/assets");
 });
 
 it('outputs a notice that the backup directory is being retained', function () {
@@ -64,29 +65,31 @@ it('outputs a notice that the backup directory is being retained', function () {
     (fn () => $this->terminateBackupArchive())->call($runUpdate);
 
     $output = $this->getActualOutputForAssertion();
-    $this->assertStringContainsString('Retaining old release backup (archive.zip). Make sure you clean it up manually.', $output);
+    $this->assertStringContainsString('Retaining old release backup (archive.zip). Make sure you clean it up manually.',
+        $output);
 });
 
-it('outputs a notice that the backup directory could not be deleted despite it being flagged for deletion', function () {
-    $this->rootFs->addChild(vfsStream::newDirectory('backup_test'));
-    $this->rootFs->addChild(vfsStream::newFile('backup_test/archive.zip'));
-    $this->rootFs->getChild('backup_test/archive.zip')?->chmod(0400);
+it('outputs a notice that the backup directory could not be deleted despite it being flagged for deletion',
+    function () {
+        $this->rootFs->addChild(vfsStream::newDirectory('backup_test'));
+        $this->rootFs->addChild(vfsStream::newFile('backup_test/archive.zip'));
+        $this->rootFs->getChild('backup_test/archive.zip')?->chmod(0400);
 
-    $runUpdate = runUpdateClassFactory(
-        [
-            'laravelBasePath'       => $this->rootPath,
-            'oldReleaseArchivePath' => "$this->rootPath/backup_test/archive.zip",
-        ]
-    );
-    (fn () => $this->terminateBackupArchive())->call($runUpdate);
+        $runUpdate = runUpdateClassFactory(
+            [
+                'laravelBasePath'       => $this->rootPath,
+                'oldReleaseArchivePath' => "$this->rootPath/backup_test/archive.zip",
+            ]
+        );
+        (fn () => $this->terminateBackupArchive())->call($runUpdate);
 
-    $output = $this->getActualOutputForAssertion();
-    $this->assertStringContainsString("Could not delete the old release: $this->rootPath/backup_test", $output);
+        $output = $this->getActualOutputForAssertion();
+        $this->assertStringContainsString("Could not delete the old release: $this->rootPath/backup_test", $output);
 
-    $this->assertTrue(
-        $this->rootFs->hasChild('backup_test/archive.zip')
-    );
-});
+        $this->assertTrue(
+            $this->rootFs->hasChild('backup_test/archive.zip')
+        );
+    });
 
 it('throws an exception that the source file cannot be read when copying assets', function () {
     $file = vfsStream::newFile('temp/public/build/assets/unreadable.txt');
@@ -202,19 +205,21 @@ it('should handle multiple protected paths with wildcards correctly', function (
     }
 });
 
-it('should correctly match a relative path that is exactly the same as a wildcard protected path without the asterisk', function () {
-    $runUpdate = runUpdateClassFactory([
-        'protectedPaths' => [
-            'config/*',
-            'storage/logs/*',
-            'public/uploads/*',
-        ],
-    ]);
+it('should correctly match a relative path that is exactly the same as a wildcard protected path without the asterisk',
+    function () {
+        $runUpdate = runUpdateClassFactory([
+            'protectedPaths' => [
+                'config/*',
+                'storage/logs/*',
+                'public/uploads/*',
+            ],
+        ]);
 
-    $result = (fn (string $relativePath) => $this->isProtectedWildcardPath($relativePath))->call($runUpdate, 'config/app.php');
+        $result = (fn (string $relativePath) => $this->isProtectedWildcardPath($relativePath))->call($runUpdate,
+            'config/app.php');
 
-    expect($result)->toBeTrue();
-});
+        expect($result)->toBeTrue();
+    });
 
 it('should return false for an empty relative path', function () {
     $runUpdate = runUpdateClassFactory([
@@ -369,7 +374,6 @@ it('throws an exception when the destination directory is not writable during fi
     $runUpdate = runUpdateClassFactory();
     $closure   = fn (string $source, string $destination) => $this->copyFile($source, $destination);
     $closure->call($runUpdate, $sourceFile->url(), $destinationDir->url() . '/' . $sourceFile->getName());
-    $this->assertTrue(true);
 });
 
 function createNestedDirectories($dir, $depth, $filesPerDir, $currentDepth = 0): void
@@ -388,6 +392,45 @@ function createNestedDirectories($dir, $depth, $filesPerDir, $currentDepth = 0):
         createNestedDirectories($subdir, $depth, $filesPerDir, $currentDepth + 1);
     }
 }
+
+it('should successfully copy frontend assets from existing deployment to new release (in temp dir)', function () {
+    // Setup directories
+    $this->rootFs->addChild(vfsStream::newDirectory('public/build/assets'));
+    $this->rootFs->addChild(vfsStream::newDirectory('temp/public/build/assets'));
+
+    /** @var \org\bovigo\vfs\vfsStreamDirectory $assetsDir */
+    $assetsDir = $this->deploymentDir->getChild('public/build');
+    // Not adding a manifest.json in the test because it exists on the filesystem in 'workbench/public/build'
+    $assetsDir->addChild(vfsStream::newFile('assets/app.css')->withContent('test css content'));
+    $assetsDir->addChild(vfsStream::newFile('assets/app.js')->withContent('test js content'));
+
+    // Create and run the update
+    $runUpdate = runUpdateClassFactory([
+        'laravelBasePath'  => $this->deploymentPath,
+        'publicDirName'    => $this->deploymentPath . '/public',
+        'frontendBuildDir' => 'build',
+        'tempDirName'      => $this->rootPath . '/temp',
+    ]);
+
+    $this->startOutputBuffer();
+    (fn () => $this->copyFrontEndAssetsFromOldToNewRelease())->call($runUpdate);
+
+    // Verify files were copied
+    $this->assertDirectoryExists("$this->rootPath/temp/public/build/assets");
+    $this->assertFileExists("$this->rootPath/temp/public/build/manifest.json", 'is copied across from filesystem');
+    $this->assertFileExists("$this->rootPath/temp/public/build/assets/app.css");
+    $this->assertFileExists("$this->rootPath/temp/public/build/assets/app.js");
+
+    $this->assertJson(file_get_contents("$this->rootPath/temp/public/build/manifest.json"));
+    $this->assertStringEqualsFile("$this->rootPath/temp/public/build/assets/app.css", 'test css content');
+    $this->assertStringEqualsFile("$this->rootPath/temp/public/build/assets/app.js", 'test js content');
+
+    // Verify proper logging
+    $output = $this->getActualOutputForAssertion();
+    $this->assertStringContainsString('Copying frontend assets', $output);
+    $this->assertStringContainsString('Directory created', $output);
+    $this->assertStringContainsString('Copied:', $output);
+});
 
 function assertDirectoriesEqual($expected, $actual): void
 {
@@ -422,7 +465,7 @@ function assertDirectoriesEqual($expected, $actual): void
 }
 
 /**
- * @param array{
+ * @param  array{
  *     tempDirName?: string,
  *     laravelBasePath?: string,
  *     publicDirName?: string,
@@ -437,7 +480,7 @@ function assertDirectoriesEqual($expected, $actual): void
  *     oldReleaseArchivePath?: string,
  *     doRetainOldReleaseDir?: bool,
  *     doOutput?: bool,
- * } $options
+ * }  $options
  */
 function runUpdateClassFactory(array $options = []): RunCompleteGitHubVersionRelease
 {
