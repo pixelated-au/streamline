@@ -395,14 +395,17 @@ function createNestedDirectories($dir, $depth, $filesPerDir, $currentDepth = 0):
 
 it('should successfully copy frontend assets from existing deployment to new release (in temp dir)', function () {
     // Setup directories
-    $this->rootFs->addChild(vfsStream::newDirectory('public/build/assets'));
     $this->rootFs->addChild(vfsStream::newDirectory('temp/public/build/assets'));
 
-    /** @var \org\bovigo\vfs\vfsStreamDirectory $assetsDir */
-    $assetsDir = $this->deploymentDir->getChild('public/build');
+    /** @var \org\bovigo\vfs\vfsStreamDirectory $existingBuildDir */
+    $existingBuildDir = $this->deploymentDir->getChild('public/build');
     // Not adding a manifest.json in the test because it exists on the filesystem in 'workbench/public/build'
-    $assetsDir->addChild(vfsStream::newFile('assets/app.css')->withContent('test css content'));
-    $assetsDir->addChild(vfsStream::newFile('assets/app.js')->withContent('test js content'));
+    $existingBuildDir->addChild(vfsStream::newFile('assets/app.css')->withContent('test css content'));
+    $existingBuildDir->addChild(vfsStream::newFile('assets/app.js')->withContent('test js content'));
+
+    /** @var \org\bovigo\vfs\vfsStreamDirectory $tempBuildDir */
+    $tempBuildDir = $this->rootFs->getChild('temp/public/build');
+    $tempBuildDir->addChild(vfsStream::newFile('manifest.json')->withContent('{"json": "file"}'));
 
     // Create and run the update
     $runUpdate = runUpdateClassFactory([
@@ -412,6 +415,7 @@ it('should successfully copy frontend assets from existing deployment to new rel
         'tempDirName'      => $this->rootPath . '/temp',
     ]);
 
+    $this->assertSame('{"json": "file"}', file_get_contents("$this->rootPath/temp/public/build/manifest.json"));
     $this->startOutputBuffer();
     (fn () => $this->copyFrontEndAssetsFromOldToNewRelease())->call($runUpdate);
 
@@ -421,7 +425,9 @@ it('should successfully copy frontend assets from existing deployment to new rel
     $this->assertFileExists("$this->rootPath/temp/public/build/assets/app.css");
     $this->assertFileExists("$this->rootPath/temp/public/build/assets/app.js");
 
-    $this->assertJson(file_get_contents("$this->rootPath/temp/public/build/manifest.json"));
+    $manifestFile = file_get_contents("$this->rootPath/temp/public/build/manifest.json");
+    $this->assertJson($manifestFile);
+    $this->assertNotSame('{"json": "file"}', $manifestFile);
     $this->assertStringEqualsFile("$this->rootPath/temp/public/build/assets/app.css", 'test css content');
     $this->assertStringEqualsFile("$this->rootPath/temp/public/build/assets/app.js", 'test js content');
 
