@@ -7,22 +7,22 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RuntimeException;
 
-readonly class RunCompleteGitHubVersionRelease
+class RunCompleteGitHubVersionRelease
 {
     private string $laravelTempBackupDir;
 
     public function __construct(
-        private string $tempDirName,
-        private string $laravelBasePath,
-        private string $publicDirName,
-        private string $frontendBuildDir,
-        private string $installingVersion,
-        private array $protectedPaths,
-        private int $dirPermission,
-        private int $filePermission,
-        private string $oldReleaseArchivePath,
-        private bool $doRetainOldReleaseDir = true,
-        private bool $doOutput = false,
+        private readonly string $tempDirName,
+        private readonly string $laravelBasePath,
+        private readonly string $publicDirName,
+        private readonly string $frontendBuildDir,
+        private readonly string $installingVersion,
+        private readonly array $protectedPaths,
+        private readonly int $dirPermission,
+        private readonly int $filePermission,
+        private readonly string $oldReleaseArchivePath,
+        private readonly bool $doRetainOldReleaseDir = true,
+        private readonly bool $doOutput = false,
     ) {
         $this->laravelTempBackupDir = "{$this->laravelBasePath}_old";
     }
@@ -154,7 +154,6 @@ readonly class RunCompleteGitHubVersionRelease
         $this->output('Migrations completed.');
     }
 
-    /** @noinspection PhpSameParameterValueInspection */
     private function runCommand(string $command): void
     {
         $this->output("Executing: $command");
