@@ -35,6 +35,13 @@ it('can run an update using actual filesystem actions and deletes the backup dir
 
         createNewReleaseFolderFileStructure($tempDisk);
         makeDirsAndFiles($disk, $tempDisk);
+
+        /*
+         * Note: This class runs after the new 'incoming' release has been downloaded and unpacked.
+         * This will take various files and copy them into the incoming release directory.
+         * As such, if files already exist in the incoming release directory, the updater should skip them.
+         */
+
         $updater = new RunCompleteGitHubVersionRelease(
             tempDirName: $tempDisk->path('unpacked'),
             laravelBasePath: $disk->path('laravel'),
@@ -53,6 +60,7 @@ it('can run an update using actual filesystem actions and deletes the backup dir
         $output = [
             'Starting update',
             'Copying frontend assets. From: ' . $disk->path('laravel/public/build') . ' to: ' . $tempDisk->path('unpacked/public/build'),
+            '  - Skipped: ' . $tempDisk->path('unpacked/public/build/manifest.json') . '. File already exists (Permission: 420)',
             '  - Directory created: ' . $tempDisk->path('unpacked/public/build/assets') . ' (permission: 493)',
             '  - Directory created: ' . $tempDisk->path('unpacked/public/build/assets/text-file') . ' (permission: 493)',
             '  - Copied: ' . $disk->path('/laravel/public/build/assets/text-file/existing_file.txt') . ' to ' . $tempDisk->path('/unpacked/public/build/assets/text-file/existing_file.txt') . ' (permission: 420)',
@@ -78,26 +86,34 @@ it('can run an update using actual filesystem actions and deletes the backup dir
 
         $this->assertDirectoryDoesNotExist(laravel_path('mock_deployment.backup_dir'));
         $this->assertFileExists($disk->path('laravel/app/test.php'));
-        $this->assertFileExists($disk->path('laravel/public/build/file1.txt'));
-        $this->assertFileExists($disk->path('laravel/public/build/file2.txt'));
-        $this->assertFileExists($disk->path('laravel/public/build/dir1/file3.txt'));
-        $this->assertFileExists($disk->path('laravel/public/build/dir1/dir2/file4.txt'));
-        $this->assertFileExists($disk->path('laravel/public/build/file5.txt'));
+        $this->assertFileExists($disk->path('laravel/public/build/manifest.json'));
+        $this->assertFileExists($disk->path('laravel/public/build/assets/file1.txt'));
+        $this->assertFileExists($disk->path('laravel/public/build/assets/file2.txt'));
+        $this->assertFileExists($disk->path('laravel/public/build/assets/dir1/file3.txt'));
+        $this->assertFileExists($disk->path('laravel/public/build/assets/dir1/dir2/file4.txt'));
+        $this->assertFileExists($disk->path('laravel/public/build/assets/file5.txt'));
         $this->assertFileExists($disk->path('laravel/public/build/assets/text-file/existing_file.txt'));
         $this->assertFileExists($disk->path('laravel/.env'));
+
+        $this->assertStringNotEqualsFile(
+            $disk->path('laravel/public/build/manifest.json'),
+            'Old Manifest',
+            'The old deployment manifest must not overwrite the new manifest');
 
         $this->assertSame(
             expected: "Prefix...\nSTREAMLINE_APPLICATION_VERSION_INSTALLED=1.0.0\nSuffix...",
             actual: file_get_contents($disk->path('laravel/.env'))
         );
-    });
+    }
+);
 
 function makeDirsAndFiles(Filesystem $disk, Filesystem $tempDisk): void
 {
-    // Mock frontend assets directory
+    // This is to ensure the old manifest is not retained after a new release
+    $disk->put('laravel/public/build/manifest.json', 'Old Manifest - Should be replaced with the new manifest');
     $disk->makeDirectory('laravel/public/build/assets/text-file');
     $disk->put('laravel/public/build/assets/text-file/existing_file.txt',
-        'an existing file that should be copied across to the new deployment');
+        'an existing file that should be retained in the new deployment');
 
     // Mock Laravel deployment structure
     $disk->makeDirectory('laravel/app');
@@ -111,20 +127,17 @@ function createNewReleaseFolderFileStructure(Filesystem $tempDisk, ?array $files
 {
     $tempDisk->makeDirectory('unpacked/app');
 
-    $tempDisk->makeDirectory('unpacked/public/build/assets/text-file');
-    $tempDisk->put('unpacked/public/build/assets/text-file/existing_file.txt',
-        'an existing file that should be copied across to the new deployment');
-
     $tempDisk->put('unpacked/app/test.php', '<?php // Test file');
     $tempDisk->put('unpacked/.env', "Prefix...\nSTREAMLINE_APPLICATION_VERSION_INSTALLED=v0.0.0\nSuffix...");
 
     collect($files ?? [
         'unpacked/app/test.php',
-        'unpacked/public/build/file1.txt',
-        'unpacked/public/build/file2.txt',
-        'unpacked/public/build/dir1/file3.txt',
-        'unpacked/public/build/dir1/dir2/file4.txt',
-        'unpacked/public/build/file5.txt',
+        'unpacked/public/build/manifest.json',
+        'unpacked/public/build/assets/file1.txt',
+        'unpacked/public/build/assets/file2.txt',
+        'unpacked/public/build/assets/dir1/file3.txt',
+        'unpacked/public/build/assets/dir1/dir2/file4.txt',
+        'unpacked/public/build/assets/file5.txt',
     ])
         ->each(fn (string $file) => $tempDisk->put($file, "This file has the name: $file"));
 }
