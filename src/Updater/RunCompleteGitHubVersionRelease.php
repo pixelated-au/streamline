@@ -67,7 +67,9 @@ class RunCompleteGitHubVersionRelease
                 $log[] = $this->makeDir($destPath);
                 $log   = [...$log, ...$this->recursiveCopyOldBuildFilesToNewDir($sourcePath, $destPath)];
             } else {
-                $log[] = $this->copyFile($sourcePath, $destPath);
+                // This doesn't overwrite because, it's copying the old release files to the new release
+                // ...we don't want to overwrite the new release files with their old counterparts.
+                $log[] = $this->copyFile($sourcePath, $destPath, false);
             }
         }
 
@@ -239,8 +241,21 @@ class RunCompleteGitHubVersionRelease
         return $log;
     }
 
-    protected function copyFile(string $source, string $destination): string
+    protected function copyFile(string $source, string $destination, bool $doOverwrite = true): string
     {
+        if (!$doOverwrite && file_exists($destination)) {
+            $message = "  - Skipped: $destination. File already exists";
+
+            if (is_writable($destination)) {
+                chmod($destination, $this->filePermission);
+                $message .= " (Permission: $this->filePermission)";
+            } else {
+                $message .= '(Permission: not set because destination is not writable)';
+            }
+
+            return $message;
+        }
+
         if (!file_exists(dirname($destination))) {
             if (!is_readable(dirname($source))) {
                 throw new RuntimeException('Error: ' . dirname($destination) . ' cannot be copied as it cannot be read from. Please check permissions.');
