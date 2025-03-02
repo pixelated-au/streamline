@@ -404,9 +404,9 @@ it('should successfully copy frontend assets from existing deployment to new rel
     $existingBuildDir->addChild(vfsStream::newFile('assets/app.js')->withContent('test js content'));
 
     /** @var \org\bovigo\vfs\vfsStreamDirectory $tempBuildDir */
-    $tempBuildDir = $this->rootFs->getChild('temp/public/build');
-    $tempBuildDir->addChild(vfsStream::newFile('manifest.json')->withContent('{"json": "file"}'));
-
+    $tempBuildDir       = $this->rootFs->getChild('temp/public/build');
+    $newManifestContent = '{"json": "should be the new manifest content"}';
+    $tempBuildDir->addChild(vfsStream::newFile('manifest.json')->withContent($newManifestContent));
     // Create and run the update
     $runUpdate = runUpdateClassFactory([
         'laravelBasePath'  => $this->deploymentPath,
@@ -415,19 +415,19 @@ it('should successfully copy frontend assets from existing deployment to new rel
         'tempDirName'      => $this->rootPath . '/temp',
     ]);
 
-    $this->assertSame('{"json": "file"}', file_get_contents("$this->rootPath/temp/public/build/manifest.json"));
+    $this->assertSame($newManifestContent, file_get_contents("$this->rootPath/temp/public/build/manifest.json"));
     $this->startOutputBuffer();
     (fn () => $this->copyFrontEndAssetsFromOldToNewRelease())->call($runUpdate);
 
     // Verify files were copied
     $this->assertDirectoryExists("$this->rootPath/temp/public/build/assets");
-    $this->assertFileExists("$this->rootPath/temp/public/build/manifest.json", 'is copied across from filesystem');
+    $this->assertFileExists("$this->rootPath/temp/public/build/manifest.json");
     $this->assertFileExists("$this->rootPath/temp/public/build/assets/app.css");
     $this->assertFileExists("$this->rootPath/temp/public/build/assets/app.js");
 
     $manifestFile = file_get_contents("$this->rootPath/temp/public/build/manifest.json");
     $this->assertJson($manifestFile);
-    $this->assertNotSame('{"json": "file"}', $manifestFile);
+    $this->assertSame($newManifestContent, $manifestFile, "This should be the new manifest content: $newManifestContent");
     $this->assertStringEqualsFile("$this->rootPath/temp/public/build/assets/app.css", 'test css content');
     $this->assertStringEqualsFile("$this->rootPath/temp/public/build/assets/app.js", 'test js content');
 
