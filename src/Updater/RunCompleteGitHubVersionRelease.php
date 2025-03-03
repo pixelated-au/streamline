@@ -117,6 +117,7 @@ class RunCompleteGitHubVersionRelease
         if (!copy($realSourcePath, $realDestPath)) {
             throw new RuntimeException("Error: Failed to copy file: $realSourcePath to $realDestPath");
         }
+
         $this->output("Copy file from: $realSourcePath to $realDestPath (permissions: $this->filePermission)");
         chmod($realDestPath, $this->filePermission);
     }
