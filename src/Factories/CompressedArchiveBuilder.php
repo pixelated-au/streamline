@@ -29,7 +29,7 @@ readonly class CompressedArchiveBuilder
     public function makeArchive(string $source): static
     {
         CommandClassCallback::dispatch('comment', "Building backup zip file from $source");
-        $iterator       = app()->make(ArchiveBuilderIterator::class, ['path' => $source]);
+        $iterator       = resolve(ArchiveBuilderIterator::class, ['path' => $source]);
         $basePathLength = strlen($source) + 1; // +1 for the trailing slash
 
         foreach ($iterator as $file) {
