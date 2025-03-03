@@ -118,6 +118,30 @@ it('throws an exception that the source file cannot be copied for an unknown rea
     $closure->call($runUpdate, $file->url(), $this->rootPath);
 });
 
+it('sets permissions and outputs a message when an asset is successfully copied', function () {
+    $file = vfsStream::newFile('source/asset.txt', 0777);
+    $this->rootFs->addChild($file->withContent('asset'));
+    $dest = vfsStream::newDirectory('dest');
+    $this->rootFs->addChild($dest);
+
+    $this->assertSame($file->getPermissions(), 511);
+
+    $realSourcePath = $file->url();
+    $realDestPath   = $dest->url() . '/asset.txt';
+    $runUpdate      = runUpdateClassFactory();
+
+    (fn (string $realSourcePath, string $realDestPath) => $this->copyAsset($realSourcePath, $realDestPath))
+        ->call($runUpdate, $realSourcePath, $realDestPath);
+
+    $output = $this->getActualOutputForAssertion();
+
+    $this->assertStringContainsString(
+        "Copy file from: $realSourcePath to $realDestPath (permissions: 420)",
+        $output
+    );
+    $this->assertSame($dest->getChild('asset.txt')->getPermissions(), 420);
+});
+
 it('cannot find the .env file when setting the current version number', function () {
     $this->startOutputBuffer();
     $this->deploymentDir->removeChild('.env');
@@ -427,7 +451,8 @@ it('should successfully copy frontend assets from existing deployment to new rel
 
     $manifestFile = file_get_contents("$this->rootPath/temp/public/build/manifest.json");
     $this->assertJson($manifestFile);
-    $this->assertSame($newManifestContent, $manifestFile, "This should be the new manifest content: $newManifestContent");
+    $this->assertSame($newManifestContent, $manifestFile,
+        "This should be the new manifest content: $newManifestContent");
     $this->assertStringEqualsFile("$this->rootPath/temp/public/build/assets/app.css", 'test css content');
     $this->assertStringEqualsFile("$this->rootPath/temp/public/build/assets/app.js", 'test js content');
 
