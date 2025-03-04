@@ -27,8 +27,4 @@ interface UpdateBuilderInterface
     public function setDownloadedArchivePath(string $path): self;
 
     public function getDownloadedArchivePath(): string;
-
-    public function setError(Throwable $error): self;
-
-    public function getError(): ?Throwable;
 }

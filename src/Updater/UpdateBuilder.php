@@ -90,16 +90,4 @@ class UpdateBuilder implements UpdateBuilderInterface
     {
         return $this->downloadedArchivePath;
     }
-
-    public function setError(Throwable $error): self
-    {
-        $this->error = $error;
-
-        return $this;
-    }
-
-    public function getError(): ?Throwable
-    {
-        return $this->error;
-    }
 }
