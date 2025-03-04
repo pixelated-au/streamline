@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Config;
 use Pixelated\Streamline\Actions\CreateArchive;
 use Pixelated\Streamline\Commands\CheckCommand;
 use Pixelated\Streamline\Commands\CleanAssetsDirectoryCommand;
+use Pixelated\Streamline\Commands\FinishUpdateCommand;
 use Pixelated\Streamline\Commands\InitInstalledVersionCommand;
 use Pixelated\Streamline\Commands\ListCommand;
 use Pixelated\Streamline\Commands\UpdateCommand;
@@ -29,10 +30,11 @@ class StreamlineServiceProvider extends PackageServiceProvider
             ->hasConfigFile()
             ->hasCommands(
                 UpdateCommand::class,
-                ListCommand::class,
                 CheckCommand::class,
                 CleanAssetsDirectoryCommand::class,
+                FinishUpdateCommand::class,
                 InitInstalledVersionCommand::class,
+                ListCommand::class,
             )
             ->hasInstallCommand(fn (InstallCommand $command) => $command->publishConfigFile());
     }
