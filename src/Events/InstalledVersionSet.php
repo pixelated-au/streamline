@@ -4,7 +4,7 @@ namespace Pixelated\Streamline\Events;
 
 use Illuminate\Foundation\Events\Dispatchable;
 
-class InstalledVersionSet
+readonly class InstalledVersionSet
 {
     use Dispatchable;
 

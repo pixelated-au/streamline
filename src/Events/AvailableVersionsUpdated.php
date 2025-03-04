@@ -5,7 +5,7 @@ namespace Pixelated\Streamline\Events;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Support\Collection;
 
-class AvailableVersionsUpdated
+readonly class AvailableVersionsUpdated
 {
     use Dispatchable;
 

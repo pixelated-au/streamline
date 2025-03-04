@@ -4,7 +4,7 @@ namespace Pixelated\Streamline\Events;
 
 use Illuminate\Foundation\Events\Dispatchable;
 
-class NextAvailableVersionUpdated
+readonly class NextAvailableVersionUpdated
 {
     use Dispatchable;
 
