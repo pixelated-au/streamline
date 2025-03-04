@@ -1,6 +1,7 @@
 {
     "preset": "laravel",
     "rules": {
+        "attribute_placement": "standalone",
         "binary_operator_spaces": {
             "default": "align_single_space_minimal",
             "operators": {
@@ -37,6 +38,10 @@
                 "yield_from"
             ]
         },
+        "function_declaration": {
+            "closure_fn_spacing": "none",
+            "closure_function_spacing": "none"
+        },
         "concat_space": {
             "spacing": "one"
         },
@@ -58,6 +63,7 @@
                 "use_trait"
             ]
         },
+        "on_multiline": "ensure_fully_multiline",
         "ordered_imports": {
             "sort_algorithm": "alpha",
             "imports_order": [
