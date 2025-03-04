@@ -118,7 +118,7 @@ class RunCompleteGitHubVersionRelease
             throw new RuntimeException("Error: Failed to copy file: $realSourcePath to $realDestPath");
         }
 
-        $this->output("Copy file from: $realSourcePath to $realDestPath (permissions: $this->filePermission)");
+        $this->output("Copy file from: $realSourcePath to $realDestPath (Permissions: $this->filePermission)");
         chmod($realDestPath, $this->filePermission);
     }
 
@@ -247,34 +247,37 @@ class RunCompleteGitHubVersionRelease
         if (!$doOverwrite && file_exists($destination)) {
             $message = "  - Skipped: $destination. File already exists";
 
-            if (is_writable($destination)) {
-                chmod($destination, $this->filePermission);
-                $message .= " (Permission: $this->filePermission)";
+            if (is_writable($destination) && chmod($destination, $this->filePermission)) {
+                $message .= " (But still set permission: $this->filePermission)";
             } else {
-                $message .= '(Permission: not set because destination is not writable)';
+                $message .= ' (And could not set the permission because destination is not writable)'; // @codeCoverageIgnore
             }
 
             return $message;
         }
 
-        if (!file_exists(dirname($destination))) {
+        $parentDir = dirname($destination);
+
+        if (!file_exists($parentDir)) {
             if (!is_readable(dirname($source))) {
-                throw new RuntimeException('Error: ' . dirname($destination) . ' cannot be copied as it cannot be read from. Please check permissions.');
+                throw new RuntimeException('Error: ' . $parentDir . ' cannot be copied as it cannot be read from. Please check permissions.');
             }
-            $this->makeDir(dirname($destination));
+            $this->makeDir($parentDir);
         }
 
         if (!is_readable($source)) {
-            throw new RuntimeException("Error: Source file is not readable: $source");
+            throw new RuntimeException("Error: Source file is not readable. Check your permissions: $source");
         }
 
         if (!@copy($source, $destination)) {
             throw new RuntimeException("Failed to copy file: $source to $destination");
         }
 
-        chmod($destination, $this->filePermission);
+        $chmodSuccess = @chmod($destination, $this->filePermission)
+            ? "Permission: $this->filePermission"
+            : 'Permission could not be set'; // @codeCoverageIgnore
 
-        return "  - Copied: $source to $destination (permission: $this->filePermission)";
+        return "  - Copied: $source to $destination ($chmodSuccess)";
     }
 
     /**
@@ -327,7 +330,7 @@ class RunCompleteGitHubVersionRelease
 
         chmod($targetPath, $this->dirPermission);
 
-        return "  - Directory created: $targetPath (permission: $this->dirPermission)";
+        return "  - Directory created: $targetPath (Permission: $this->dirPermission)";
     }
 
     protected function isProtectedWildcardPath(string $relativePath): bool
