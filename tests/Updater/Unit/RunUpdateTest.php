@@ -19,7 +19,7 @@ it('throws an exception that the laravel base directory cannot be found', functi
     $this->expectException(RuntimeException::class);
 
     $runUpdate = runUpdateClassFactory(['laravelBasePath' => 'non-existent-directory']);
-    $closure   = fn ($liveAssetsDir, $oldAssetsDir) => $this->validateDirectoriesExist($liveAssetsDir, $oldAssetsDir);
+    $closure   = fn($liveAssetsDir, $oldAssetsDir) => $this->validateDirectoriesExist($liveAssetsDir, $oldAssetsDir);
     $closure->call($runUpdate, "$this->deploymentPath/public/build", "$this->rootPath/temp/public/build");
 });
 
@@ -27,7 +27,7 @@ it('throws an exception that the live/old assets directory cannot be found', fun
     $this->expectExceptionMessage("Error: Invalid old assets directory: $this->deploymentPath/invalid");
     $this->expectException(RuntimeException::class);
     $runUpdate = runUpdateClassFactory();
-    $closure   = fn ($liveAssetsDir, $oldAssetsDir) => $this->validateDirectoriesExist($liveAssetsDir, $oldAssetsDir);
+    $closure   = fn($liveAssetsDir, $oldAssetsDir) => $this->validateDirectoriesExist($liveAssetsDir, $oldAssetsDir);
     $closure->call($runUpdate, "$this->deploymentPath/invalid", "$this->deploymentPath/temp/public/build");
 });
 
@@ -38,7 +38,7 @@ it('throws an exception that the temp assets directory cannot be found', functio
     $this->expectException(RuntimeException::class);
 
     $runUpdate = runUpdateClassFactory();
-    $closure   = fn ($liveAssetsDir, $oldAssetsDir) => $this->validateDirectoriesExist($liveAssetsDir, $oldAssetsDir);
+    $closure   = fn($liveAssetsDir, $oldAssetsDir) => $this->validateDirectoriesExist($liveAssetsDir, $oldAssetsDir);
     $closure->call($runUpdate, "$this->deploymentPath/public/build", "$this->rootPath/temp/public/build");
 });
 
@@ -52,7 +52,7 @@ it('throws an exception when the destination directory is not writeable', functi
     $this->expectExceptionMessage("Directory \"$this->deploymentPath/public/build/assets/NEW_DIRECTORY\" was not created");
 
     $runUpdate = runUpdateClassFactory();
-    $closure   = fn ($source, $destination) => $this->recursiveCopyOldBuildFilesToNewDir($source, $destination);
+    $closure   = fn($source, $destination) => $this->recursiveCopyOldBuildFilesToNewDir($source, $destination);
     $closure->call($runUpdate, "$this->rootPath/backup_dir/public/build/assets",
         "$this->deploymentPath/public/build/assets");
 });
@@ -62,7 +62,7 @@ it('outputs a notice that the backup directory is being retained', function () {
         'doRetainOldReleaseDir' => true,
         'oldReleaseArchivePath' => 'archive.zip',
     ]);
-    (fn () => $this->terminateBackupArchive())->call($runUpdate);
+    (fn() => $this->terminateBackupArchive())->call($runUpdate);
 
     $output = $this->getActualOutputForAssertion();
     $this->assertStringContainsString('Retaining old release backup (archive.zip). Make sure you clean it up manually.',
@@ -81,7 +81,7 @@ it('outputs a notice that the backup directory could not be deleted despite it b
                 'oldReleaseArchivePath' => "$this->rootPath/backup_test/archive.zip",
             ]
         );
-        (fn () => $this->terminateBackupArchive())->call($runUpdate);
+        (fn() => $this->terminateBackupArchive())->call($runUpdate);
 
         $output = $this->getActualOutputForAssertion();
         $this->assertStringContainsString("Could not delete the old release: $this->rootPath/backup_test", $output);
@@ -99,7 +99,7 @@ it('throws an exception that the source file cannot be read when copying assets'
     $this->expectException(RuntimeException::class);
 
     $runUpdate = runUpdateClassFactory();
-    $closure   = fn (string $realSourcePath, string $realDestPath) => $this->copyAsset($realSourcePath, $realDestPath);
+    $closure   = fn(string $realSourcePath, string $realDestPath) => $this->copyAsset($realSourcePath, $realDestPath);
     $closure->call($runUpdate, $file->url(), 'unused_destination');
 });
 
@@ -114,7 +114,7 @@ it('throws an exception that the source file cannot be copied for an unknown rea
     $this->expectException(RuntimeException::class);
 
     $runUpdate = runUpdateClassFactory();
-    $closure   = fn (string $realSourcePath, string $realDestPath) => $this->copyAsset($realSourcePath, $realDestPath);
+    $closure   = fn(string $realSourcePath, string $realDestPath) => $this->copyAsset($realSourcePath, $realDestPath);
     $closure->call($runUpdate, $file->url(), $this->rootPath);
 });
 
@@ -130,16 +130,16 @@ it('sets permissions and outputs a message when an asset is successfully copied'
     $realDestPath   = $dest->url() . '/asset.txt';
     $runUpdate      = runUpdateClassFactory();
 
-    (fn (string $realSourcePath, string $realDestPath) => $this->copyAsset($realSourcePath, $realDestPath))
+    (fn(string $realSourcePath, string $realDestPath) => $this->copyAsset($realSourcePath, $realDestPath))
         ->call($runUpdate, $realSourcePath, $realDestPath);
 
     $output = $this->getActualOutputForAssertion();
 
     $this->assertStringContainsString(
-        "Copy file from: $realSourcePath to $realDestPath (permissions: 420)",
+        "Copy file from: $realSourcePath to $realDestPath (Permissions: 420)",
         $output
     );
-    $this->assertSame($dest->getChild('asset.txt')->getPermissions(), 420);
+    $this->assertSame($dest->getChild('asset.txt')?->getPermissions(), 420);
 });
 
 it('cannot find the .env file when setting the current version number', function () {
@@ -150,7 +150,7 @@ it('cannot find the .env file when setting the current version number', function
     $this->expectException(RuntimeException::class);
 
     $runUpdate = runUpdateClassFactory(['laravelBasePath' => $this->deploymentPath]);
-    (fn () => $this->setEnvVersionNumber())->call($runUpdate);
+    (fn() => $this->setEnvVersionNumber())->call($runUpdate);
 });
 
 it('cannot save the .env file when setting the current version number', function () {
@@ -164,14 +164,14 @@ it('cannot save the .env file when setting the current version number', function
     $this->expectException(RuntimeException::class);
 
     $runUpdate = runUpdateClassFactory(['laravelBasePath' => $this->deploymentPath]);
-    (fn () => $this->setEnvVersionNumber())->call($runUpdate);
+    (fn() => $this->setEnvVersionNumber())->call($runUpdate);
 
     $this->assertStringEqualsFile($dotEnvFile->url(), $dotEnvFileContents);
 });
 
 it('fails to delete a missing directory', function () {
     $runUpdate = runUpdateClassFactory();
-    $result    = (fn ($directory) => $this->deleteDirectory($directory))
+    $result    = (fn($directory) => $this->deleteDirectory($directory))
         ->call($runUpdate, "$this->rootPath/missing_dir");
 
     expect($result)->toBeTrue();
@@ -182,7 +182,7 @@ it('calls delete and will return false when the file does not exist', function (
 
     $this->disableErrorHandling();
     $runUpdate = runUpdateClassFactory();
-    $result    = (fn ($path) => $this->delete($path))->call($runUpdate, $nonExistentFile);
+    $result    = (fn($path) => $this->delete($path))->call($runUpdate, $nonExistentFile);
 
     expect($result)->toBeFalse();
 });
@@ -197,7 +197,7 @@ it('should return false when the file exists but cannot be deleted due to permis
     $this->rootFs->addChild($dir);
 
     $runUpdate = runUpdateClassFactory();
-    $closure   = fn (string $path) => $this->delete($path);
+    $closure   = fn(string $path) => $this->delete($path);
     $result    = $closure->call($runUpdate, $file->url());
 
     expect($result)->toBeFalse()
@@ -224,7 +224,7 @@ it('should handle multiple protected paths with wildcards correctly', function (
     ];
 
     foreach ($testCases as $path => $expected) {
-        $result = (fn (string $relativePath) => $this->isProtectedWildcardPath($relativePath))->call($runUpdate, $path);
+        $result = (fn(string $relativePath) => $this->isProtectedWildcardPath($relativePath))->call($runUpdate, $path);
         expect($result)->toBe($expected, "Failed assertion for path: $path");
     }
 });
@@ -239,7 +239,7 @@ it('should correctly match a relative path that is exactly the same as a wildcar
             ],
         ]);
 
-        $result = (fn (string $relativePath) => $this->isProtectedWildcardPath($relativePath))->call($runUpdate,
+        $result = (fn(string $relativePath) => $this->isProtectedWildcardPath($relativePath))->call($runUpdate,
             'config/app.php');
 
         expect($result)->toBeTrue();
@@ -254,7 +254,7 @@ it('should return false for an empty relative path', function () {
         ],
     ]);
 
-    $result = (fn (string $relativePath) => $this->isProtectedWildcardPath($relativePath))->call($runUpdate, '');
+    $result = (fn(string $relativePath) => $this->isProtectedWildcardPath($relativePath))->call($runUpdate, '');
 
     expect($result)->toBeFalse();
 });
@@ -283,7 +283,7 @@ it('should preserve protected paths', function () {
         'protectedPaths'  => ['protected_dir/sub', 'protected_file.txt', 'sub/directory/protected_child_file.txt'],
     ]);
 
-    (fn () => $this->preserveProtectedPaths())->call($runUpdate);
+    (fn() => $this->preserveProtectedPaths())->call($runUpdate);
 
     expect(is_dir("$this->rootPath/temp/protected_dir"))->toBeTrue()
         ->and(file_exists("$this->rootPath/temp/protected_dir"))->toBeTrue()
@@ -319,7 +319,7 @@ it('should preserve protected paths when they exist as files', function () {
         'doOutput'              => false,
     ]);
 
-    (fn () => $this->preserveProtectedPaths())->call($runUpdate);
+    (fn() => $this->preserveProtectedPaths())->call($runUpdate);
 
     expect(file_exists("{$temp->url()}/protected.txt"))->toBeTrue()
         ->and(file_get_contents("{$temp->url()}/protected.txt"))->toBe('Protected content')
@@ -344,7 +344,7 @@ it('outputs a warning when a protected path is not found', function () {
         "Protected paths preserved successfully.\n"
     );
 
-    (fn () => $this->preserveProtectedPaths())->call($runUpdate);
+    (fn() => $this->preserveProtectedPaths())->call($runUpdate);
 });
 
 it('throws an exception when the destination directory is not writable during directory copy', function () {
@@ -362,7 +362,7 @@ it('throws an exception when the destination directory is not writable during di
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage('Directory "vfs://streamline/destination" was not created');
 
-    $closure = fn (string $source, string $destination) => $this->copyDirectory($source, $destination);
+    $closure = fn(string $source, string $destination) => $this->copyDirectory($source, $destination);
     $closure->call($runUpdate, 'vfs://streamline/source', 'vfs://streamline/destination');
 });
 
@@ -376,7 +376,7 @@ it('should handle large directories with many nested subdirectories', function (
     createNestedDirectories($source, 2, 3);
 
     $runUpdate = runUpdateClassFactory();
-    $closure   = fn ($src, $dest) => $this->copyDirectory($src, $dest);
+    $closure   = fn($src, $dest) => $this->copyDirectory($src, $dest);
     $closure->call($runUpdate, $source->url(), $destination->url());
 
     assertDirectoriesEqual($source, $destination);
@@ -396,7 +396,7 @@ it('throws an exception when the destination directory is not writable during fi
     $this->expectExceptionMessage("Failed to copy file: {$sourceFile->url()} to {$destinationDir->url()}");
 
     $runUpdate = runUpdateClassFactory();
-    $closure   = fn (string $source, string $destination) => $this->copyFile($source, $destination);
+    $closure   = fn(string $source, string $destination) => $this->copyFile($source, $destination);
     $closure->call($runUpdate, $sourceFile->url(), $destinationDir->url() . '/' . $sourceFile->getName());
 });
 
@@ -441,7 +441,7 @@ it('should successfully copy frontend assets from existing deployment to new rel
 
     $this->assertSame($newManifestContent, file_get_contents("$this->rootPath/temp/public/build/manifest.json"));
     $this->startOutputBuffer();
-    (fn () => $this->copyFrontEndAssetsFromOldToNewRelease())->call($runUpdate);
+    (fn() => $this->copyFrontEndAssetsFromOldToNewRelease())->call($runUpdate);
 
     // Verify files were copied
     $this->assertDirectoryExists("$this->rootPath/temp/public/build/assets");
@@ -461,6 +461,46 @@ it('should successfully copy frontend assets from existing deployment to new rel
     $this->assertStringContainsString('Copying frontend assets', $output);
     $this->assertStringContainsString('Directory created', $output);
     $this->assertStringContainsString('Copied:', $output);
+});
+
+it('throws an exception when the source directory exists but is not readable', function () {
+    $sourceDir  = vfsStream::newDirectory('source_dir', 0000);
+    $sourceFile = vfsStream::newFile('source_dir/file.txt');
+    $sourceDir->addChild($sourceFile);
+    $this->rootFs->addChild($sourceDir);
+
+    $destinationPath = $this->rootPath . '/destination/file.txt';
+
+    $this->expectException(RuntimeException::class);
+    $this->expectExceptionMessage('Error: ' . dirname($destinationPath) . ' cannot be copied as it cannot be read from. Please check permissions.');
+
+    $runUpdate = runUpdateClassFactory();
+    $closure   = fn(string $source, string $destination, bool $doOverwrite = true) => $this->copyFile($source,
+        $destination, $doOverwrite);
+    $closure->call($runUpdate, $sourceFile->url(), $destinationPath);
+});
+
+it('throws an exception when the the source file is not readable', function () {
+    $this->disableErrorHandling();
+
+    // Setup source directory and file
+    $sourceDir  = vfsStream::newDirectory('source_dir');
+    $sourceFile = vfsStream::newFile('source_dir/test.txt', 0000)->withContent('test content');
+    $sourceDir->addChild($sourceFile);
+    $this->rootFs->addChild($sourceDir);
+
+    $sourcePath = $sourceFile->url();
+    $destPath   = 'irrelevant_path';
+
+    $runUpdate = runUpdateClassFactory();
+
+    $this->expectException(RuntimeException::class);
+    $this->expectExceptionMessage("Error: Source file is not readable. Check your permissions: {$sourceFile->url()}");
+
+    (fn(string $source, string $destination, bool $doOverwrite) => $this->copyFile($source, $destination, $doOverwrite)
+    )->call($runUpdate, $sourcePath, $destPath, true);
+
+    $this->assertFileDoesNotExist($destPath);
 });
 
 function assertDirectoriesEqual($expected, $actual): void
