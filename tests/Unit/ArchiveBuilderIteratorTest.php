@@ -2,7 +2,7 @@
 
 use Pixelated\Streamline\Iterators\ArchiveBuilderIterator;
 
-it('returns next non symlink file when current is symlink', function () {
+it('returns next non symlink file when current is symlink', function() {
     $disk = Storage::fake('local');
 
     $disk->put('file1.txt', 'contents');
@@ -27,7 +27,7 @@ it('returns next non symlink file when current is symlink', function () {
     $this->assertFalse($matchedFiles['symlink.txt']);
 });
 
-it('should handle a directory containing only symlinks', function () {
+it('should handle a directory containing only symlinks', function() {
     $disk = Storage::fake('local');
 
     // Create a directory with only symlinks
@@ -49,7 +49,7 @@ it('should handle a directory containing only symlinks', function () {
     $this->assertEquals(2, $fileCount, "Expected 2 files, got $fileCount");
 });
 
-it('should return the same SplFileInfo object when the current file is not a symlink', function () {
+it('should return the same SplFileInfo object when the current file is not a symlink', function() {
     $disk = Storage::fake('local');
     $disk->put('file.txt', 'contents');
 

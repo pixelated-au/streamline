@@ -6,7 +6,7 @@ use Pixelated\Streamline\Facades\GitHubApi;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 use Pixelated\Streamline\Pipes\DownloadRelease;
 
-it('should correctly set the downloaded archive path on the builder', function () {
+it('should correctly set the downloaded archive path on the builder', function() {
     $builder = Mockery::mock(UpdateBuilderInterface::class);
     $builder->shouldReceive('getRequestedVersion')->andReturnNull();
     $builder->shouldReceive('getNextAvailableRepositoryVersion')->andReturn('v1.0.0');
@@ -17,7 +17,7 @@ it('should correctly set the downloaded archive path on the builder', function (
 
     Event::shouldReceive('dispatch')->once();
 
-    $this->app->bind(ProgressMeter::class, fn () => null);
+    $this->app->bind(ProgressMeter::class, fn() => null);
     GitHubApi::shouldReceive('withWebUrl')->with('releases/download/v1.0.0/release.zip')->andReturnSelf();
     GitHubApi::shouldReceive('withDownloadPath')->with('/tmp/streamline/release.zip')->andReturnSelf();
     GitHubApi::shouldReceive('withProgressCallback')->andReturnSelf();
@@ -29,7 +29,7 @@ it('should correctly set the downloaded archive path on the builder', function (
     expect($result)->toBe($builder);
 });
 
-it('should dispatch an Event with the correct version information', function () {
+it('should dispatch an Event with the correct version information', function() {
     $builder = Mockery::mock(UpdateBuilderInterface::class);
     $builder->shouldReceive('getRequestedVersion')->andReturnNull();
     $builder->shouldReceive('getNextAvailableRepositoryVersion')->andReturn('v1.2.3');
@@ -38,13 +38,13 @@ it('should dispatch an Event with the correct version information', function () 
 
     Config::set('streamline.release_archive_file_name', 'release.zip');
 
-    Event::shouldReceive('dispatch')->once()->withArgs(function ($event) {
+    Event::shouldReceive('dispatch')->once()->withArgs(function($event) {
         return $event instanceof CommandClassCallback
             && $event->action === 'info'
             && $event->value  === 'Downloading archive for version v1.2.3 from releases/download/v1.2.3/release.zip';
     });
 
-    $this->app->bind(ProgressMeter::class, fn () => null);
+    $this->app->bind(ProgressMeter::class, fn() => null);
     GitHubApi::shouldReceive('withWebUrl')->with('releases/download/v1.2.3/release.zip')->andReturnSelf();
     GitHubApi::shouldReceive('withDownloadPath')->with('/tmp/streamline/release.zip')->andReturnSelf();
     GitHubApi::shouldReceive('withProgressCallback')->andReturnSelf();

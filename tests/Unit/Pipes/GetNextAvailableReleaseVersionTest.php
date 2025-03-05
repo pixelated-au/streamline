@@ -4,7 +4,7 @@ use Pixelated\Streamline\Actions\CheckAvailableVersions as DoCheck;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 use Pixelated\Streamline\Pipes\GetNextAvailableReleaseVersion;
 
-it('should set the version to install based on the result of checkAvailableVersions->execute()', function () {
+it('should set the version to install based on the result of checkAvailableVersions->execute()', function() {
     $mockBuilder = Mockery::mock(UpdateBuilderInterface::class);
     $mockBuilder->shouldReceive('isForceUpdate')->once()->andReturn(false);
     $mockBuilder->shouldReceive('setNextAvailableRepositoryVersion')->once()->with('2.0.0')->andReturnSelf();
@@ -19,7 +19,7 @@ it('should set the version to install based on the result of checkAvailableVersi
     expect($result)->toBe($mockBuilder);
 });
 
-it('should set different version strings based on checkAvailableVersions result', function () {
+it('should set different version strings based on checkAvailableVersions result', function() {
     $versions = ['v1.0.0', 'v2.1.3-beta', 'latest'];
 
     $mockBuilder = Mockery::mock(UpdateBuilderInterface::class);

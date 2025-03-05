@@ -35,12 +35,12 @@ class UpdateCommand extends Command
 
         return (new Pipeline($builder))
             ->through(config('streamline.pipeline-update'))
-            ->catch(function (Throwable $e) {
+            ->catch(function(Throwable $e) {
                 $this->error('Error: ' . $e->getFile() . ', #' . $e->getLine() . ': ' . $e->getMessage());
 
                 return self::FAILURE;
             })
             ->finally(config('streamline.pipeline-finish'))
-            ->then(fn () => self::SUCCESS);
+            ->then(fn() => self::SUCCESS);
     }
 }

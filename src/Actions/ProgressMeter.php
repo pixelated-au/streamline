@@ -42,7 +42,7 @@ class ProgressMeter
 
     protected function initCallback(?Closure $callback = null): void
     {
-        $this->progressCallback = $callback ?: function (int $downloadTotal, int $downloadedBytes) {
+        $this->progressCallback = $callback ?: function(int $downloadTotal, int $downloadedBytes) {
             if (!$this->hasStarted) {
                 $this->init((bool) $downloadTotal);
             }

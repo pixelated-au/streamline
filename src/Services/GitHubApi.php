@@ -64,11 +64,11 @@ class GitHubApi
             $requestClient = Http::withHeaders(self::REQUEST_USER_AGENT_HEADERS)
                 ->when(
                     value: (bool) $this->authToken,
-                    callback: fn (PendingRequest $request) => $request->withToken($this->authToken)
+                    callback: fn(PendingRequest $request) => $request->withToken($this->authToken)
                 )
                 ->when(
                     value: isset($this->progressMeter?->progressCallback),
-                    callback: function (PendingRequest $request) {
+                    callback: function(PendingRequest $request) {
                         $request->withOptions($request->mergeOptions([
                             RequestOptions::PROGRESS => $this->progressMeter->progressCallback,
                         ]));
@@ -76,7 +76,7 @@ class GitHubApi
                 )
                 ->when(
                     value: (bool) $this->downloadPath,
-                    callback: fn (PendingRequest $request) => $request->sink($this->downloadPath)
+                    callback: fn(PendingRequest $request) => $request->sink($this->downloadPath)
                 )
                 ->get($this->buildUrl());
 

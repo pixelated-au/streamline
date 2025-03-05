@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Config;
 use Pixelated\Streamline\Actions\InstantiateStreamlineUpdater;
 use Pixelated\Streamline\Factories\ProcessFactory;
 
-it('should throw a RuntimeException when given an invalid class', function () {
+it('should throw a RuntimeException when given an invalid class', function() {
     $filename = 'BrokenClass.php';
 
     $process = Mockery::mock(ProcessFactory::class);
@@ -18,10 +18,10 @@ it('should throw a RuntimeException when given an invalid class', function () {
     // TODO restore this after upgrading to Laravel 11
     //        (new InstantiateStreamlineUpdater($process, $nonExistentClassName))
     (new InstantiateStreamlineUpdater($process))
-        ->execute('1.0.0', fn () => null);
+        ->execute('1.0.0', fn() => null);
 });
 
-it('should return the file path when a valid class is passed in', function () {
+it('should return the file path when a valid class is passed in', function() {
     $filename = 'ValidTestClass.php';
     Storage::fake();
     Storage::put($filename, '<?php class ValidTestClass {}');
@@ -34,28 +34,28 @@ it('should return the file path when a valid class is passed in', function () {
     Config::set('streamline.runner_class', ValidTestClass::class);
     $updater = new InstantiateStreamlineUpdater($process);
 
-    $pathInvokable = Closure::bind(fn () => $this->getClassFilePath(), $updater, $updater);
+    $pathInvokable = Closure::bind(fn() => $this->getClassFilePath(), $updater, $updater);
     $this->assertSame(Storage::path($filename), $pathInvokable());
 });
 
-it('can properly parse an array and string values', function () {
+it('can properly parse an array and string values', function() {
     $process = Mockery::mock(ProcessFactory::class);
 
     /** @noinspection PhpUndefinedClassInspection */
     Config::set('streamline.runner_class', ValidTestClass::class);
     $updater    = new InstantiateStreamlineUpdater($process);
-    $arrayValue = Closure::bind(fn () => $this->parseArray(['one', 'two']), $updater, $updater);
+    $arrayValue = Closure::bind(fn() => $this->parseArray(['one', 'two']), $updater, $updater);
     $this->assertSame('["one","two"]', $arrayValue());
 
-    $arrayValue = Closure::bind(fn () => $this->parseArray('string of text'), $updater, $updater);
+    $arrayValue = Closure::bind(fn() => $this->parseArray('string of text'), $updater, $updater);
     $this->assertSame('string of text', $arrayValue());
 });
 
-it('should run the process and set all required environment variables correctly', function () {
+it('should run the process and set all required environment variables correctly', function() {
     $this->expectNotToPerformAssertions();
 
     $process          = Mockery::mock(ProcessFactory::class);
-    $callback         = function () {};
+    $callback         = function() {};
     $versionToInstall = '2.0.0';
     $classPath        = '/path/to/RunnerClass.php';
 
@@ -104,7 +104,7 @@ it('should run the process and set all required environment variables correctly'
 
     $phpProcess->shouldReceive('setEnv')
         ->once()
-        ->with(Mockery::on(function ($env) use ($expectedEnv) {
+        ->with(Mockery::on(function($env) use ($expectedEnv) {
             foreach ($expectedEnv as $key => $value) {
                 if ($env[$key] !== $value) {
                     return false;

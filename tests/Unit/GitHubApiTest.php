@@ -6,14 +6,14 @@ use Illuminate\Support\Facades\Http;
 use Pixelated\Streamline\Facades\GitHubApi;
 use Pixelated\Streamline\Testing\Mocks\ProgressMeterFake;
 
-it('checks that it has a defined url before requesting data', function () {
+it('checks that it has a defined url before requesting data', function() {
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage('Error: No URL set. Set it via getWebUrl() or getApiUrl()');
     config(['streamline.github_repo' => 'test']);
     GitHubApi::get();
 });
 
-it('does not have a progress callback when none is given to withProgressCallback', function () {
+it('does not have a progress callback when none is given to withProgressCallback', function() {
     Http::fake(['https://api.github.com/repos/*' => Http::response('hi')]);
     Config::set('streamline.github_repo', 'test');
 
@@ -21,12 +21,12 @@ it('does not have a progress callback when none is given to withProgressCallback
         ->withProgressCallback(null)
         ->get();
     Http::assertSentCount(1);
-    Http::assertSent(function ($request) {
+    Http::assertSent(function($request) {
         return $request->url() === 'https://api.github.com/repos/test/test';
     });
 });
 
-it('should paginate through multiple pages of data when the API returns more than 5 items', function () {
+it('should paginate through multiple pages of data when the API returns more than 5 items', function() {
     $baseUrl = 'https://api.github.com/repos/test/test';
     $perPage = 5;
 
@@ -46,19 +46,19 @@ it('should paginate through multiple pages of data when the API returns more tha
 
     expect($result)
         ->toHaveCount(13)
-        ->and($result->slice(0, 5)->every(fn ($item) => $item['id'] === 1))->toBeTrue()
-        ->and($result->slice(5, 5)->every(fn ($item) => $item['id'] === 2))->toBeTrue()
-        ->and($result->slice(10)->every(fn ($item) => $item['id'] === 3))->toBeTrue();
+        ->and($result->slice(0, 5)->every(fn($item) => $item['id'] === 1))->toBeTrue()
+        ->and($result->slice(5, 5)->every(fn($item) => $item['id'] === 2))->toBeTrue()
+        ->and($result->slice(10)->every(fn($item) => $item['id'] === 3))->toBeTrue();
 
     Http::assertSentCount(3);
     Http::assertSentInOrder([
-        fn (Request $request) => $request->url() === "$baseUrl?page=1&per_page=$perPage",
-        fn (Request $request) => $request->url() === "$baseUrl?page=2&per_page=$perPage",
-        fn (Request $request) => $request->url() === "$baseUrl?page=3&per_page=$perPage",
+        fn(Request $request) => $request->url() === "$baseUrl?page=1&per_page=$perPage",
+        fn(Request $request) => $request->url() === "$baseUrl?page=2&per_page=$perPage",
+        fn(Request $request) => $request->url() === "$baseUrl?page=3&per_page=$perPage",
     ]);
 });
 
-it('should find the last page when paginating through multiple pages of data', function () {
+it('should find the last page when paginating through multiple pages of data', function() {
     $baseUrl = 'https://api.github.com/repos/test/test';
     $perPage = 5;
 
@@ -77,7 +77,7 @@ it('should find the last page when paginating through multiple pages of data', f
         ->withApiUrl('test');
     $ghApi->paginate();
 
-    $getTotalPages = Closure::bind(fn () => $this->totalPages, $ghApi, $ghApi);
+    $getTotalPages = Closure::bind(fn() => $this->totalPages, $ghApi, $ghApi);
 
     $this->assertSame(75, $getTotalPages());
 });
@@ -87,7 +87,7 @@ function mockApiBody(int $id, int $count = 5): array
     return array_fill(0, $count, ['id' => $id]);
 }
 
-it('should add the auth token to the request when provided', function () {
+it('should add the auth token to the request when provided', function() {
     Config::set('streamline.github_repo', 'test-repo');
     Config::set('streamline.github_auth_token', 'test-token');
 
@@ -95,10 +95,10 @@ it('should add the auth token to the request when provided', function () {
 
     GitHubApi::withApiUrl('test')->get();
 
-    Http::assertSent(fn (Request $request) => $request->hasHeader('Authorization') && $request->header('Authorization')[0] === 'Bearer test-token');
+    Http::assertSent(fn(Request $request) => $request->hasHeader('Authorization') && $request->header('Authorization')[0] === 'Bearer test-token');
 });
 
-it('should not add the auth token to the request when not provided', function () {
+it('should not add the auth token to the request when not provided', function() {
     Config::set('streamline.github_repo', 'test-repo');
     Config::set('streamline.github_auth_token');
 
@@ -106,5 +106,5 @@ it('should not add the auth token to the request when not provided', function ()
 
     GitHubApi::withApiUrl('test')->get();
 
-    Http::assertSent(fn (Request $request) => !$request->hasHeader('Authorization'));
+    Http::assertSent(fn(Request $request) => !$request->hasHeader('Authorization'));
 });

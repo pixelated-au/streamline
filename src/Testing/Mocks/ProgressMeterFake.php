@@ -13,7 +13,7 @@ class ProgressMeterFake extends ProgressMeter
      */
     public function __construct()
     {
-        $this->initCallback(function () {});
+        $this->initCallback(function() {});
     }
 
     public function __invoke(int $downloadTotal, int $downloadedBytes): void

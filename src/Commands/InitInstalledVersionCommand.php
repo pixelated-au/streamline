@@ -5,13 +5,13 @@ namespace Pixelated\Streamline\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
-use Pixelated\Streamline\Actions\SetInstalledVersionFromConfig;
 use Pixelated\Streamline\Enums\CacheKeysEnum;
 use Pixelated\Streamline\Events\InstalledVersionSet;
 
 class InitInstalledVersionCommand extends Command
 {
     protected $signature = 'streamline:init-installed-version';
+
     protected $description = 'Initialise the installed version in cache';
 
     public function handle(): int

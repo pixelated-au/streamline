@@ -7,7 +7,7 @@ use Pixelated\Streamline\Actions\ProgressMeter;
 use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\StreamOutput;
 
-it('can run the progress meter with a known download total', function () {
+it('can run the progress meter with a known download total', function() {
     $resource = fopen('php://memory', 'a+b');
     $output   = new OutputStyle(
         new StringInput(''),
@@ -44,7 +44,7 @@ it('can run the progress meter with a known download total', function () {
     $this->assertStringContainsString('100/100 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓] 100%', $output);
 });
 
-it('can run the progress meter with an unknown download total', function () {
+it('can run the progress meter with an unknown download total', function() {
     $resource = fopen('php://memory', 'a+b');
     $output   = new OutputStyle(
         new StringInput(''),
@@ -81,7 +81,7 @@ it('can run the progress meter with an unknown download total', function () {
     $this->assertStringContainsString('4 [▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░]', $output);
 });
 
-it('cannot run the progress meter as OutputStyle has not been defined', function () {
+it('cannot run the progress meter as OutputStyle has not been defined', function() {
     $this->expectException(InvalidArgumentException::class);
     $this->expectExceptionMessage('OutputStyle needs to be passed in if you want to use the ProgressMeter.');
 
@@ -89,7 +89,7 @@ it('cannot run the progress meter as OutputStyle has not been defined', function
     $meter(100, 20);
 });
 
-it('should set message successfully when progress bar has started and is initialized', function () {
+it('should set message successfully when progress bar has started and is initialized', function() {
     $resource = fopen('php://memory', 'a+b');
     $output   = new OutputStyle(
         new StringInput(''),

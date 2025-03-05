@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\File;
 
-it('copies the configuration file', function () {
+it('copies the configuration file', function() {
     File::delete(config_path('streamline.php'));
     File::delete(app_path('.streamline'));
 
@@ -14,6 +14,6 @@ it('copies the configuration file', function () {
 
     $this->assertTrue(File::exists(config_path('streamline.php')));
 })
-    ->after(function () {
+    ->after(function() {
         File::delete(config_path('streamline.php'));
     });

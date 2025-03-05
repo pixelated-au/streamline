@@ -3,7 +3,7 @@
 use Pixelated\Streamline\Actions\Cleanup;
 use Pixelated\Streamline\Events\CommandClassCallback;
 
-it('should dispatch proper events', function () {
+it('should dispatch proper events', function() {
     $tempDir = '/path/to/temp/dir';
 
     Event::fake();
@@ -12,15 +12,17 @@ it('should dispatch proper events', function () {
     $cleanup = new Cleanup;
     $cleanup($tempDir);
 
-    Event::assertDispatched(fn (CommandClassCallback $event) => $event
-        ->action === 'info' && $event->value === "Purging the temporary work directory: $tempDir"
+    Event::assertDispatched(
+        fn(CommandClassCallback $event) => $event
+            ->action === 'info' && $event->value === "Purging the temporary work directory: $tempDir"
     );
-    Event::assertDispatched(fn (CommandClassCallback $event) => $event
-        ->action === 'success' && $event->value === "Temporary work directory purged successfully: $tempDir"
+    Event::assertDispatched(
+        fn(CommandClassCallback $event) => $event
+            ->action === 'success' && $event->value === "Temporary work directory purged successfully: $tempDir"
     );
 });
 
-it('should dispatch an failed event when it could not delete the temp dir', function () {
+it('should dispatch an failed event when it could not delete the temp dir', function() {
     $tempDir = '/path/to/temp/dir';
 
     Event::fake();
@@ -29,10 +31,12 @@ it('should dispatch an failed event when it could not delete the temp dir', func
     $cleanup = new Cleanup;
     $cleanup($tempDir);
 
-    Event::assertDispatched(fn (CommandClassCallback $event) => $event
-        ->action === 'info' && $event->value === "Purging the temporary work directory: $tempDir"
+    Event::assertDispatched(
+        fn(CommandClassCallback $event) => $event
+            ->action === 'info' && $event->value === "Purging the temporary work directory: $tempDir"
     );
-    Event::assertDispatched(fn (CommandClassCallback $event) => $event
-        ->action === 'error' && $event->value === "Failed to purge temporary work directory: $tempDir"
+    Event::assertDispatched(
+        fn(CommandClassCallback $event) => $event
+            ->action === 'error' && $event->value === "Failed to purge temporary work directory: $tempDir"
     );
 });

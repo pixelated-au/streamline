@@ -2,19 +2,19 @@
 
 use org\bovigo\vfs\vfsStream;
 
-beforeAll(fn () => putenv('IS_TESTING=' . StreamlineUpdater::TESTING_ON));
+beforeAll(fn() => putenv('IS_TESTING=' . StreamlineUpdater::TESTING_ON));
 
-it('will fail when it is missing environment variables', function () {
+it('will fail when it is missing environment variables', function() {
     $this->expectException(InvalidArgumentException::class);
     $this->expectExceptionMessageMatches('/Environment variable .* needs to be set!/');
     $envVars = collect(getEnvVars())
-        ->map(fn ($value) => $value === '')
+        ->map(fn($value) => $value === '')
         ->toArray();
     setEnv($envVars);
     new StreamlineUpdater;
 });
 
-it('can find the composer autoload file in the default vendor directory', function () {
+it('can find the composer autoload file in the default vendor directory', function() {
     symlink(realpath('./composer.json'), './workbench/temp/composer.json');
 
     setEnv(['LARAVEL_BASE_PATH' => './workbench/temp']);
@@ -23,7 +23,7 @@ it('can find the composer autoload file in the default vendor directory', functi
     unlink('./workbench/temp/composer.json');
 });
 
-it('can find the composer autoload file in a different directory', function () {
+it('can find the composer autoload file in a different directory', function() {
     $projectPath = 'path/to/project/vendor-directory';
 
     $root = vfsStream::setup('streamline');
@@ -46,14 +46,14 @@ it('can find the composer autoload file in a different directory', function () {
     expect($updater->autoloadFile())->toBe($vendor->url() . '/autoload.php');
 });
 
-it('throws an error when it cannot find composer.json file', function () {
+it('throws an error when it cannot find composer.json file', function() {
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage('Cannot locate the base composer file (./not-working/composer.json)');
     setEnv(['LARAVEL_BASE_PATH' => './not-working']);
     (new StreamlineUpdater)->autoloadFile();
 });
 
-it('throws an error when the composer.json file is invalid', function () {
+it('throws an error when the composer.json file is invalid', function() {
     $root = vfsStream::setup('streamline');
 
     $composerFile = vfsStream::newFile('composer.json')->withContent('[broken json');
@@ -66,12 +66,12 @@ it('throws an error when the composer.json file is invalid', function () {
     (new StreamlineUpdater)->autoloadFile();
 });
 
-it('can initialise the RunUpdate class', function () {
+it('can initialise the RunUpdate class', function() {
     setEnv();
     (new StreamlineUpdater)->run();
 })->throwsNoExceptions();
 
-it('should add an error message to envIssues when JSON parsing fails twice', function () {
+it('should add an error message to envIssues when JSON parsing fails twice', function() {
     setEnv(
         ['PROTECTED_PATHS' => 'invalid json']
     );

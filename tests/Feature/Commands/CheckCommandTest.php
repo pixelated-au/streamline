@@ -7,7 +7,7 @@ use Pixelated\Streamline\Tests\Feature\Traits\HttpMock;
 
 pest()->use(CheckCommandCommon::class, HttpMock::class);
 
-it('checks for available updates without a remote request', function () {
+it('checks for available updates without a remote request', function() {
     $this->setDefaults(['nextAvailableVersion' => null, 'availableVersions' => ['v2.8.7', 'v2.8.6', 'v2.8.5']]);
     $this->mockCache();
 
@@ -19,7 +19,7 @@ it('checks for available updates without a remote request', function () {
         ->assertExitCode(0);
 });
 
-it('checks for available updates with a remote request', function () {
+it('checks for available updates with a remote request', function() {
     $this->setDefaults(['nextAvailableVersion' => null, 'availableVersions' => null]);
 
     Cache::shouldReceive('get')
@@ -39,7 +39,7 @@ it('checks for available updates with a remote request', function () {
     Http::assertSentCount(1);
 });
 
-it('checks for available updates forcing a remote request', function () {
+it('checks for available updates forcing a remote request', function() {
     $this->setDefaults(['nextAvailableVersion' => '2.8.6', 'availableVersions' => ['v2.8.7b', 'v2.8.6', 'v2.8.5']])
         ->mockCache();
     $this->mockHttpReleases();
@@ -49,7 +49,7 @@ it('checks for available updates forcing a remote request', function () {
         ->assertExitCode(0);
 });
 
-it('throws an exception when doing a remote request because a version is missing', function () {
+it('throws an exception when doing a remote request because a version is missing', function() {
     $this->setDefaults(['nextAvailableVersion' => null, 'availableVersions' => null])
         ->mockCache();
     $this->mockHttpReleases();

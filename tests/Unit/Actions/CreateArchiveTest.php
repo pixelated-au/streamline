@@ -3,11 +3,12 @@
 use Illuminate\Support\Facades\Storage;
 use Pixelated\Streamline\Actions\CreateArchive;
 
-it('should create a .tar.gz file with correct structure and contents',
+it(
+    'should create a .tar.gz file with correct structure and contents',
     /**
      * @throws \League\Flysystem\FilesystemException
      */
-    function () {
+    function() {
         Storage::fake('local');
 
         $sourceFolder      = 'source';
@@ -85,9 +86,10 @@ it('should create a .tar.gz file with correct structure and contents',
 
         Storage::deleteDirectory($sourceFolder);
         Storage::deleteDirectory($destinationFolder);
-    });
+    }
+);
 
-it('should throw an exception when the source folder does not exist', function () {
+it('should throw an exception when the source folder does not exist', function() {
     $nonExistentFolder = 'non_existent_folder';
     File::shouldReceive('dirname')->andReturn('');
     File::shouldReceive('name')->andReturn('');
@@ -99,7 +101,7 @@ it('should throw an exception when the source folder does not exist', function (
         ->create();
 });
 
-it('should throw an exception when the destination directory cannot be created', function () {
+it('should throw an exception when the destination directory cannot be created', function() {
     $destinationPath = '/non-existent/directory';
 
     File::shouldReceive('dirname')->andReturn('');
@@ -113,10 +115,10 @@ it('should throw an exception when the destination directory cannot be created',
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage('Directory "/non-existent/directory" was not created');
 
-    (fn () => $this->checkDestinationPath())->call($createArchive);
+    (fn() => $this->checkDestinationPath())->call($createArchive);
 });
 
-it('should throw an exception when the destination path is not writable', function () {
+it('should throw an exception when the destination path is not writable', function() {
     $destinationPath = '/path/to/destination';
 
     File::shouldReceive('dirname')->andReturn('');
@@ -130,10 +132,10 @@ it('should throw an exception when the destination path is not writable', functi
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage("Destination path '$destinationPath' is not writable.");
 
-    (fn () => $this->checkDestinationPath())->call($createArchive);
+    (fn() => $this->checkDestinationPath())->call($createArchive);
 });
 
-it('should throw an exception when the archive file already exists', function () {
+it('should throw an exception when the archive file already exists', function() {
     $destinationPath = '/path/to/destination';
     $filename        = 'test_archive.tgz';
 
@@ -148,5 +150,5 @@ it('should throw an exception when the archive file already exists', function ()
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage("Archive file '$destinationPath/$filename' already exists.");
 
-    (fn () => $this->checkDestinationPath())->call($createArchive);
+    (fn() => $this->checkDestinationPath())->call($createArchive);
 });
