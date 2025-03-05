@@ -25,6 +25,8 @@ class FinishUpdateCommand extends Command
 
     public function handle(UncachedEnvironment $env): void
     {
+        $this->listenForSubProcessEvents();
+
         resolve(Cleanup::class)(Config::get('streamline.work_temp_dir'));
 
         if ($installedVersion = $env->get('STREAMLINE_APPLICATION_VERSION_INSTALLED')) {
