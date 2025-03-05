@@ -336,7 +336,7 @@ return [
 
     'pipeline-finish' => static function(UpdateBuilderInterface $builder) {
         $process = resolve(\Symfony\Component\Process\Process::class, [
-            'command' => [(new PhpExecutableFinder)->find(), 'artisan', 'streamline:finish-update'],
+            'command' => ['cd', '.', '&&', (new PhpExecutableFinder)->find(), 'artisan', 'streamline:finish-update'],
             'cwd'     => $builder->getBasePath(),
         ]);
         $process->run();
