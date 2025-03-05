@@ -28,14 +28,18 @@ it('outputs an info message when the cleanup process fails', function() {
 
     Event::fake(CommandClassCallback::class);
 
+    $builder  = (new UpdateBuilder)->setBasePath(base_path());
     $callback = Config::get('streamline.pipeline-finish');
-    $callback(new UpdateBuilder);
+    $callback($builder);
 
     Event::assertDispatchedTimes(CommandClassCallback::class);
 
     Event::assertDispatched(
         CommandClassCallback::class,
-        fn(CommandClassCallback $callback) => $callback->action === 'info' && Str::startsWith($callback->value, 'Test success message')
+        fn(CommandClassCallback $callback) => $callback->action === 'info' && Str::startsWith(
+            $callback->value,
+            'Test success message'
+        )
     );
 });
 
@@ -63,13 +67,17 @@ it('outputs an error when the cleanup process fails', function() {
     );
     Event::fake(CommandClassCallback::class);
 
+    $builder  = (new UpdateBuilder)->setBasePath(base_path());
     $callback = Config::get('streamline.pipeline-finish');
-    $callback(new UpdateBuilder);
+    $callback($builder);
 
     Event::assertDispatchedTimes(CommandClassCallback::class);
 
     Event::assertDispatched(
         CommandClassCallback::class,
-        fn(CommandClassCallback $callback) => $callback->action === 'error' && Str::startsWith($callback->value, 'Test error message')
+        fn(CommandClassCallback $callback) => $callback->action === 'error' && Str::startsWith(
+            $callback->value,
+            'Test error message'
+        )
     );
 });
