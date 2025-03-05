@@ -57,7 +57,7 @@ it('can run an update using actual filesystem actions and deletes the backup dir
         );
         $updater->run();
 
-        $output = [
+        $expectedOutput = [
             'Starting update',
             'Copying frontend assets. From: ' . $disk->path('laravel/public/build') . ' to: ' . $tempDisk->path('unpacked/public/build'),
             '  - Skipped: ' . $tempDisk->path('unpacked/public/build/manifest.json') . '. File already exists (But still set permission: 420)',
@@ -82,7 +82,7 @@ it('can run an update using actual filesystem actions and deletes the backup dir
             'Deleting old release backup: oldArchive.tgz',
             "Update completed\n",
         ];
-        $this->expectOutputString(implode("\n", $output));
+        $this->expectOutputString(implode("\n", $expectedOutput));
 
         $this->assertDirectoryDoesNotExist(laravel_path('mock_deployment.backup_dir'));
         $this->assertFileExists($disk->path('laravel/app/test.php'));
