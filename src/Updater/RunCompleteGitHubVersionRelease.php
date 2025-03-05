@@ -49,6 +49,10 @@ class RunCompleteGitHubVersionRelease
         $this->validateDirectoriesExist($existingReleaseBuildDir, $incomingReleaseBuildDir);
 
         $log = $this->recursiveCopyOldBuildFilesToNewDir($existingReleaseBuildDir, $incomingReleaseBuildDir);
+
+        // This is to ensure the output is in a consistent log order for testing purposes.
+        defined('IS_TESTING') && ksort($log);
+
         $this->output(implode(PHP_EOL, $log));
     }
 
@@ -71,9 +75,6 @@ class RunCompleteGitHubVersionRelease
                 $log[] = $this->copyFile($sourcePath, $destPath, false);
             }
         }
-
-        // This is to ensure the output is in a consistent log order for testing purposes.
-        defined('IS_TESTING') && ksort($log);
 
         return $log;
     }
