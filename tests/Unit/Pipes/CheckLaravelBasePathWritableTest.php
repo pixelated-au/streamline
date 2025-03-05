@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\File;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 use Pixelated\Streamline\Pipes\CheckLaravelBasePathWritable;
 
-it('should throw RuntimeException when base_path is not writable', function () {
+it('should throw RuntimeException when base_path is not writable', function() {
     $builder = Mockery::mock(UpdateBuilderInterface::class);
 
     $basePath = '/path/to/laravel';
@@ -17,7 +17,7 @@ it('should throw RuntimeException when base_path is not writable', function () {
     (new CheckLaravelBasePathWritable)($builder);
 });
 
-it('should return the original UpdateBuilderInterface instance when base_path is writable', function () {
+it('should return the original UpdateBuilderInterface instance when base_path is writable', function() {
     $builder = Mockery::mock(UpdateBuilderInterface::class);
 
     $basePath = '/path/to/laravel';

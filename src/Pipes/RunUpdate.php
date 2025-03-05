@@ -16,7 +16,7 @@ readonly class RunUpdate implements Pipe
     {
         $this->runUpdate->execute(
             $builder->getRequestedVersion() ?? $builder->getNextAvailableRepositoryVersion(),
-            function (string $type, string $output) {
+            function(string $type, string $output) {
                 if ($type === 'err') {
                     CommandClassCallback::dispatch('error', $output);
 
@@ -24,7 +24,8 @@ readonly class RunUpdate implements Pipe
                 }
 
                 CommandClassCallback::dispatch('info', $output);
-            });
+            }
+        );
 
         return $builder;
     }

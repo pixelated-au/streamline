@@ -42,8 +42,8 @@ trait UpdateCommandCommon
         File::shouldReceive('isWritable')->andReturnTrue();
         File::shouldReceive('isReadable')->andReturnTrue();
         File::shouldReceive('put');
-        File::shouldReceive('dirname')->andReturnUsing(fn (string $value) => dirname($value));
-        File::shouldReceive('name')->andReturnUsing(fn (string $value) => pathinfo($value, PATHINFO_FILENAME));
+        File::shouldReceive('dirname')->andReturnUsing(fn(string $value) => dirname($value));
+        File::shouldReceive('name')->andReturnUsing(fn(string $value) => pathinfo($value, PATHINFO_FILENAME));
 
         return $this;
     }
@@ -67,7 +67,7 @@ trait UpdateCommandCommon
     {
         test()->mock(
             GetAvailableVersions::class,
-            fn (MockInterface $mock) => $mock->shouldReceive('execute')->andReturn($returnedVersion)
+            fn(MockInterface $mock) => $mock->shouldReceive('execute')->andReturn($returnedVersion)
         );
 
         return $this;
@@ -75,7 +75,7 @@ trait UpdateCommandCommon
 
     public function mockZipArchive(): self
     {
-        test()->mock(ZipArchive::class, function (MockInterface $mock) {
+        test()->mock(ZipArchive::class, function(MockInterface $mock) {
             $mock->shouldReceive('open')->andReturn(true);
             $mock->shouldReceive('extractTo')->andReturn(true);
             $mock->shouldReceive('addFile')->andReturn(true);

@@ -2,8 +2,6 @@
 
 namespace Pixelated\Streamline\Interfaces;
 
-use Throwable;
-
 interface UpdateBuilderInterface
 {
     public function setCurrentlyInstalledVersion(string $version): UpdateBuilderInterface;

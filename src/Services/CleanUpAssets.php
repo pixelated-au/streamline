@@ -53,7 +53,8 @@ class CleanUpAssets
         CommandClassCallback::dispatch(
             'info',
             'DELETING EXPIRED ASSETS: '
-            . ($assets->isEmpty()
+            . (
+                $assets->isEmpty()
                 ? 'No matching assets found. Likely because none meet the minimum amount of revisions'
                 : $assets->implode(', ')
             )
@@ -73,22 +74,22 @@ class CleanUpAssets
         // Keep only files that end with .js, .css or .map
         return $this->filesToDelete
             // Filter out files whose extension does not match any of the allowed ones
-            ->filter(fn (string $file) => Str::endsWith(
+            ->filter(fn(string $file) => Str::endsWith(
                 haystack: $file,
                 needles: Arr::map(
                     array: Facades\Config::commaToArray('streamline.web_assets_filterable_file_types'),
-                    callback: static fn (string $ext) => Str::of($ext)
+                    callback: static fn(string $ext) => Str::of($ext)
                         // Prefix each extension with a dot if it doesn't already have one
                         ->when(
-                            value: fn (Stringable $ext) => !$ext->startsWith('.'),
-                            callback: fn (Stringable $ext) => $ext->prepend('.')
+                            value: fn(Stringable $ext) => !$ext->startsWith('.'),
+                            callback: fn(Stringable $ext) => $ext->prepend('.')
                         )
                 )
             ))
             // build a collection of files and their mtime grouped by the base name.
             // For example: If a file is named "foo.34sar4d.js" then the base name is "foo"
             ->mapToGroups(
-                function (string $file) {
+                function(string $file) {
                     $baseName = preg_replace('/\.[^.]+\.[^.]+$/', '', $file);
 
                     return [$baseName => [
@@ -97,17 +98,18 @@ class CleanUpAssets
                     ]];
                 }
             )
-            ->map(fn (Collection $group) => $group
-                ->sortBy(fn (array $meta) => $meta['mtime']))
-            ->tap(function (Collection $group) {})
+            ->map(fn(Collection $group) => $group
+                ->sortBy(fn(array $meta) => $meta['mtime']))
+            ->tap(function(Collection $group) {})
             // remove Global number of revisions from the collection
-            ->map(fn (Collection $meta, string $baseName) => $meta
-                ->when(
-                    $meta->count() > $this->numRevisions,
-                    fn (Collection $meta) => $meta->take($meta->count() - $this->numRevisions),
-                    fn ()                 => collect(),
-                )
-                ->map(fn (array $meta) => $meta['filename'])
+            ->map(
+                fn(Collection $meta, string $baseName) => $meta
+                    ->when(
+                        $meta->count() > $this->numRevisions,
+                        fn(Collection $meta) => $meta->take($meta->count() - $this->numRevisions),
+                        fn()                 => collect(),
+                    )
+                    ->map(fn(array $meta) => $meta['filename'])
             )
             ->flatten();
     }

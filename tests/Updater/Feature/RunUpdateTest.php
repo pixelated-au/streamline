@@ -6,19 +6,20 @@ use Illuminate\Support\Facades\Storage;
 use Pixelated\Streamline\Actions\CreateArchive;
 use Pixelated\Streamline\Updater\RunCompleteGitHubVersionRelease;
 
-beforeEach(function () {
+beforeEach(function() {
     $this->ns = 'Pixelated\\Streamline\\Updater';
 
     $this->deploymentPath = workbench_path();
 });
 
-afterEach(function () {
+afterEach(function() {
     deleteDirectory(working_path());
     deleteDirectory(laravel_path('mock_deployment.backup.2024-12-25_11-22-33'));
 });
 
-it('can run an update using actual filesystem actions and deletes the backup directory from the previous release',
-    function () {
+it(
+    'can run an update using actual filesystem actions and deletes the backup directory from the previous release',
+    function() {
         $disk     = Storage::fake('local');
         $tempDisk = Storage::fake('temp');
 
@@ -26,7 +27,7 @@ it('can run an update using actual filesystem actions and deletes the backup dir
 
         $this->app->bind(
             CreateArchive::class,
-            fn (Application $app) => new CreateArchive(
+            fn(Application $app) => new CreateArchive(
                 sourceFolder: $disk->path(''),
                 destinationPath: config('streamline.backup_dir'),
                 filename: 'backup-' . date('Ymd_His') . '.tgz',
@@ -98,7 +99,8 @@ it('can run an update using actual filesystem actions and deletes the backup dir
         $this->assertStringNotEqualsFile(
             $disk->path('laravel/public/build/manifest.json'),
             'Old Manifest',
-            'The old deployment manifest must not overwrite the new manifest');
+            'The old deployment manifest must not overwrite the new manifest'
+        );
 
         $this->assertSame(
             expected: "Prefix...\nSTREAMLINE_APPLICATION_VERSION_INSTALLED=1.0.0\nSuffix...",
@@ -112,8 +114,10 @@ function makeDirsAndFiles(Filesystem $disk, Filesystem $tempDisk): void
     // This is to ensure the old manifest is not retained after a new release
     $disk->put('laravel/public/build/manifest.json', 'Old Manifest - Should be replaced with the new manifest');
     $disk->makeDirectory('laravel/public/build/assets/text-file');
-    $disk->put('laravel/public/build/assets/text-file/existing_file.txt',
-        'an existing file that should be retained in the new deployment');
+    $disk->put(
+        'laravel/public/build/assets/text-file/existing_file.txt',
+        'an existing file that should be retained in the new deployment'
+    );
 
     // Mock Laravel deployment structure
     $disk->makeDirectory('laravel/app');
@@ -139,5 +143,5 @@ function createNewReleaseFolderFileStructure(Filesystem $tempDisk, ?array $files
         'unpacked/public/build/assets/dir1/dir2/file4.txt',
         'unpacked/public/build/assets/file5.txt',
     ])
-        ->each(fn (string $file) => $tempDisk->put($file, "This file has the name: $file"));
+        ->each(fn(string $file) => $tempDisk->put($file, "This file has the name: $file"));
 }

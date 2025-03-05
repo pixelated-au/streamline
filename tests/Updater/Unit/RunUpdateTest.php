@@ -3,7 +3,7 @@
 use org\bovigo\vfs\vfsStream;
 use Pixelated\Streamline\Updater\RunCompleteGitHubVersionRelease;
 
-beforeEach(function () {
+beforeEach(function() {
     $this->ns            = 'Pixelated\\Streamline\\Updater';
     $this->rootFs        = vfsStream::setup('streamline');
     $this->deploymentDir = vfsStream::newDirectory('mock_deployment');
@@ -14,7 +14,7 @@ beforeEach(function () {
     vfsStream::copyFromFileSystem(workbench_path(), $this->deploymentDir);
 });
 
-it('throws an exception that the laravel base directory cannot be found', function () {
+it('throws an exception that the laravel base directory cannot be found', function() {
     $this->expectExceptionMessage("Error: Release directory 'non-existent-directory' does not exist! This should be the directory that contains your application deployment.");
     $this->expectException(RuntimeException::class);
 
@@ -23,7 +23,7 @@ it('throws an exception that the laravel base directory cannot be found', functi
     $closure->call($runUpdate, "$this->deploymentPath/public/build", "$this->rootPath/temp/public/build");
 });
 
-it('throws an exception that the live/old assets directory cannot be found', function () {
+it('throws an exception that the live/old assets directory cannot be found', function() {
     $this->expectExceptionMessage("Error: Invalid old assets directory: $this->deploymentPath/invalid");
     $this->expectException(RuntimeException::class);
     $runUpdate = runUpdateClassFactory();
@@ -31,7 +31,7 @@ it('throws an exception that the live/old assets directory cannot be found', fun
     $closure->call($runUpdate, "$this->deploymentPath/invalid", "$this->deploymentPath/temp/public/build");
 });
 
-it('throws an exception that the temp assets directory cannot be found', function () {
+it('throws an exception that the temp assets directory cannot be found', function() {
     $this->rootFs->chmod(0000);
 
     $this->expectExceptionMessage("Error: Could not create assets directory: $this->rootPath/temp/public/build");
@@ -42,7 +42,7 @@ it('throws an exception that the temp assets directory cannot be found', functio
     $closure->call($runUpdate, "$this->deploymentPath/public/build", "$this->rootPath/temp/public/build");
 });
 
-it('throws an exception when the destination directory is not writeable', function () {
+it('throws an exception when the destination directory is not writeable', function() {
     $this->rootFs->addChild(vfsStream::newDirectory('backup_dir/public/build/assets/NEW_DIRECTORY'));
     $assetsDir = $this->deploymentDir->getChild('public/build/assets');
     $this->assertNotNull($assetsDir);
@@ -53,11 +53,14 @@ it('throws an exception when the destination directory is not writeable', functi
 
     $runUpdate = runUpdateClassFactory();
     $closure   = fn($source, $destination) => $this->recursiveCopyOldBuildFilesToNewDir($source, $destination);
-    $closure->call($runUpdate, "$this->rootPath/backup_dir/public/build/assets",
-        "$this->deploymentPath/public/build/assets");
+    $closure->call(
+        $runUpdate,
+        "$this->rootPath/backup_dir/public/build/assets",
+        "$this->deploymentPath/public/build/assets"
+    );
 });
 
-it('outputs a notice that the backup directory is being retained', function () {
+it('outputs a notice that the backup directory is being retained', function() {
     $runUpdate = runUpdateClassFactory([
         'doRetainOldReleaseDir' => true,
         'oldReleaseArchivePath' => 'archive.zip',
@@ -65,12 +68,15 @@ it('outputs a notice that the backup directory is being retained', function () {
     (fn() => $this->terminateBackupArchive())->call($runUpdate);
 
     $output = $this->getActualOutputForAssertion();
-    $this->assertStringContainsString('Retaining old release backup (archive.zip). Make sure you clean it up manually.',
-        $output);
+    $this->assertStringContainsString(
+        'Retaining old release backup (archive.zip). Make sure you clean it up manually.',
+        $output
+    );
 });
 
-it('outputs a notice that the backup directory could not be deleted despite it being flagged for deletion',
-    function () {
+it(
+    'outputs a notice that the backup directory could not be deleted despite it being flagged for deletion',
+    function() {
         $this->rootFs->addChild(vfsStream::newDirectory('backup_test'));
         $this->rootFs->addChild(vfsStream::newFile('backup_test/archive.zip'));
         $this->rootFs->getChild('backup_test/archive.zip')?->chmod(0400);
@@ -89,9 +95,10 @@ it('outputs a notice that the backup directory could not be deleted despite it b
         $this->assertTrue(
             $this->rootFs->hasChild('backup_test/archive.zip')
         );
-    });
+    }
+);
 
-it('throws an exception that the source file cannot be read when copying assets', function () {
+it('throws an exception that the source file cannot be read when copying assets', function() {
     $file = vfsStream::newFile('temp/public/build/assets/unreadable.txt');
     $this->rootFs->addChild($file->withContent('')->chmod(0000));
 
@@ -103,7 +110,7 @@ it('throws an exception that the source file cannot be read when copying assets'
     $closure->call($runUpdate, $file->url(), 'unused_destination');
 });
 
-it('throws an exception that the source file cannot be copied for an unknown reason when copying assets', function () {
+it('throws an exception that the source file cannot be copied for an unknown reason when copying assets', function() {
     $this->disableErrorHandling();
 
     $file = vfsStream::newFile('temp/public/build/assets/my_asset.txt');
@@ -118,7 +125,7 @@ it('throws an exception that the source file cannot be copied for an unknown rea
     $closure->call($runUpdate, $file->url(), $this->rootPath);
 });
 
-it('sets permissions and outputs a message when an asset is successfully copied', function () {
+it('sets permissions and outputs a message when an asset is successfully copied', function() {
     $file = vfsStream::newFile('source/asset.txt', 0777);
     $this->rootFs->addChild($file->withContent('asset'));
     $dest = vfsStream::newDirectory('dest');
@@ -142,7 +149,7 @@ it('sets permissions and outputs a message when an asset is successfully copied'
     $this->assertSame($dest->getChild('asset.txt')?->getPermissions(), 420);
 });
 
-it('cannot find the .env file when setting the current version number', function () {
+it('cannot find the .env file when setting the current version number', function() {
     $this->startOutputBuffer();
     $this->deploymentDir->removeChild('.env');
 
@@ -153,7 +160,7 @@ it('cannot find the .env file when setting the current version number', function
     (fn() => $this->setEnvVersionNumber())->call($runUpdate);
 });
 
-it('cannot save the .env file when setting the current version number', function () {
+it('cannot save the .env file when setting the current version number', function() {
     $this->startOutputBuffer();
     $this->disableErrorHandling();
 
@@ -169,7 +176,7 @@ it('cannot save the .env file when setting the current version number', function
     $this->assertStringEqualsFile($dotEnvFile->url(), $dotEnvFileContents);
 });
 
-it('fails to delete a missing directory', function () {
+it('fails to delete a missing directory', function() {
     $runUpdate = runUpdateClassFactory();
     $result    = (fn($directory) => $this->deleteDirectory($directory))
         ->call($runUpdate, "$this->rootPath/missing_dir");
@@ -177,7 +184,7 @@ it('fails to delete a missing directory', function () {
     expect($result)->toBeTrue();
 });
 
-it('calls delete and will return false when the file does not exist', function () {
+it('calls delete and will return false when the file does not exist', function() {
     $nonExistentFile = vfsStream::url('root/non_existent_file.txt');
 
     $this->disableErrorHandling();
@@ -187,7 +194,7 @@ it('calls delete and will return false when the file does not exist', function (
     expect($result)->toBeFalse();
 });
 
-it('should return false when the file exists but cannot be deleted due to permissions', function () {
+it('should return false when the file exists but cannot be deleted due to permissions', function() {
     $this->disableErrorHandling();
 
     $file = vfsStream::newFile('bad_permissions.txt');
@@ -204,7 +211,7 @@ it('should return false when the file exists but cannot be deleted due to permis
         ->and($file->url())->toBeReadableFile();
 });
 
-it('should handle multiple protected paths with wildcards correctly', function () {
+it('should handle multiple protected paths with wildcards correctly', function() {
     $runUpdate = runUpdateClassFactory([
         'protectedPaths' => [
             'config/*',
@@ -229,8 +236,9 @@ it('should handle multiple protected paths with wildcards correctly', function (
     }
 });
 
-it('should correctly match a relative path that is exactly the same as a wildcard protected path without the asterisk',
-    function () {
+it(
+    'should correctly match a relative path that is exactly the same as a wildcard protected path without the asterisk',
+    function() {
         $runUpdate = runUpdateClassFactory([
             'protectedPaths' => [
                 'config/*',
@@ -239,13 +247,16 @@ it('should correctly match a relative path that is exactly the same as a wildcar
             ],
         ]);
 
-        $result = (fn(string $relativePath) => $this->isProtectedWildcardPath($relativePath))->call($runUpdate,
-            'config/app.php');
+        $result = (fn(string $relativePath) => $this->isProtectedWildcardPath($relativePath))->call(
+            $runUpdate,
+            'config/app.php'
+        );
 
         expect($result)->toBeTrue();
-    });
+    }
+);
 
-it('should return false for an empty relative path', function () {
+it('should return false for an empty relative path', function() {
     $runUpdate = runUpdateClassFactory([
         'protectedPaths' => [
             'config/*',
@@ -259,7 +270,7 @@ it('should return false for an empty relative path', function () {
     expect($result)->toBeFalse();
 });
 
-it('should preserve protected paths', function () {
+it('should preserve protected paths', function() {
     $this->rootFs   = vfsStream::setup();
     $this->rootPath = vfsStream::url('root');
     $protectedDir   = vfsStream::newDirectory('protected_dir/sub');
@@ -296,7 +307,7 @@ it('should preserve protected paths', function () {
         ->and($output)->toContain('Protected paths preserved successfully.');
 });
 
-it('should preserve protected paths when they exist as files', function () {
+it('should preserve protected paths when they exist as files', function() {
     $this->rootFs   = vfsStream::setup();
     $this->rootPath = vfsStream::url('root');
 
@@ -328,7 +339,7 @@ it('should preserve protected paths when they exist as files', function () {
         ->and($temp->getChildren())->toHaveCount(2);
 });
 
-it('outputs a warning when a protected path is not found', function () {
+it('outputs a warning when a protected path is not found', function() {
     $this->rootFs->addChild(vfsStream::newDirectory('deployment'));
     $deploymentPath = vfsStream::url('streamline/deployment');
 
@@ -347,7 +358,7 @@ it('outputs a warning when a protected path is not found', function () {
     (fn() => $this->preserveProtectedPaths())->call($runUpdate);
 });
 
-it('throws an exception when the destination directory is not writable during directory copy', function () {
+it('throws an exception when the destination directory is not writable during directory copy', function() {
     $this->rootFs   = vfsStream::setup();
     $this->rootPath = vfsStream::url('root');
     $this->rootFs->addChild(vfsStream::newDirectory('source'));
@@ -366,7 +377,7 @@ it('throws an exception when the destination directory is not writable during di
     $closure->call($runUpdate, 'vfs://streamline/source', 'vfs://streamline/destination');
 });
 
-it('should handle large directories with many nested subdirectories', function () {
+it('should handle large directories with many nested subdirectories', function() {
     $this->startOutputBuffer();
     $this->expectsOutput();
     $this->rootFs = vfsStream::setup('streamline');
@@ -382,7 +393,7 @@ it('should handle large directories with many nested subdirectories', function (
     assertDirectoriesEqual($source, $destination);
 });
 
-it('throws an exception when the destination directory is not writable during file copy', function () {
+it('throws an exception when the destination directory is not writable during file copy', function() {
     $this->disableErrorHandling();
     $this->rootFs = vfsStream::setup('streamline');
     $sourceDir    = vfsStream::newDirectory('source');
@@ -417,7 +428,7 @@ function createNestedDirectories($dir, $depth, $filesPerDir, $currentDepth = 0):
     }
 }
 
-it('should successfully copy frontend assets from existing deployment to new release (in temp dir)', function () {
+it('should successfully copy frontend assets from existing deployment to new release (in temp dir)', function() {
     // Setup directories
     $this->rootFs->addChild(vfsStream::newDirectory('temp/public/build/assets'));
 
@@ -451,8 +462,11 @@ it('should successfully copy frontend assets from existing deployment to new rel
 
     $manifestFile = file_get_contents("$this->rootPath/temp/public/build/manifest.json");
     $this->assertJson($manifestFile);
-    $this->assertSame($newManifestContent, $manifestFile,
-        "This should be the new manifest content: $newManifestContent");
+    $this->assertSame(
+        $newManifestContent,
+        $manifestFile,
+        "This should be the new manifest content: $newManifestContent"
+    );
     $this->assertStringEqualsFile("$this->rootPath/temp/public/build/assets/app.css", 'test css content');
     $this->assertStringEqualsFile("$this->rootPath/temp/public/build/assets/app.js", 'test js content');
 
@@ -463,7 +477,7 @@ it('should successfully copy frontend assets from existing deployment to new rel
     $this->assertStringContainsString('Copied:', $output);
 });
 
-it('throws an exception when the source directory exists but is not readable', function () {
+it('throws an exception when the source directory exists but is not readable', function() {
     $sourceDir  = vfsStream::newDirectory('source_dir', 0000);
     $sourceFile = vfsStream::newFile('source_dir/file.txt');
     $sourceDir->addChild($sourceFile);
@@ -475,12 +489,15 @@ it('throws an exception when the source directory exists but is not readable', f
     $this->expectExceptionMessage('Error: ' . dirname($destinationPath) . ' cannot be copied as it cannot be read from. Please check permissions.');
 
     $runUpdate = runUpdateClassFactory();
-    $closure   = fn(string $source, string $destination, bool $doOverwrite = true) => $this->copyFile($source,
-        $destination, $doOverwrite);
+    $closure   = fn(string $source, string $destination, bool $doOverwrite = true) => $this->copyFile(
+        $source,
+        $destination,
+        $doOverwrite
+    );
     $closure->call($runUpdate, $sourceFile->url(), $destinationPath);
 });
 
-it('throws an exception when the the source file is not readable', function () {
+it('throws an exception when the the source file is not readable', function() {
     $this->disableErrorHandling();
 
     // Setup source directory and file
@@ -497,7 +514,8 @@ it('throws an exception when the the source file is not readable', function () {
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage("Error: Source file is not readable. Check your permissions: {$sourceFile->url()}");
 
-    (fn(string $source, string $destination, bool $doOverwrite) => $this->copyFile($source, $destination, $doOverwrite)
+    (
+        fn(string $source, string $destination, bool $doOverwrite) => $this->copyFile($source, $destination, $doOverwrite)
     )->call($runUpdate, $sourcePath, $destPath, true);
 
     $this->assertFileDoesNotExist($destPath);
@@ -570,7 +588,8 @@ function runUpdateClassFactory(array $options = []): RunCompleteGitHubVersionRel
             'downloadedArchivePath' => laravel_path('archive.zip'),
             'doOutput'              => true,
         ],
-        $options);
+        $options
+    );
 
     return new RunCompleteGitHubVersionRelease(
         tempDirName: $options['tempDirName'],

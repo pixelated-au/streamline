@@ -12,7 +12,7 @@ trait OutputSubProcessCalls
         // @codeCoverageIgnoreStart
         Event::listen(
             CommandClassCallback::class,
-            function (CommandClassCallback $event) {
+            function(CommandClassCallback $event) {
                 $verbosity = $this->output->getVerbosity();
 
                 if ($verbosity < $event->verbosity) {

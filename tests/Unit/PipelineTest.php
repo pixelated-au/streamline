@@ -3,90 +3,90 @@
 use Pixelated\Streamline\Pipeline\Pipeline;
 use Pixelated\Streamline\Updater\UpdateBuilder;
 
-it('can process function pipes', closure: function () {
+it('can process function pipes', closure: function() {
     $this->expectOutputString('Test pipe');
     $result = (new Pipeline(new UpdateBuilder))
-        ->through([function () {
+        ->through([function() {
             echo 'Test pipe';
         }])
-        ->then(fn () => true);
+        ->then(fn() => true);
 
     $this->assertTrue($result);
 });
 
-it('can handle pipe exceptions properly', closure: function () {
+it('can handle pipe exceptions properly', closure: function() {
     $this->expectOutputString('Caught exception: Test exception');
     $result = (new Pipeline(new UpdateBuilder))
-        ->through([function () {
+        ->through([function() {
             throw new RuntimeException('Test exception');
         }])
-        ->catch(function (Throwable $e) {
+        ->catch(function(Throwable $e) {
             echo 'Caught exception: ' . $e->getMessage();
 
             return false;
         })
-        ->then(function () {
+        ->then(function() {
             return true;
         });
     $this->assertFalse($result);
 });
 
-it('will throw pipe exceptions properly', closure: function () {
+it('will throw pipe exceptions properly', closure: function() {
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage('Test throwing exception');
     (new Pipeline(new UpdateBuilder))
-        ->through([function () {
+        ->through([function() {
             throw new RuntimeException('Test throwing exception');
         }])
-        ->then(function () {
+        ->then(function() {
             return true;
         });
 });
 
-it('can handle "then" exceptions properly', closure: function () {
+it('can handle "then" exceptions properly', closure: function() {
     $this->expectOutputString('Caught exception: Test (then) exception');
     $result = (new Pipeline(new UpdateBuilder))
         ->through([])
-        ->catch(function (Throwable $e) {
+        ->catch(function(Throwable $e) {
             echo 'Caught exception: ' . $e->getMessage();
 
             return false;
         })
-        ->then(function () {
+        ->then(function() {
             throw new RuntimeException('Test (then) exception');
         });
     $this->assertFalse($result);
 });
 
-it('will throw "then" exceptions properly', closure: function () {
+it('will throw "then" exceptions properly', closure: function() {
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage('Test throwing (then) exception');
     (new Pipeline(new UpdateBuilder))
         ->through([])
-        ->then(function () {
+        ->then(function() {
             throw new RuntimeException('Test throwing (then) exception');
         });
 });
 
-it('will throw an exception but still run the finally function', closure: function () {
+it('will throw an exception but still run the finally function', closure: function() {
     $this->expectOutputString('Caught exception: Test finally exception');
 
     $finallyRun = false;
 
     $result = (new Pipeline(new UpdateBuilder))
-        ->through([fn () => throw new RuntimeException('Test finally exception')])
-        ->catch(function (Throwable $e) {
+        ->through([fn() => throw new RuntimeException('Test finally exception')])
+        ->catch(function(Throwable $e) {
             echo 'Caught exception: ' . $e->getMessage();
 
             return false;
         })
-        ->finally(function () use (&$finallyRun) {
+        ->finally(function() use (&$finallyRun) {
             // This function should be called. First confirm that $finallyRun is false. Then set $finallyRun to true
             // so that it can be confirmed that the finally function was called
             $this->assertFalse($finallyRun);
             $finallyRun = true;
         })
-        ->then(function () {
+        ->then(function() {
             $this->assertTrue(false, 'This should not be reached, therefore it should fail if called');
 
             return true;

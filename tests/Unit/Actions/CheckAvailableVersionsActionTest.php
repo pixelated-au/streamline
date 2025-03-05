@@ -6,7 +6,7 @@ use Pixelated\Streamline\Enums\CacheKeysEnum;
 use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Events\NextAvailableVersionUpdated;
 
-it('should return the latest non-prerelease version', function () {
+it('should return the latest non-prerelease version', function() {
     $versions = ['v2.1.6b', 'v2.1.5-beta', 'v2.1.4', 'v1.0.0'];
 
     $cacheMock = Cache::partialMock();
@@ -27,10 +27,10 @@ it('should return the latest non-prerelease version', function () {
     $result = $checkAvailableVersions->execute();
     expect($result)->toBe($versions[2]);
     Event::assertNotDispatched(CommandClassCallback::class);
-    Event::assertDispatched(fn (NextAvailableVersionUpdated $event) => $event->version === $versions[2]);
+    Event::assertDispatched(fn(NextAvailableVersionUpdated $event) => $event->version === $versions[2]);
 });
 
-it('should return the latest pre-release version when ignorePreReleases is true', function () {
+it('should return the latest pre-release version when ignorePreReleases is true', function() {
     $versions = ['v2.1.6b', 'v2.1.5-beta', 'v2.1.4a', 'v2.1.3-alpha', 'v2.1.2', 'v1.0.0'];
 
     $cacheMock = Cache::partialMock();
@@ -53,7 +53,7 @@ it('should return the latest pre-release version when ignorePreReleases is true'
     Event::assertNotDispatched(CommandClassCallback::class);
 });
 
-it('should refresh all available versions when there is an existing "next version" when force is used', function () {
+it('should refresh all available versions when there is an existing "next version" when force is used', function() {
     $versions = ['v2.1.6b', 'v2.1.5', 'v2.1.4', 'v1.0.0'];
 
     $cacheMock = Cache::partialMock();
@@ -76,7 +76,7 @@ it('should refresh all available versions when there is an existing "next versio
     Event::assertDispatchedTimes(CommandClassCallback::class);
 });
 
-it('throws an exception when availableVersions are not in the cache', function () {
+it('throws an exception when availableVersions are not in the cache', function() {
     $cacheMock = Cache::partialMock();
     $cacheMock->shouldReceive('get')
         ->with(CacheKeysEnum::NEXT_AVAILABLE_VERSION->value)

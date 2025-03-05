@@ -3,7 +3,7 @@
 use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Updater\UpdateBuilder;
 
-it('outputs an info message when the cleanup process fails', function () {
+it('outputs an info message when the cleanup process fails', function() {
     Process::preventStrayProcesses();
 
     //    Process::fake([
@@ -12,7 +12,7 @@ it('outputs an info message when the cleanup process fails', function () {
 
     $this->app->bind(
         \Symfony\Component\Process\Process::class,
-        function () {
+        function() {
             // For some reason, $this->mock(...) isn't working as expected, so I'm mocking it manually
             $mock = Mockery::mock(\Symfony\Component\Process\Process::class);
             $mock->shouldReceive('run')
@@ -35,11 +35,11 @@ it('outputs an info message when the cleanup process fails', function () {
 
     Event::assertDispatched(
         CommandClassCallback::class,
-        fn (CommandClassCallback $callback) => $callback->action === 'info' && Str::startsWith($callback->value, 'Test success message')
+        fn(CommandClassCallback $callback) => $callback->action === 'info' && Str::startsWith($callback->value, 'Test success message')
     );
 });
 
-it('outputs an error when the cleanup process fails', function () {
+it('outputs an error when the cleanup process fails', function() {
     Process::preventStrayProcesses();
 
     //    Process::fake([
@@ -48,7 +48,7 @@ it('outputs an error when the cleanup process fails', function () {
 
     $this->app->bind(
         \Symfony\Component\Process\Process::class,
-        function () {
+        function() {
             // For some reason, $this->mock(...) isn't working as expected, so I'm mocking it manually
             $mock = Mockery::mock(\Symfony\Component\Process\Process::class);
             $mock->shouldReceive('run')
@@ -70,6 +70,6 @@ it('outputs an error when the cleanup process fails', function () {
 
     Event::assertDispatched(
         CommandClassCallback::class,
-        fn (CommandClassCallback $callback) => $callback->action === 'error' && Str::startsWith($callback->value, 'Test error message')
+        fn(CommandClassCallback $callback) => $callback->action === 'error' && Str::startsWith($callback->value, 'Test error message')
     );
 });

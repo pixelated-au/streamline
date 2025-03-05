@@ -74,8 +74,8 @@ class Pipeline
 
     protected function carry(): Closure
     {
-        return function ($stack, $pipe) {
-            return function ($passable) use ($stack, $pipe) {
+        return function($stack, $pipe) {
+            return function($passable) use ($stack, $pipe) {
                 try {
                     if (!is_callable($pipe)) {
                         $pipe = app()->make($pipe);
@@ -100,7 +100,7 @@ class Pipeline
 
     protected function prepareDestination(Closure $destination): Closure
     {
-        $this->destination = function ($passable) use ($destination) {
+        $this->destination = function($passable) use ($destination) {
             try {
                 return $destination($passable);
             } catch (Throwable $e) {

@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
 use Pixelated\Streamline\Facades\CleanUpAssets;
 
-it('can clean up assets with multiple revisions', function () {
+it('can clean up assets with multiple revisions', function() {
     Storage::fake();
 
     storeFiles([
@@ -37,7 +37,7 @@ it('can clean up assets with multiple revisions', function () {
     Storage::assertMissing('style.333ccc.css');
 });
 
-it('handles empty asset directory', function () {
+it('handles empty asset directory', function() {
     Storage::fake();
 
     Config::set('streamline.build_dir', Storage::getConfig()['root']);
@@ -53,7 +53,7 @@ it('handles empty asset directory', function () {
     Storage::assertDirectoryEmpty(Storage::getConfig()['root']);
 });
 
-it('ignores files with non-matching extensions', function () {
+it('ignores files with non-matching extensions', function() {
     Storage::fake();
 
     storeFiles([
@@ -88,7 +88,7 @@ it('ignores files with non-matching extensions', function () {
     Storage::assertMissing('style.111aaa.css');
 });
 
-it('throws exception when storage operation fails', function () {
+it('throws exception when storage operation fails', function() {
     Config::set('streamline.laravel_public_disk_name', 'public');
 
     Storage::purge('public');
@@ -100,12 +100,14 @@ it('throws exception when storage operation fails', function () {
 
     Storage::set('public', $mock);
 
-    expect(static fn () => CleanUpAssets::run())
-        ->toThrow(RuntimeException::class,
-            'Error: Failed to clean out redundant front-end build assets. Could not execute the cleanup command.');
+    expect(static fn() => CleanUpAssets::run())
+        ->toThrow(
+            RuntimeException::class,
+            'Error: Failed to clean out redundant front-end build assets. Could not execute the cleanup command.'
+        );
 });
 
-it('overrides the number of revisions in config allowing only 1', function () {
+it('overrides the number of revisions in config allowing only 1', function() {
     Storage::fake();
 
     storeFiles([
@@ -138,7 +140,7 @@ it('overrides the number of revisions in config allowing only 1', function () {
     Storage::assertMissing('style.333ccc.css');
 });
 
-it('overrides the number of revisions in config allowing only 3', function () {
+it('overrides the number of revisions in config allowing only 3', function() {
     Storage::fake();
 
     storeFiles([
@@ -170,7 +172,7 @@ it('overrides the number of revisions in config allowing only 3', function () {
     Storage::assertMissing('style.111aaa.css');
 });
 
-it('files are not deleted if there are less files available than the number of revisions', function () {
+it('files are not deleted if there are less files available than the number of revisions', function() {
     Storage::fake();
 
     storeFiles([

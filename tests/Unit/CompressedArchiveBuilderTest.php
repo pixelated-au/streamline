@@ -4,7 +4,7 @@ use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Factories\CompressedArchiveBuilder;
 use Pixelated\Streamline\Iterators\ArchiveBuilderIterator;
 
-it('throws a RuntimeException when zip creation fails', function () {
+it('throws a RuntimeException when zip creation fails', function() {
     $zipMock = Mockery::mock(ZipArchive::class);
     $zipMock->shouldReceive('open')
         ->once()
@@ -19,12 +19,12 @@ it('throws a RuntimeException when zip creation fails', function () {
 
     $builder->init();
 
-    Event::assertDispatched(function (CommandClassCallback $event) {
+    Event::assertDispatched(function(CommandClassCallback $event) {
         return $event->action === 'comment' && $event->value === 'Creating zip backup of existing release';
     });
 });
 
-it('creates a zip file at the expected path', function () {
+it('creates a zip file at the expected path', function() {
     $zipPath = '/path/to/expected/archive.zip';
     $zipMock = Mockery::mock(ZipArchive::class);
 
@@ -40,12 +40,12 @@ it('creates a zip file at the expected path', function () {
 
     expect($result)->toBeInstanceOf(CompressedArchiveBuilder::class);
 
-    Event::assertDispatched(function (CommandClassCallback $event) {
+    Event::assertDispatched(function(CommandClassCallback $event) {
         return $event->action === 'comment' && $event->value === 'Creating zip backup of existing release';
     });
 });
 
-it('throws a RuntimeException when adding a file to the zip fails', function () {
+it('throws a RuntimeException when adding a file to the zip fails', function() {
     $disk = Storage::fake();
 
     $zipPath = $disk->path('/path/to/archive.zip');
@@ -56,7 +56,7 @@ it('throws a RuntimeException when adding a file to the zip fails', function () 
     $file->shouldReceive('isDir')->andReturn(false);
     $file->shouldReceive('getPathname')->andReturn($disk->path('/path/to/source/test.txt'));
 
-    $this->app->bind(ArchiveBuilderIterator::class, function () use ($file, $sourcePath) {
+    $this->app->bind(ArchiveBuilderIterator::class, function() use ($file, $sourcePath) {
         $iterator = Mockery::mock(ArchiveBuilderIterator::class . '[!rewind,!beginIteration]', [$sourcePath]);
         $iterator->shouldIgnoreMissing();
         $iterator->shouldReceive('valid')->andReturn(true, false);
@@ -84,12 +84,13 @@ it('throws a RuntimeException when adding a file to the zip fails', function () 
 
     $builder->makeArchive($sourcePath);
 
-    Event::assertDispatched(fn (CommandClassCallback $event) => $event->action === 'comment'
-        && $event->value                                                       === 'Building backup zip file from ' . $sourcePath
+    Event::assertDispatched(
+        fn(CommandClassCallback $event) => $event->action === 'comment'
+        && $event->value                                  === 'Building backup zip file from ' . $sourcePath
     );
 });
 
-it('throws a RuntimeException when closing the zip file fails', function () {
+it('throws a RuntimeException when closing the zip file fails', function() {
     $disk = Storage::fake();
 
     $zipPath = $disk->path('/path/to/archive.zip');
@@ -100,7 +101,7 @@ it('throws a RuntimeException when closing the zip file fails', function () {
     $file->shouldReceive('isDir')->andReturn(false);
     $file->shouldReceive('getPathname')->andReturn($disk->path('/path/to/source/test.txt'));
 
-    $this->app->bind(ArchiveBuilderIterator::class, function () use ($file, $sourcePath) {
+    $this->app->bind(ArchiveBuilderIterator::class, function() use ($file, $sourcePath) {
         $iterator = Mockery::mock(ArchiveBuilderIterator::class . '[!rewind,!beginIteration]', [$sourcePath]);
         $iterator->shouldIgnoreMissing();
         $iterator->shouldReceive('valid')->andReturn(true, false);
@@ -126,12 +127,13 @@ it('throws a RuntimeException when closing the zip file fails', function () {
 
     $builder->makeArchive($sourcePath);
 
-    Event::assertDispatched(fn (CommandClassCallback $event) => $event->action === 'comment'
-        && $event->value                                                       === 'Building backup zip file from ' . $sourcePath
+    Event::assertDispatched(
+        fn(CommandClassCallback $event) => $event->action === 'comment'
+        && $event->value                                  === 'Building backup zip file from ' . $sourcePath
     );
 });
 
-it('should skip directories during iteration', function () {
+it('should skip directories during iteration', function() {
     $disk = Storage::fake();
 
     $zipPath = $disk->path('/path/to/archive.zip');
@@ -144,7 +146,7 @@ it('should skip directories during iteration', function () {
     $splFileInfo->shouldReceive('getPathname')->andReturn($disk->path('/path/to/source/test.txt'));
 
     // Mock the iterator to return both a directory and a file
-    $this->app->bind(ArchiveBuilderIterator::class, function () use ($splFileInfo, $sourcePath) {
+    $this->app->bind(ArchiveBuilderIterator::class, function() use ($splFileInfo, $sourcePath) {
         $iterator = Mockery::mock(ArchiveBuilderIterator::class . '[!rewind,!beginIteration]', [$sourcePath]);
         $iterator->shouldReceive('valid')->andReturn(true, true, false);
         $iterator->shouldReceive('current')->andReturn($splFileInfo);
@@ -172,11 +174,13 @@ it('should skip directories during iteration', function () {
 
     expect($result)->toBeInstanceOf(CompressedArchiveBuilder::class);
 
-    Event::assertDispatched(fn (CommandClassCallback $event) => $event->action === 'comment'
-        && $event->value                                                       === 'Building backup zip file from ' . $sourcePath
+    Event::assertDispatched(
+        fn(CommandClassCallback $event) => $event->action === 'comment'
+        && $event->value                                  === 'Building backup zip file from ' . $sourcePath
     );
 
-    Event::assertDispatched(fn (CommandClassCallback $event) => $event->action === 'success'
-        && $event->value                                                       === 'Backup created successfully'
+    Event::assertDispatched(
+        fn(CommandClassCallback $event) => $event->action === 'success'
+        && $event->value                                  === 'Backup created successfully'
     );
 });

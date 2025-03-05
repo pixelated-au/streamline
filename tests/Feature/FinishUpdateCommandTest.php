@@ -4,7 +4,7 @@ use Illuminate\Support\Env;
 use Pixelated\Streamline\Enums\CacheKeysEnum;
 use Pixelated\Streamline\Events\InstalledVersionSet;
 
-it('sets the installed version and dispatches an event', function () {
+it('sets the installed version and dispatches an event', function() {
     Event::fake();
     Cache::put(CacheKeysEnum::INSTALLED_VERSION->value, 'v0.0.0');
     $installedVersion = 'v100.0.2';

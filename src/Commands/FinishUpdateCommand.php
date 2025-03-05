@@ -16,8 +16,11 @@ class FinishUpdateCommand extends Command
     use OutputSubProcessCalls;
 
     protected $signature = 'streamline:finish-update';
+
     protected $description = 'Run this only after the update is complete. It really should only be run as part of the update pipeline.';
+
     protected $hidden = true;
+
     protected $isolated = true;
 
     public function handle(): void
