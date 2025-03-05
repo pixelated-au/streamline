@@ -29,6 +29,7 @@ class UpdateCommand extends Command
         $this->listenForSubProcessEvents();
 
         $builder = (new UpdateBuilder)
+            ->setBasePath(base_path())
             ->setRequestedVersion($this->option('install-version'))
             ->setCurrentlyInstalledVersion(Config::get('streamline.installed_version'))
             ->forceUpdate($this->option('force'));

@@ -4,6 +4,10 @@ namespace Pixelated\Streamline\Interfaces;
 
 interface UpdateBuilderInterface
 {
+    public function setBasePath(string $basePath): UpdateBuilderInterface;
+
+    public function getBasePath(): string;
+
     public function setCurrentlyInstalledVersion(string $version): UpdateBuilderInterface;
 
     public function getCurrentlyInstalledVersion(): ?string;

@@ -3,10 +3,11 @@
 namespace Pixelated\Streamline\Updater;
 
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
-use Throwable;
 
 class UpdateBuilder implements UpdateBuilderInterface
 {
+    private string $basePath;
+
     private string $currentlyInstalledVersion;
 
     private ?string $requestedVersion = null;
@@ -19,11 +20,21 @@ class UpdateBuilder implements UpdateBuilderInterface
 
     private string $downloadedArchivePath;
 
-    private ?Throwable $error = null;
-
     public function __construct()
     {
         $this->workTempDir = config('streamline.work_temp_dir');
+    }
+
+    public function setBasePath(string $basePath): UpdateBuilderInterface
+    {
+        $this->basePath = $basePath;
+
+        return $this;
+    }
+
+    public function getBasePath(): string
+    {
+        return $this->basePath;
     }
 
     public function setCurrentlyInstalledVersion(?string $version): UpdateBuilderInterface
