@@ -61,10 +61,10 @@ it(
         $expectedOutput = [
             'Starting update',
             'Copying frontend assets. From: ' . $disk->path('laravel/public/build') . ' to: ' . $tempDisk->path('unpacked/public/build'),
-            '  - Skipped: ' . $tempDisk->path('unpacked/public/build/manifest.json') . '. File already exists (But still set permission: 420)',
+            '  - Copied: ' . $disk->path('/laravel/public/build/assets/text-file/existing_file.txt') . ' to ' . $tempDisk->path('/unpacked/public/build/assets/text-file/existing_file.txt') . ' (Permission: 420)',
             '  - Directory created: ' . $tempDisk->path('unpacked/public/build/assets') . ' (Permission: 493)',
             '  - Directory created: ' . $tempDisk->path('unpacked/public/build/assets/text-file') . ' (Permission: 493)',
-            '  - Copied: ' . $disk->path('/laravel/public/build/assets/text-file/existing_file.txt') . ' to ' . $tempDisk->path('/unpacked/public/build/assets/text-file/existing_file.txt') . ' (Permission: 420)',
+            '  - Skipped: ' . $tempDisk->path('unpacked/public/build/manifest.json') . '. File already exists (But still set permission: 420)',
             'Preserving protected paths...',
             '  - Copied: ' . $disk->path('laravel/.env') . ' to ' . $tempDisk->path('unpacked/.env') . ' (Permission: 420)',
             'Protected paths preserved successfully.',
