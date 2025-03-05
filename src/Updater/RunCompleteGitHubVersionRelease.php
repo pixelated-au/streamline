@@ -72,7 +72,8 @@ class RunCompleteGitHubVersionRelease
             }
         }
 
-        ksort($log);
+        // This is to ensure the output is in a consistent log order for testing purposes.
+        defined('IS_TESTING') && ksort($log);
 
         return $log;
     }
