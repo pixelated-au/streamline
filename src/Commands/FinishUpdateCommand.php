@@ -27,7 +27,6 @@ class FinishUpdateCommand extends Command
     {
         resolve(Cleanup::class)(Config::get('streamline.work_temp_dir'));
 
-        // $installedVersion may be falsy if there was a failure
         if ($installedVersion = $this->getNewVersion()) {
             $this->info("Persisting the new version number ($installedVersion) to the cache.");
             Cache::put(CacheKeysEnum::INSTALLED_VERSION->value, $installedVersion);
@@ -35,13 +34,10 @@ class FinishUpdateCommand extends Command
         }
     }
 
-    protected function getNewVersion()
+    protected function getNewVersion(): ?string
     {
-        $dotenv = Dotenv::createImmutable(base_path());
-        $dotenv->load();
+        $currentEnv = Dotenv::createArrayBacked(base_path())->load();
 
-        $this->warn(file_get_contents(base_path('.env')));
-
-        return $_ENV['STREAMLINE_APPLICATION_VERSION_INSTALLED'];
+        return isset($currentEnv['STREAMLINE_APPLICATION_VERSION_INSTALLED']) ?: null;
     }
 }
