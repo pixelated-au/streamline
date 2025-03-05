@@ -51,7 +51,7 @@ class RunCompleteGitHubVersionRelease
         $log = $this->recursiveCopyOldBuildFilesToNewDir($existingReleaseBuildDir, $incomingReleaseBuildDir);
 
         // This is to ensure the output is in a consistent log order for testing purposes.
-        defined('IS_TESTING') && ksort($log);
+        defined('IS_TESTING') && sort($log);
 
         $this->output(implode(PHP_EOL, $log));
     }
