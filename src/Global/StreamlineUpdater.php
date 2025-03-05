@@ -34,7 +34,7 @@ class StreamlineUpdater
 
     public const int TESTING_ON = 1;
 
-    public const int TESTING_SKIP_REQUIRE_AUTOLOAD = 2;
+    public const int TESTING_ON_AND_SKIP_REQUIRE_AUTOLOAD = 2;
 
     /**
      * @throws \JsonException
@@ -51,7 +51,7 @@ class StreamlineUpdater
         $this->filePermission        = (int) $this->env('FILE_PERMISSION');
         $this->oldReleaseArchivePath = $this->env('OLD_RELEASE_ARCHIVE_PATH');
         $this->doRetainOldRelease    = (bool) $this->env('DO_RETAIN_OLD_RELEASE');
-        $this->isTesting             = (int) (getenv('IS_TESTING') ?: self::TESTING_OFF);
+        $this->isTesting             = (int) $this->env('IS_TESTING') ?: self::TESTING_OFF;
 
         if (count($this->envIssues)) {
             throw new InvalidArgumentException(implode("\n", $this->envIssues));
@@ -63,7 +63,7 @@ class StreamlineUpdater
             // @codeCoverageIgnoreEnd
         }
 
-        if ($this->isTesting & self::TESTING_SKIP_REQUIRE_AUTOLOAD) {
+        if ($this->isTesting & self::TESTING_ON_AND_SKIP_REQUIRE_AUTOLOAD) {
             return;
         }
 
