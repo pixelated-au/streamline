@@ -41,6 +41,6 @@ class FinishUpdateCommand extends Command
         $dotenv = Dotenv::createImmutable(base_path());
         $dotenv->load();
 
-        return Env::get('STREAMLINE_APPLICATION_VERSION_INSTALLED');
+        return $_ENV['STREAMLINE_APPLICATION_VERSION_INSTALLED'];
     }
 }
