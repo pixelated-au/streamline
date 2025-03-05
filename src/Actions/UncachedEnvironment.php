@@ -11,10 +11,6 @@ class UncachedEnvironment
     {
         $currentEnv = Dotenv::createArrayBacked(base_path())->load();
 
-        //todo delete when finished with this...
-        logger('Current environment variables:');
-        logger(print_r($currentEnv, true));
-
-        return isset($currentEnv[$key]) ?: $default;
+        return $currentEnv[$key] ?? $default;
     }
 }
