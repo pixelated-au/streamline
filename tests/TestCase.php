@@ -18,10 +18,6 @@ class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        if (!file_exists('./workbench/.env')) {
-            symlink('.env', './workbench/.env');
-        }
     }
 
     public function getEnvironmentSetUp($app): void {}
