@@ -4,7 +4,6 @@ namespace Pixelated\Streamline\Commands;
 
 use Dotenv\Dotenv;
 use Illuminate\Console\Command;
-use Illuminate\Support\Env;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Pixelated\Streamline\Actions\Cleanup;
