@@ -55,8 +55,7 @@ class RunCompleteGitHubVersionRelease
     protected function recursiveCopyOldBuildFilesToNewDir(string $source, string $destination): array
     {
         $iterator = new FilesystemIterator($source);
-
-        $log = [];
+        $log      = [];
 
         /** @var \SplFileInfo $item */
         foreach ($iterator as $item) {
@@ -72,6 +71,8 @@ class RunCompleteGitHubVersionRelease
                 $log[] = $this->copyFile($sourcePath, $destPath, false);
             }
         }
+
+        ksort($log);
 
         return $log;
     }
