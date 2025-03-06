@@ -18,7 +18,7 @@ it('should throw RuntimeException when requested version does not exist', functi
         ->with(CacheKeysEnum::AVAILABLE_VERSIONS->value)
         ->andReturn(collect(['v2.0.0', 'v1.0.0']));
 
-    $verifyVersion = new VerifyVersion;
+    $verifyVersion = resolve(VerifyVersion::class);
 
     expect(fn() => $verifyVersion->__invoke($builder))
         ->toThrow(RuntimeException::class, 'Version v3.0.0 is not a valid version!');
@@ -39,7 +39,7 @@ it(
             ->with(CacheKeysEnum::AVAILABLE_VERSIONS->value)
             ->andReturn(collect([$version, 'v2.0.0']));
 
-        $verifyVersion = new VerifyVersion;
+        $verifyVersion = resolve(VerifyVersion::class);
 
         expect(fn() => $verifyVersion->__invoke($builder))
             ->toThrow(RuntimeException::class, "Version $version is a pre-release version, use --force to install it.");
@@ -61,7 +61,7 @@ it(
             ->with(CacheKeysEnum::AVAILABLE_VERSIONS->value)
             ->andReturn(collect(['v1.0.0', 'v2.0.0']));
 
-        $verifyVersion = new VerifyVersion;
+        $verifyVersion = resolve(VerifyVersion::class);
 
         expect(fn() => $verifyVersion->__invoke($builder))
             ->toThrow(RuntimeException::class, 'Version v1.0.0 is not greater than the current version (v2.0.0)');
@@ -83,7 +83,7 @@ it(
             ->with(CacheKeysEnum::AVAILABLE_VERSIONS->value)
             ->andReturn(collect(['v1.0.0', 'v2.0.0']));
 
-        $verifyVersion = new VerifyVersion;
+        $verifyVersion = resolve(VerifyVersion::class);
 
         expect(fn() => $verifyVersion->__invoke($builder))
             ->toThrow(
@@ -107,7 +107,7 @@ it(
             ->with(CacheKeysEnum::AVAILABLE_VERSIONS->value)
             ->andReturn(collect(['v1.0.0', 'v2.0.0']));
 
-        $verifyVersion = new VerifyVersion;
+        $verifyVersion = resolve(VerifyVersion::class);
 
         expect(fn() => $verifyVersion->__invoke($builder))->not->toThrow(RuntimeException::class);
 
@@ -149,7 +149,7 @@ it('should return null when next version is the same as the installed version', 
 
     Config::set('streamline.installed_version', 'v3.0.0');
 
-    $verifyVersion = new VerifyVersion;
+    $verifyVersion = resolve(VerifyVersion::class);
     expect($verifyVersion->__invoke($builder))->toBeNull();
 
     Event::assertDispatchedTimes(CommandClassCallback::class);
@@ -173,7 +173,7 @@ it('should throw RuntimeException when next version does not exist and no specif
         ->with(CacheKeysEnum::AVAILABLE_VERSIONS->value)
         ->andReturn(collect(['v1.0.0']));
 
-    $verifyVersion = new VerifyVersion;
+    $verifyVersion = resolve(VerifyVersion::class);
 
     expect(fn() => $verifyVersion->__invoke($builder))
         ->toThrow(RuntimeException::class, 'Unexpected! The next available version: v2.0.0 cannot be found.');
@@ -196,7 +196,7 @@ it('should use the next available version when no specific version is requested'
         ->with(CacheKeysEnum::AVAILABLE_VERSIONS->value)
         ->andReturn(collect(['v1.0.0', 'v2.0.0']));
 
-    $verifyVersion = new VerifyVersion;
+    $verifyVersion = resolve(VerifyVersion::class);
 
     expect($verifyVersion->__invoke($builder))->toBe($builder);
 
@@ -218,7 +218,7 @@ it('should dispatch appropriate info and warning events based on version compari
         ->with(CacheKeysEnum::AVAILABLE_VERSIONS->value)
         ->andReturn(collect(['v2.0.0', 'v1.5.0', 'v1.0.0']));
 
-    $verifyVersion = new VerifyVersion;
+    $verifyVersion = resolve(VerifyVersion::class);
 
     expect($verifyVersion->__invoke($builder))->toBe($builder);
 

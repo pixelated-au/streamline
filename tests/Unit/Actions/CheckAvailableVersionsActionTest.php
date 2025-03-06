@@ -22,7 +22,7 @@ it('should return the latest version', function() {
     Artisan::shouldReceive('call')->with('streamline:list')->andReturn(0);
     Event::fake();
 
-    $checkAvailableVersions = new CheckAvailableVersions;
+    $checkAvailableVersions = resolve(CheckAvailableVersions::class);
 
     $result = $checkAvailableVersions->execute();
     expect($result)->toBe($versions[0]);
@@ -46,7 +46,7 @@ it('should return the latest non-prerelease version', function() {
     Artisan::shouldReceive('call')->with('streamline:list')->andReturn(0);
     Event::fake();
 
-    $checkAvailableVersions = new CheckAvailableVersions;
+    $checkAvailableVersions = resolve(CheckAvailableVersions::class);
 
     $result = $checkAvailableVersions->execute();
     expect($result)->toBe($versions[2]);
@@ -70,7 +70,7 @@ it('should return the latest pre-release version when ignorePreReleases is false
     Artisan::shouldReceive('call')->with('streamline:list')->andReturn(0);
     Event::fake();
 
-    $checkAvailableVersions = new CheckAvailableVersions;
+    $checkAvailableVersions = resolve(CheckAvailableVersions::class);
 
     $result = $checkAvailableVersions->execute(ignorePreReleases: false);
     expect($result)->toBe($versions[0]);
@@ -93,7 +93,7 @@ it('should refresh all available versions when there is an existing "next versio
     Artisan::shouldReceive('call')->with('streamline:list')->andReturn(0);
     Event::fake();
 
-    $checkAvailableVersions = new CheckAvailableVersions;
+    $checkAvailableVersions = resolve(CheckAvailableVersions::class);
 
     $result = $checkAvailableVersions->execute(force: true);
     expect($result)->toBe($versions[1]);
@@ -114,7 +114,7 @@ it('throws an exception when availableVersions are not in the cache', function()
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage('The next available version could not be determined.');
 
-    $checkAvailableVersions = new CheckAvailableVersions;
+    $checkAvailableVersions = resolve(CheckAvailableVersions::class);
 
     $result = $checkAvailableVersions->execute(force: true);
     expect($result)->toBeNull();
