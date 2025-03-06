@@ -6,6 +6,7 @@ use GuzzleHttp\RequestOptions;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Traits\Conditionable;
@@ -83,6 +84,8 @@ class GitHubApi
             if ($this->progressMeter?->hasStarted()) {
                 $this->progressMeter->finish();
             }
+
+            $this->checkRateLimits($requestClient);
 
             return $requestClient;
         } catch (ConnectionException $e) {
@@ -203,11 +206,11 @@ class GitHubApi
         // This regex extracts the page number from the GitHub API Link header
         // Explanation:
         // <.*                  : Matches the opening angle bracket and any characters
-        // (?:&|\?).            : Matches either '&', '?'
+        // [&?]                 : Matches either '&' or '?'
         // page=(\d+)           : Matches 'page=' followed by one or more digits (captured)
         // .*>                  : Matches any remaining characters until the closing angle bracket
         // ; rel="$type->value" : Matches the rel attribute with the specified link type
-        if (preg_match("/<.*(?:&|\?)page=(\\d+).*>; rel=\"$type->value\"/", $linkHeader, $matches)) {
+        if (preg_match("/<.*[&?]page=(\\d+).*>; rel=\"$type->value\"/", $linkHeader, $matches)) {
             return (int) $matches[1];
         }
 
@@ -229,5 +232,21 @@ class GitHubApi
             $message .= " of $this->totalPages";
         }
         $this->progressMeter->setMessage($message);
+    }
+
+    public function checkRateLimits(Response $requestClient): void
+    {
+        if ($requestClient->getStatusCode() === 403 || $requestClient->getStatusCode() === 429) {
+            $max       = $requestClient->getHeaderLine('X-RateLimit-Limit');
+            $remaining = $requestClient->getHeaderLine('X-RateLimit-Remaining');
+            $reset     = $requestClient->getHeaderLine('X-RateLimit-Reset');
+
+            $resetTime = Carbon::createFromTimestampUTC($reset)
+                ->format('H:i:s - d M Y');
+
+            $message = "GitHub API rate limit exceeded. You have $remaining requests of $max remaining. You can make more requests at: $resetTime";
+
+            throw new RuntimeException(message: $message);
+        }
     }
 }
