@@ -40,7 +40,7 @@ class CheckAvailableVersions
     {
         $nextVersion = $availableVersions[0] ?? null;
 
-        if ($ignorePreReleases || Str::endsWith($nextVersion, ['a', 'b', 'alpha', 'beta'])) {
+        if ($ignorePreReleases && Str::endsWith($nextVersion, ['a', 'b', 'alpha', 'beta'])) {
             // iterate $availableVersions until we find a non-prerelease version
             foreach ($availableVersions as $version) {
                 if (!Str::endsWith($version, ['a', 'b', 'alpha', 'beta'])) {
