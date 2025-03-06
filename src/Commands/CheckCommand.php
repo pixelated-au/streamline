@@ -25,7 +25,7 @@ class CheckCommand extends Command
         $this->listenForSubProcessEvents();
 
         try {
-            $nextVersion = $availableVersions->execute($this->option('force'), $this->option('pre-releases'));
+            $nextVersion = $availableVersions->execute($this->option('force'), !$this->option('pre-releases'));
             $this->info('Next available version: ' . $nextVersion);
         } catch (RuntimeException $e) {
             $this->error($e->getMessage());
