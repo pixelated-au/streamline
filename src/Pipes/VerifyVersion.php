@@ -3,7 +3,7 @@
 namespace Pixelated\Streamline\Pipes;
 
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
+use Pixelated\Streamline\Actions\IsPreReleaseVersion;
 use Pixelated\Streamline\Enums\CacheKeysEnum;
 use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
@@ -12,6 +12,8 @@ use RuntimeException;
 
 class VerifyVersion implements Pipe
 {
+    public function __construct(private readonly IsPreReleaseVersion $isPreReleaseVersion) {}
+
     public function __invoke(UpdateBuilderInterface $builder): ?UpdateBuilderInterface
     {
         $requestedVersion = $builder->getRequestedVersion();
@@ -83,7 +85,7 @@ class VerifyVersion implements Pipe
             return;
         }
 
-        if (Str::endsWith($requestedVersion, ['alpha', 'beta', 'a', 'b'])) {
+        if ($this->isPreReleaseVersion->execute($requestedVersion)) {
             throw new RuntimeException("Version $requestedVersion is a pre-release version, use --force to install it.");
         }
     }
