@@ -1,11 +1,12 @@
 <?php
 
+/** @noinspection PhpClassCanBeReadonlyInspection */
+
 namespace Pixelated\Streamline\Actions;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 use Pixelated\Streamline\Enums\CacheKeysEnum;
 use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Events\NextAvailableVersionUpdated;
@@ -13,6 +14,8 @@ use RuntimeException;
 
 class CheckAvailableVersions
 {
+    public function __construct(private readonly IsPreReleaseVersion $isPreReleaseVersion) {}
+
     public function execute(bool $force = false, bool $ignorePreReleases = true): string
     {
         $availableVersions = Cache::get(CacheKeysEnum::AVAILABLE_VERSIONS->value);
@@ -40,14 +43,16 @@ class CheckAvailableVersions
     {
         $nextVersion = $availableVersions[0] ?? null;
 
-        if ($ignorePreReleases && Str::endsWith($nextVersion, ['a', 'b', 'alpha', 'beta'])) {
+        if ($ignorePreReleases && $this->isPreReleaseVersion->execute($nextVersion)) {
             // iterate $availableVersions until we find a non-prerelease version
             foreach ($availableVersions as $version) {
-                if (!Str::endsWith($version, ['a', 'b', 'alpha', 'beta'])) {
-                    $nextVersion = $version;
-
-                    break;
+                if ($this->isPreReleaseVersion->execute($version)) {
+                    continue;
                 }
+                //                if (!Str::endsWith($version, ['a', 'b', 'alpha', 'beta'])) {
+                $nextVersion = $version;
+
+                break;
             }
         }
 
