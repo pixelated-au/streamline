@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\Client\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Pixelated\Streamline\Facades\GitHubApi;
@@ -66,8 +67,14 @@ it('should find the last page when paginating through multiple pages of data', f
 
     Http::fake([
         'github.com/*' => Http::sequence()
-            ->push(body: mockApiBody(1), headers: ['Link' => "<$baseUrl?page=2&per_page=5>; rel=\"next\", <$baseUrl?page=75>; rel=\"last\""])
-            ->push(body: mockApiBody(2), headers: ['Link' => "<$baseUrl?page=3&per_page=5>; rel=\"next\", <$baseUrl?page=85>; rel=\"last\""])
+            ->push(
+                body: mockApiBody(1),
+                headers: ['Link' => "<$baseUrl?page=2&per_page=5>; rel=\"next\", <$baseUrl?page=75>; rel=\"last\""]
+            )
+            ->push(
+                body: mockApiBody(2),
+                headers: ['Link' => "<$baseUrl?page=3&per_page=5>; rel=\"next\", <$baseUrl?page=85>; rel=\"last\""]
+            )
             ->push(body: mockApiBody(3), headers: ['Link' => "<$baseUrl?page=2&per_page=5>; rel=\"prev\""]),
     ]);
 
@@ -95,7 +102,9 @@ it('should add the auth token to the request when provided', function() {
 
     GitHubApi::withApiUrl('test')->get();
 
-    Http::assertSent(fn(Request $request) => $request->hasHeader('Authorization') && $request->header('Authorization')[0] === 'Bearer test-token');
+    Http::assertSent(fn(
+        Request $request
+    ) => $request->hasHeader('Authorization') && $request->header('Authorization')[0] === 'Bearer test-token');
 });
 
 it('should not add the auth token to the request when not provided', function() {
@@ -107,4 +116,32 @@ it('should not add the auth token to the request when not provided', function() 
     GitHubApi::withApiUrl('test')->get();
 
     Http::assertSent(fn(Request $request) => !$request->hasHeader('Authorization'));
+});
+it('should throw a RuntimeException with rate limit details when 403 status code is returned', function() {
+    $rateLimit = '60';
+    $remaining = '0';
+    $now       = Carbon::now();
+    $reset     = $now->getTimestamp();
+
+    $baseUrl = 'https://api.github.com/repos/test/test';
+    // Mock the Carbon time formatting
+    $expectedTime = $now->format('H:i:s - d M Y');
+
+    Config::set('streamline.github_repo', 'test');
+    Config::set('app.timezone', 'Australia/Melbourne');
+
+    Http::fake([
+        'github.com/*' => Http::response('Rate limit exceeded', 403, [
+            'X-RateLimit-Limit'     => $rateLimit,
+            'X-RateLimit-Remaining' => $remaining,
+            'X-RateLimit-Reset'     => $reset,
+        ]),
+    ]);
+
+    $this->expectException(RuntimeException::class);
+    $this->expectExceptionMessage("GitHub API rate limit exceeded. You have $remaining requests of $rateLimit remaining. You can make more requests at: $expectedTime");
+
+    GitHubApi::withApiUrl('test')->get();
+
+    Http::assertSent(fn(Request $request) => $request->url() === $baseUrl);
 });
