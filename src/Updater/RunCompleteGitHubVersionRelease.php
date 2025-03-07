@@ -11,6 +11,8 @@ class RunCompleteGitHubVersionRelease
 {
     private string $laravelTempBackupDir;
 
+    private $stream = null;
+
     public function __construct(
         private readonly string $tempDirName,
         private readonly string $laravelBasePath,
@@ -180,10 +182,14 @@ class RunCompleteGitHubVersionRelease
 
     protected function output(string $message): void
     {
-        if ($this->doOutput) {
-            printf("$message\n");
-            flush();
+        if (!$this->doOutput) {
+            return;
         }
+
+        if (!$this->stream) {
+            $this->stream = fopen('php://output', 'wb');
+        }
+        fwrite($this->stream, "$message\n");
     }
 
     protected function validateDirectoriesExist(string $liveAssetsDir, string $tempWorkingDir): void
