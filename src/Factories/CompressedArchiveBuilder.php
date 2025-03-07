@@ -49,7 +49,7 @@ readonly class CompressedArchiveBuilder
             throw new RuntimeException('Failed to close zip file');
         }
 
-        CommandClassCallback::dispatch('success', 'Backup created successfully');
+        CommandClassCallback::dispatch('info', 'Backup created successfully');
 
         return $this;
     }

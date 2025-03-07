@@ -14,11 +14,11 @@ it('should dispatch proper events', function() {
 
     Event::assertDispatched(
         fn(CommandClassCallback $event) => $event
-            ->action === 'info' && $event->value === "Purging the temporary work directory: $tempDir"
+            ->action === 'comment' && $event->value === "Purging the temporary work directory: $tempDir"
     );
     Event::assertDispatched(
         fn(CommandClassCallback $event) => $event
-            ->action === 'success' && $event->value === "Temporary work directory purged successfully: $tempDir"
+            ->action === 'info' && $event->value === "Temporary work directory purged successfully: $tempDir"
     );
 });
 
@@ -33,7 +33,7 @@ it('should dispatch an failed event when it could not delete the temp dir', func
 
     Event::assertDispatched(
         fn(CommandClassCallback $event) => $event
-            ->action === 'info' && $event->value === "Purging the temporary work directory: $tempDir"
+            ->action === 'comment' && $event->value === "Purging the temporary work directory: $tempDir"
     );
     Event::assertDispatched(
         fn(CommandClassCallback $event) => $event

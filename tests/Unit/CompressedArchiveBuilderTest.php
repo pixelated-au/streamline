@@ -180,7 +180,7 @@ it('should skip directories during iteration', function() {
     );
 
     Event::assertDispatched(
-        fn(CommandClassCallback $event) => $event->action === 'success'
+        fn(CommandClassCallback $event) => $event->action === 'info'
         && $event->value                                  === 'Backup created successfully'
     );
 });

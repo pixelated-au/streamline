@@ -24,7 +24,7 @@ it('should dispatch an info event when the update executes successfully', functi
     $runUpdate($builder);
 
     Event::assertDispatched(CommandClassCallback::class, function(CommandClassCallback $event) {
-        return $event->action === 'info' && $event->value === 'Update successful';
+        return $event->action === 'line' && $event->value === 'Update successful';
     });
 });
 

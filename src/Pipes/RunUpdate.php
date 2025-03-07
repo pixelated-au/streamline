@@ -23,7 +23,7 @@ readonly class RunUpdate implements Pipe
                     throw new RuntimeException($output);
                 }
 
-                CommandClassCallback::dispatch('info', $output);
+                CommandClassCallback::dispatch('line', $output);
             }
         );
 

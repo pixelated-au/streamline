@@ -30,7 +30,10 @@ class CreateArchive
 
     public function create(): void
     {
-        CommandClassCallback::dispatch('info', "Backing up the current installation to $this->gzipPath");
+        CommandClassCallback::dispatch(
+            'info',
+            "Backing up the current installation to $this->gzipPath. This will take some time..."
+        );
 
         // check that the source folder exists
         if (!File::exists($this->sourceFolder)) {
@@ -46,7 +49,14 @@ class CreateArchive
     protected function checkDestinationPath(): void
     {
         if (
-            !File::isDirectory($this->destinationPath) && !File::makeDirectory($this->destinationPath, 0755, true) && !File::isDirectory($this->destinationPath)) {
+            !File::isDirectory($this->destinationPath)
+            && !File::makeDirectory(
+                $this->destinationPath,
+                0755,
+                true
+            )
+            && !File::isDirectory($this->destinationPath)
+        ) {
             throw new RuntimeException(sprintf('Directory "%s" was not created', $this->destinationPath));
         }
 

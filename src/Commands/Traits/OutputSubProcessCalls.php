@@ -24,7 +24,7 @@ trait OutputSubProcessCalls
                     'warn'    => $this->warn($event->value),
                     'error'   => $this->error($event->value),
                     'call'    => $this->call($event->value),
-                    default   => null,
+                    default   => $this->line($event->value),
                 };
             }
         );
