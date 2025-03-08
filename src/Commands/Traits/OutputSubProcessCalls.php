@@ -5,6 +5,7 @@
 namespace Pixelated\Streamline\Commands\Traits;
 
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Pixelated\Streamline\Events\CommandClassCallback;
@@ -38,6 +39,9 @@ trait OutputSubProcessCalls
 
     private function listenForSubProcessEvents(): void
     {
+        if (Context::has('streamline_is_listening_' . CommandClassCallback::class)) {
+            return;
+        }
         Event::listen(
             CommandClassCallback::class,
             function(CommandClassCallback $event) {
@@ -49,6 +53,7 @@ trait OutputSubProcessCalls
                 $this->outputEvent($event);
             }
         );
+        Context::add('streamline_is_listening_' . CommandClassCallback::class, true);
     }
 
     public function outputEvent(CommandClassCallback $event): void
