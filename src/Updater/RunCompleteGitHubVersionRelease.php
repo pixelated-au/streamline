@@ -11,7 +11,10 @@ class RunCompleteGitHubVersionRelease
 {
     private string $laravelTempBackupDir;
 
-    private $stream = null;
+    /** @var resource */
+    private $stream;
+
+    private bool $isTesting;
 
     public function __construct(
         private readonly string $tempDirName,
@@ -27,6 +30,8 @@ class RunCompleteGitHubVersionRelease
         private readonly bool $doOutput = false,
     ) {
         $this->laravelTempBackupDir = "{$this->laravelBasePath}_old";
+        $this->isTesting            = defined('IS_TESTING');
+        $this->stream               = $this->isTesting ? fopen('php://output', 'wb') : STDOUT;
     }
 
     public function run(): void
@@ -53,7 +58,7 @@ class RunCompleteGitHubVersionRelease
         $log = $this->recursiveCopyOldBuildFilesToNewDir($existingReleaseBuildDir, $incomingReleaseBuildDir);
 
         // This is to ensure the output is in a consistent log order for testing purposes.
-        defined('IS_TESTING') && sort($log);
+        $this->isTesting && sort($log);
 
         $this->output(implode(PHP_EOL, $log));
     }
@@ -167,7 +172,7 @@ class RunCompleteGitHubVersionRelease
         $this->output("Executing: $command");
 
         // @codeCoverageIgnoreStart
-        if (defined('IS_TESTING')) {
+        if ($this->isTesting) {
             return; // Do not execute commands in tests. We only want to simulate them.
         }
         $response = system($command);
@@ -184,10 +189,6 @@ class RunCompleteGitHubVersionRelease
     {
         if (!$this->doOutput) {
             return;
-        }
-
-        if (!$this->stream) {
-            $this->stream = fopen('php://output', 'wb');
         }
         fwrite($this->stream, "$message\n");
     }
