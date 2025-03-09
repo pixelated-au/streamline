@@ -31,9 +31,9 @@ class InstantiateStreamlineUpdater
      */
     public function execute(string $versionToInstall, Closure $callback): void
     {
-        $path = $this->getClassFilePath();
+        $classFilePath = $this->getClassFilePath();
 
-        $script = "<?php require_once '$path'; (new $this->runnerClass())->run(); ?>";
+        $script = "<?php require_once '$classFilePath'; (new $this->runnerClass())->run(); ?>";
 
         $protectedPaths = $this->parseArray([
             ...Config::commaToArray('streamline.protected_files'),
