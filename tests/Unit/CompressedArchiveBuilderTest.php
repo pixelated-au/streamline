@@ -176,7 +176,7 @@ it('should skip directories during iteration', function() {
 
     Event::assertDispatched(
         fn(CommandClassCallback $event) => $event->action === 'comment'
-        && $event->value                                  === 'Building backup zip file from ' . $sourcePath
+        && $event->value                                  === "Building backup zip file from $sourcePath\n  ...This will take some time..."
     );
 
     Event::assertDispatched(
