@@ -32,7 +32,7 @@ class CreateArchive
     {
         CommandClassCallback::dispatch(
             'info',
-            "Backing up the current installation to $this->gzipPath. This will take some time..."
+            "Backing up the current installation to $this->gzipPath."
         );
 
         // check that the source folder exists
