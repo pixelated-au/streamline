@@ -6,7 +6,8 @@ namespace Pixelated\Streamline\Actions;
 
 use Closure;
 use Illuminate\Support\Facades\Config;
-use Pixelated\Streamline\Factories;
+use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Process\PhpExecutableFinder;
 use ReflectionClass;
 use ReflectionException;
 use RuntimeException;
@@ -17,7 +18,6 @@ class InstantiateStreamlineUpdater
     private readonly string $runnerClass;
 
     public function __construct(
-        private readonly Factories\ProcessFactory $process,
         // TODO restore this after upgrading to Laravel 11
         //        #[ConfigAttribute('streamline.runner_class')]
         //        private readonly string           $runnerClass,
@@ -33,15 +33,15 @@ class InstantiateStreamlineUpdater
     {
         $classFilePath = $this->getClassFilePath();
 
-        $script = "<?php require_once '$classFilePath'; (new $this->runnerClass())->run(); ?>";
+        $script = "-r 'require \"$classFilePath\"; (new $this->runnerClass)->run();'";
 
         $protectedPaths = $this->parseArray([
             ...Config::commaToArray('streamline.protected_files'),
         ]);
 
-        $this->process
-            ->invoke($script)
-            ->setEnv([
+        $php = (new PhpExecutableFinder)->find();
+        Process::forever()
+            ->env([
                 'TEMP_DIR'                 => config('streamline.work_temp_dir'),
                 'LARAVEL_BASE_PATH'        => base_path(),
                 'PUBLIC_DIR_NAME'          => public_path(),
@@ -53,7 +53,7 @@ class InstantiateStreamlineUpdater
                 'OLD_RELEASE_ARCHIVE_PATH' => config('streamline.backup_dir'),
                 'DO_RETAIN_OLD_RELEASE'    => (bool) config('streamline.retain_old_releases'),
                 'IS_TESTING'               => defined('IS_TESTING'), // Set in phpunit config XML file.
-            ])->run($callback);
+            ])->run($php . ' ' . $script, $callback);
     }
 
     protected function parseArray(array|string $input): string
