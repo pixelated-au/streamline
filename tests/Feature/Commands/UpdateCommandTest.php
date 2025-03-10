@@ -4,7 +4,9 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
+use Mockery\MockInterface;
 use Pixelated\Streamline\Events\CommandClassCallback;
+use Pixelated\Streamline\Factories\ProcessFactory;
 use Pixelated\Streamline\Tests\Feature\Traits\HttpMock;
 use Pixelated\Streamline\Tests\Feature\Traits\UpdateCommandCommon;
 
@@ -26,6 +28,25 @@ beforeEach(function() {
             return $mock;
         }
     );
+
+    $process = Mockery::mock(Symfony\Component\Process\Process::class);
+
+    $process->shouldReceive('__construct')
+        ->andReturnSelf();
+    $process->shouldReceive('setEnv')
+        ->andReturnSelf();
+    $process->shouldReceive('run');
+
+    $this->mock(
+        ProcessFactory::class,
+        function(MockInterface $mock) use ($process) {
+            $mock->shouldReceive('__construct')
+                ->andReturnSelf();
+            $mock->shouldReceive('invoke')
+                ->andReturn($process);
+        }
+    );
+    //    Config::set('streamline.external_process_class', get_class($process));
 });
 
 it('should run an update with no parameters', function() {
