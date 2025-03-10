@@ -5,6 +5,7 @@
 namespace Pixelated\Streamline\Factories;
 
 use Illuminate\Support\Facades\Config;
+use Symfony\Component\Process\PhpExecutableFinder;
 use Symfony\Component\Process\Process;
 
 /**
@@ -22,9 +23,11 @@ class ProcessFactory
         $this->processClass = Config::get('streamline.external_process_class');
     }
 
-    public function invoke(string $script, ?string $cwd = null, ?array $env = null, int $timeout = 60, ?array $php = null): Process
+    public function invoke(string $script): Process
     {
-        // TODO THIS IS ONLY NEEDED UNTIL THE UPDATE TO LARAVEL 11
-        return new $this->processClass($script, $cwd, $env, $timeout, $php);
+        // TODO THIS CLASS IS ONLY NEEDED UNTIL THE UPDATE TO LARAVEL 11
+        $php = (new PhpExecutableFinder)->find();
+
+        return new $this->processClass([$php, '-r', $script]);
     }
 }
