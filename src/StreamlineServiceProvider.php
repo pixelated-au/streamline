@@ -59,8 +59,8 @@ class StreamlineServiceProvider extends PackageServiceProvider
         $this->app->resolving(
             OutputStyle::class,
             fn(OutputStyle $outputStyle) => $this->app
-            // Laravel resolves OutputStyle with make(). This means it won't be re-resolved which
-            // means it can't be reused later. This is why we bind() it to the app instance
+                // Laravel resolves OutputStyle with make(). This means it won't be re-resolved which
+                // means it can't be reused later. This is why we bind() it to the app instance
                 ->bindIf(OutputStyle::class, fn() => $outputStyle)
         );
     }
