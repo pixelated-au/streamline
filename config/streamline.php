@@ -13,6 +13,7 @@ use Pixelated\Streamline\Pipes\RunUpdate;
 use Pixelated\Streamline\Pipes\UnpackRelease;
 use Pixelated\Streamline\Pipes\VerifyVersion;
 use Symfony\Component\Process\PhpExecutableFinder;
+use Symfony\Component\Process\PhpProcess;
 
 return [
     /*
@@ -267,6 +268,21 @@ return [
     */
 
     'web_assets_max_file_size' => env('STREAMLINE_WEB_ASSET_MAX_FILE_SIZE', 1024 * 1024 * 5),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Process Class
+    |--------------------------------------------------------------------------
+    |
+    | This is the class that instantiates the external update process.
+    | Typically, it would extend Symfony\Component\Process\Process::class
+    | but it doesn't need to.
+    |
+    | @see Pixelated\Streamline\Actions\InstantiateStreamlineUpdater
+    |
+    */
+
+    'external_process_class' => PhpProcess::class,
 
     /*
     |--------------------------------------------------------------------------
