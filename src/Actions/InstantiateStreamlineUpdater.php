@@ -33,8 +33,7 @@ class InstantiateStreamlineUpdater
     {
         $classFilePath = $this->getClassFilePath();
 
-        $script = "<?php require_once '$classFilePath'; (new $this->runnerClass())->run(); ?>";
-
+        $script         = sprintf('require "%s"; (new %s)->run();', $classFilePath, $this->runnerClass);
         $protectedPaths = $this->parseArray([
             ...Config::commaToArray('streamline.protected_files'),
         ]);
