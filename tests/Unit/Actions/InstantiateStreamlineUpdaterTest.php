@@ -1,8 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Config;
+use Mockery\LegacyMockInterface;
 use Pixelated\Streamline\Actions\InstantiateStreamlineUpdater;
 use Pixelated\Streamline\Factories\ProcessFactory;
+use Symfony\Component\Process\Process;
 
 it('should throw a RuntimeException when given an invalid class', function() {
     $filename = 'BrokenClass.php';
@@ -54,12 +56,12 @@ it('can properly parse an array and string values', function() {
 it('should run the process and set all required environment variables correctly', function() {
     $this->expectNotToPerformAssertions();
 
-    $process          = Mockery::mock(ProcessFactory::class);
     $callback         = function() {};
     $versionToInstall = '2.0.0';
-    $classPath        = '/path/to/RunnerClass.php';
+    $runnerClass      = 'TestRunnerClass';
+    $classPath        = "/path/to/$runnerClass.php";
 
-    Config::set('streamline.runner_class', 'TestRunnerClass');
+    Config::set('streamline.runner_class', $runnerClass);
     Config::set('streamline.laravel_build_dir_name', 'build_dir_value');
     Config::set('streamline.work_temp_dir', 'temp_dir_value');
     Config::set('streamline.backup_dir', 'backup_dir_value');
@@ -69,15 +71,6 @@ it('should run the process and set all required environment variables correctly'
     Config::set('streamline.retain_old_releases', true);
     Config::set('streamline.web_assets_filterable_file_types', 'jpg,png,gif');
     Config::set('streamline.protected_files', 'path1,path2');
-
-    /** @var \Mockery\MockInterface&InstantiateStreamlineUpdater $updater */
-    $updater = Mockery::mock(InstantiateStreamlineUpdater::class, [$process])
-        ->makePartial()
-        ->shouldAllowMockingProtectedMethods();
-
-    $updater->shouldReceive('getClassFilePath')
-        ->once()
-        ->andReturn($classPath);
 
     $expectedEnv = [
         'TEMP_DIR'                 => config('streamline.work_temp_dir'),
@@ -93,16 +86,30 @@ it('should run the process and set all required environment variables correctly'
         'IS_TESTING'               => true,
     ];
 
-    $expectedScript = "<?php require_once '$classPath'; (new TestRunnerClass())->run(); ?>";
+    $process        = mockProcess($expectedEnv, $callback);
+    $processFactory = mockProcessFactory($classPath, $runnerClass, $process);
+    $updater        = mockUpdaterClass($processFactory, $classPath);
 
-    $phpProcess = Mockery::mock(Symfony\Component\Process\Process::class);
+    $updater->execute($versionToInstall, $callback);
+});
 
-    $process->shouldReceive('invoke')
-        ->with($expectedScript)
+function mockProcessFactory(string $classPath, string $runnerClass, $process): ProcessFactory
+{
+    $processFactory = Mockery::mock(ProcessFactory::class);
+
+    $processFactory->shouldReceive('invoke')
+        ->with(sprintf('require "%s"; (new %s)->run();', $classPath, $runnerClass))
         ->once()
-        ->andReturn($phpProcess);
+        ->andReturn($process);
 
-    $phpProcess->shouldReceive('setEnv')
+    return $processFactory;
+}
+
+function mockProcess(array $expectedEnv, Closure $callback): Process
+{
+    $process = Mockery::mock(Process::class);
+
+    $process->shouldReceive('setEnv')
         ->once()
         ->with(Mockery::on(function($env) use ($expectedEnv) {
             foreach ($expectedEnv as $key => $value) {
@@ -115,9 +122,24 @@ it('should run the process and set all required environment variables correctly'
         }))
         ->andReturnSelf();
 
-    $phpProcess->shouldReceive('run')
+    $process->shouldReceive('run')
         ->once()
         ->with($callback);
 
-    $updater->execute($versionToInstall, $callback);
-});
+    return $process;
+}
+
+function mockUpdaterClass(
+    ProcessFactory $processFactory,
+    string $classPath
+): InstantiateStreamlineUpdater|LegacyMockInterface {
+    $updater = Mockery::mock(InstantiateStreamlineUpdater::class, [$processFactory])
+        ->makePartial()
+        ->shouldAllowMockingProtectedMethods();
+
+    $updater->shouldReceive('getClassFilePath')
+        ->once()
+        ->andReturn($classPath);
+
+    return $updater;
+}
