@@ -13,7 +13,7 @@ use Pixelated\Streamline\Pipes\RunUpdate;
 use Pixelated\Streamline\Pipes\UnpackRelease;
 use Pixelated\Streamline\Pipes\VerifyVersion;
 use Symfony\Component\Process\PhpExecutableFinder;
-use Symfony\Component\Process\PhpProcess;
+use Symfony\Component\Process\Process;
 
 return [
     /*
@@ -282,7 +282,7 @@ return [
     |
     */
 
-    'external_process_class' => PhpProcess::class,
+    'external_process_class' => Process::class,
 
     /*
     |--------------------------------------------------------------------------
