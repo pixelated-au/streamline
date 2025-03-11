@@ -135,7 +135,7 @@ class StreamlineUpdater
 
         try {
             $composer = json_decode(file_get_contents($composerJsonPath), true, 512, JSON_THROW_ON_ERROR);
-            $dir      = $composer['config']['vendor-dir'] ?? 'vendor';
+            $dir      = $this->laravelBasePath . DIRECTORY_SEPARATOR . ($composer['config']['vendor-dir'] ?? 'vendor');
 
             return "$dir/autoload.php";
         } catch (JsonException) {
