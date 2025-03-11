@@ -351,7 +351,7 @@ it('outputs a warning when a protected path is not found', function() {
 
     $this->expectOutputString(
         "Preserving protected paths...\n" .
-        "Warning: Protected path not found: $deploymentPath/non_existent_path\n" .
+        "  - Warning: Protected path not found: $deploymentPath/non_existent_path\n" .
         "Protected paths preserved successfully.\n"
     );
 

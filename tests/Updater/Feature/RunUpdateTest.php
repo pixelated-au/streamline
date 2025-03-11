@@ -49,7 +49,7 @@ it(
             publicDirName: $disk->path('laravel/public'),
             frontendBuildDir: 'build',
             installingVersion: '1.0.0',
-            protectedPaths: ['.env'],
+            protectedPaths: ['.env', 'storage/logs/streamline.log', 'missing-file.txt'],
             dirPermission: 0755,
             filePermission: 0644,
             oldReleaseArchivePath: $tempDisk->path('/old_releases/oldArchive.tgz'),
@@ -67,6 +67,8 @@ it(
             '  - Skipped: ' . $tempDisk->path('unpacked/public/build/manifest.json') . '. File already exists (But still set permission: 420)',
             'Preserving protected paths...',
             '  - Copied: ' . $disk->path('laravel/.env') . ' to ' . $tempDisk->path('unpacked/.env') . ' (Permission: 420)',
+            '  - Copied: ' . $disk->path('laravel/storage/logs/streamline.log') . ' to ' . $tempDisk->path('unpacked/storage/logs/streamline.log') . ' (Permission: 420)',
+            '  - Warning: Protected path not found: ' . $disk->path('laravel/missing-file.txt'),
             'Protected paths preserved successfully.',
             'Moving ' . $disk->path('laravel') . ' to ' . $disk->path('laravel_old'),
             'Moving ' . $tempDisk->path('unpacked') . ' to ' . $disk->path('laravel'),
@@ -123,6 +125,7 @@ function makeDirsAndFiles(Filesystem $disk, Filesystem $tempDisk): void
     $disk->makeDirectory('laravel/app');
     $disk->put('laravel/app/test.php', '<?php // Test file');
     $disk->put('laravel/.env', "Prefix...\nSTREAMLINE_APPLICATION_VERSION_INSTALLED=v0.0.0\nSuffix...");
+    $disk->put('laravel/storage/logs/streamline.log', 'Log File...');
 
     $tempDisk->put('old_releases/oldArchive.tgz', 'old archive contents');
 }
@@ -142,6 +145,7 @@ function createNewReleaseFolderFileStructure(Filesystem $tempDisk, ?array $files
         'unpacked/public/build/assets/dir1/file3.txt',
         'unpacked/public/build/assets/dir1/dir2/file4.txt',
         'unpacked/public/build/assets/file5.txt',
+        'unpacked/storage/logs/streamline.log',
     ])
         ->each(fn(string $file) => $tempDisk->put($file, "This file has the name: $file"));
 }
