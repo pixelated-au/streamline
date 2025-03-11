@@ -16,31 +16,36 @@ it('will fail when it is missing environment variables', function() {
 
 it('can find the composer autoload file in the default vendor directory', function() {
     symlink(realpath('./composer.json'), './workbench/temp/composer.json');
+    symlink(realpath('./vendor'), './workbench/temp/vendor');
 
     setEnv(['LARAVEL_BASE_PATH' => './workbench/temp']);
     $updater = new StreamlineUpdater;
-    expect($updater->autoloadFile())->toBe('vendor/autoload.php');
+    expect($updater->autoloadFile())->toBe('./workbench/temp/vendor/autoload.php');
+})->after(function() {
     unlink('./workbench/temp/composer.json');
+    unlink('./workbench/temp/vendor');
 });
 
 it('can find the composer autoload file in a different directory', function() {
-    $projectPath = 'path/to/project/vendor-directory';
-
-    $root = vfsStream::setup('streamline');
-    $root->addChild(vfsStream::newDirectory($projectPath));
+    $projectPath = 'path/to/project';
+    $projectDir  = vfsStream::newDirectory($projectPath);
+    $root        = vfsStream::setup('streamline');
+    $root->addChild($projectDir);
 
     /** @var \org\bovigo\vfs\vfsStreamDirectory $project */
     $project = $root->getChild($projectPath);
 
     $vendor = vfsStream::newDirectory('vendor-directory');
-    $root->addChild($vendor);
+    $project->addChild($vendor);
 
     $composerFile = vfsStream::newFile('composer.json')->withContent(
-        collect(['config' => ['vendor-dir' => $vendor->url()]])->toJson(JSON_THROW_ON_ERROR)
+        collect(['config' => ['vendor-dir' => 'vendor-directory']])->toJson(JSON_THROW_ON_ERROR)
     );
     $project->addChild($composerFile);
 
-    setEnv(['LARAVEL_BASE_PATH' => $project->url(), 'IS_TESTING' => StreamlineUpdater::TESTING_ON_AND_SKIP_REQUIRE_AUTOLOAD]);
+    setEnv([
+        'LARAVEL_BASE_PATH' => $project->url(), 'IS_TESTING' => StreamlineUpdater::TESTING_ON_AND_SKIP_REQUIRE_AUTOLOAD,
+    ]);
     $updater = new StreamlineUpdater;
 
     expect($updater->autoloadFile())->toBe($vendor->url() . '/autoload.php');
@@ -62,7 +67,9 @@ it('throws an error when the composer.json file is invalid', function() {
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage('The file ' . $root->url() . '/composer.json file contains invalid JSON');
 
-    setEnv(['LARAVEL_BASE_PATH' => $root->url(), 'IS_TESTING' => StreamlineUpdater::TESTING_ON_AND_SKIP_REQUIRE_AUTOLOAD]);
+    setEnv([
+        'LARAVEL_BASE_PATH' => $root->url(), 'IS_TESTING' => StreamlineUpdater::TESTING_ON_AND_SKIP_REQUIRE_AUTOLOAD,
+    ]);
     (new StreamlineUpdater)->autoloadFile();
 });
 
@@ -81,7 +88,7 @@ it('should add an error message to envIssues when JSON parsing fails twice', fun
 });
 
 /**
- * @param array{
+ * @param  array{
  *     TEMP_DIR?: string,
  *     LARAVEL_BASE_PATH?: string,
  *     PUBLIC_DIR_NAME?: string,
@@ -93,7 +100,7 @@ it('should add an error message to envIssues when JSON parsing fails twice', fun
  *     OLD_RELEASE_ARCHIVE_PATH?: string,
  *     DO_RETAIN_OLD_RELEASE?: string,
  *     IS_TESTING?: int,
- * } $overrides
+ * }  $overrides
  */
 function setEnv(array $overrides = []): void
 {
