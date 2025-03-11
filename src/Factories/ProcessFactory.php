@@ -28,6 +28,6 @@ class ProcessFactory
         // TODO THIS CLASS IS ONLY NEEDED UNTIL THE UPDATE TO LARAVEL 11
         $php = (new PhpExecutableFinder)->find();
 
-        return new $this->processClass([$php, '-r', $script]);
+        return new $this->processClass([$php, '-d', 'display_errors=1', '-d', 'error_reporting=E_ALL', '-r', $script]);
     }
 }
