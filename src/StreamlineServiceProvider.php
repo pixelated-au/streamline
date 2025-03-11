@@ -45,10 +45,12 @@ class StreamlineServiceProvider extends PackageServiceProvider
             CreateArchive::class,
             fn(Application $app) => new CreateArchive(
                 sourceFolder: base_path(),
-                destinationPath: config('streamline.backup_dir'),
+                destinationPath: Config::get('streamline.backup_dir'),
                 filename: 'backup-' . date('Ymd_His') . '.tgz',
             )
         );
+
+        Config::get('logging.channels.streamline', Config::get('streamline.logging'));
 
         if ($this->app->environment('local')) {
             // @codeCoverageIgnoreStart
@@ -71,10 +73,6 @@ class StreamlineServiceProvider extends PackageServiceProvider
     public function bootingPackage(): void
     {
         ConfigCommaToArrayMacro::register();
-
-        /** @var \Illuminate\Config\Repository $config */
-        $config = $this->app->make('config');
-        $config->set('logging.channels.streamline', $config->get('streamline.logging'));
 
         AboutCommand::add('Streamline Updater', ['<fg=bright-magenta>Version</>' => $this->getVersionInfo()]);
     }
