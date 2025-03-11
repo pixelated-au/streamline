@@ -220,7 +220,7 @@ class RunCompleteGitHubVersionRelease
             } elseif (file_exists($sourcePath)) {
                 $log[] = $this->copyFile($sourcePath, $destinationPath);
             } else {
-                $log[] = "Warning: Protected path not found: $sourcePath";
+                $log[] = "  - Warning: Protected path not found: $sourcePath";
             }
         }
         $this->output(implode(PHP_EOL, $log));
