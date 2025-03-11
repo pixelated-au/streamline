@@ -43,7 +43,7 @@ return [
     |
     */
 
-    'protected_files' => env('STREAMLINE_PROTECTED_PATHS', '.env'),
+    'protected_files' => env('STREAMLINE_PROTECTED_PATHS', ['.env', 'storage/logs/streamline.log']),
 
     /*
     |--------------------------------------------------------------------------
