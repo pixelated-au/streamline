@@ -15,25 +15,25 @@ trait OutputSubProcessCalls
 {
     public function comment($message, $verbosity = null): void
     {
-        !App::runningUnitTests() && Log::debug($message);
+        !App::runningUnitTests() && Log::channel('streamline')->debug($message);
         parent::comment($message, $verbosity);
     }
 
     public function info($message, $verbosity = null): void
     {
-        !App::runningUnitTests() && Log::info($message);
+        !App::runningUnitTests() && Log::channel('streamline')->info($message);
         parent::info($message, $verbosity);
     }
 
     public function warn($message, $verbosity = null): void
     {
-        !App::runningUnitTests() && Log::warning($message);
+        !App::runningUnitTests() && Log::channel('streamline')->warning($message);
         parent::warn($message, $verbosity);
     }
 
     public function error($message, $verbosity = null): void
     {
-        !App::runningUnitTests() && Log::error($message);
+        !App::runningUnitTests() && Log::channel('streamline')->error($message);
         parent::error($message, $verbosity);
     }
 
