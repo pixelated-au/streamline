@@ -50,7 +50,7 @@ class StreamlineServiceProvider extends PackageServiceProvider
             )
         );
 
-        Config::get('logging.channels.streamline', Config::get('streamline.logging'));
+        Config::set('logging.channels.streamline', Config::get('streamline.logging'));
 
         if ($this->app->environment('local')) {
             // @codeCoverageIgnoreStart
