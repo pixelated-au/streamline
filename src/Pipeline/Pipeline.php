@@ -15,7 +15,8 @@ class Pipeline
 
     private Closure $destination;
 
-    private ?Closure $finallyHandler = null;
+    /** @var string|callable */
+    private $finallyHandler;
 
     public function __construct(protected UpdateBuilderInterface $builder) {}
 
@@ -40,9 +41,10 @@ class Pipeline
     }
 
     /**
+     * @param  class-string | callable  $finallyHandler
      * @return $this
      */
-    public function finally(Closure $finallyHandler): static
+    public function finally(string|callable $finallyHandler): static
     {
         $this->finallyHandler = $finallyHandler;
 

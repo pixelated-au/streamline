@@ -14,8 +14,10 @@ use Pixelated\Streamline\Commands\FinishUpdateCommand;
 use Pixelated\Streamline\Commands\InitInstalledVersionCommand;
 use Pixelated\Streamline\Commands\ListCommand;
 use Pixelated\Streamline\Commands\UpdateCommand;
+use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 use Pixelated\Streamline\Macros\ConfigCommaToArrayMacro;
 use Pixelated\Streamline\Testing\Mocks\UpdateRunnerFake;
+use Pixelated\Streamline\Updater\UpdateBuilder;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -41,6 +43,8 @@ class StreamlineServiceProvider extends PackageServiceProvider
 
     public function registeringPackage(): void
     {
+        $this->app->singleton(UpdateBuilderInterface::class, UpdateBuilder::class);
+
         $this->app->bind(
             CreateArchive::class,
             fn(Application $app) => new CreateArchive(

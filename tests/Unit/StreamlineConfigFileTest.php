@@ -1,7 +1,8 @@
 <?php
 
+use Illuminate\Support\Facades\App;
 use Pixelated\Streamline\Events\CommandClassCallback;
-use Pixelated\Streamline\Updater\UpdateBuilder;
+use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 
 it('outputs an info message when the cleanup process fails', function() {
     Process::preventStrayProcesses();
@@ -28,8 +29,9 @@ it('outputs an info message when the cleanup process fails', function() {
 
     Event::fake(CommandClassCallback::class);
 
-    $builder  = (new UpdateBuilder)->setBasePath(base_path());
-    $callback = Config::get('streamline.pipeline-finish');
+    $builder = App::make(UpdateBuilderInterface::class)
+        ->setBasePath(base_path());
+    $callback = App::make(Config::get('streamline.pipeline-finish-class'));
     $callback($builder);
 
     Event::assertDispatchedTimes(CommandClassCallback::class);
@@ -67,8 +69,9 @@ it('outputs an error when the cleanup process fails', function() {
     );
     Event::fake(CommandClassCallback::class);
 
-    $builder  = (new UpdateBuilder)->setBasePath(base_path());
-    $callback = Config::get('streamline.pipeline-finish');
+    $builder = App::make(UpdateBuilderInterface::class)
+        ->setBasePath(base_path());
+    $callback = App::make(Config::get('streamline.pipeline-finish-class'));
     $callback($builder);
 
     Event::assertDispatchedTimes(CommandClassCallback::class);
