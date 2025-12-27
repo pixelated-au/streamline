@@ -16,6 +16,8 @@ class StreamlineUpdater
 
     public string $installingVersion;
 
+    public string $composerPath;
+
     public string $oldReleaseArchivePath;
 
     public array $protectedPaths;
@@ -46,6 +48,7 @@ class StreamlineUpdater
         $this->publicDirName         = $this->env('PUBLIC_DIR_NAME');
         $this->frontEndBuildDir      = $this->env('FRONT_END_BUILD_DIR');
         $this->installingVersion     = $this->env('INSTALLING_VERSION');
+        $this->composerPath          = $this->env('COMPOSER_PATH');
         $this->protectedPaths        = $this->jsonEnv('PROTECTED_PATHS');
         $this->dirPermission         = (int) $this->env('DIR_PERMISSION');
         $this->filePermission        = (int) $this->env('FILE_PERMISSION');
@@ -109,6 +112,7 @@ class StreamlineUpdater
             publicDirName: $this->publicDirName,
             frontendBuildDir: $this->frontEndBuildDir,
             installingVersion: $this->installingVersion,
+            composerPath: $this->composerPath,
             protectedPaths: $this->protectedPaths,
             dirPermission: $this->dirPermission,
             filePermission: $this->filePermission,

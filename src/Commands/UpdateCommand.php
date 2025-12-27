@@ -18,6 +18,7 @@ class UpdateCommand extends Command
 
     protected $signature = 'streamline:run-update
     {--install-version= : Specify version to install}
+    {--composer= : Set the path to composer.phar if not installed globally}
     {--force : Force update. Use for overriding the current version.}';
 
     protected $description = 'CLI update';
@@ -33,6 +34,7 @@ class UpdateCommand extends Command
             ->setBasePath(base_path())
             ->setRequestedVersion($this->option('install-version'))
             ->setCurrentlyInstalledVersion(Config::get('streamline.installed_version'))
+            ->setComposerPath($this->option('composer'))
             ->forceUpdate($this->option('force'));
 
         return (new Pipeline($builder))

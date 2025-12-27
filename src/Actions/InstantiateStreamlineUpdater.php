@@ -5,6 +5,7 @@
 namespace Pixelated\Streamline\Actions;
 
 use Closure;
+use Illuminate\Container\Attributes\Config as ConfigAttribute;
 use Illuminate\Support\Facades\Config;
 use Pixelated\Streamline\Factories;
 use ReflectionClass;
@@ -13,23 +14,17 @@ use RuntimeException;
 
 class InstantiateStreamlineUpdater
 {
-    /** @var class-string */
-    private readonly string $runnerClass;
-
     public function __construct(
         private readonly Factories\ProcessFactory $process,
-        // TODO restore this after upgrading to Laravel 11
-        //        #[ConfigAttribute('streamline.runner_class')]
-        //        private readonly string           $runnerClass,
-    ) {
-        // TODO restore this after upgrading to Laravel 11
-        $this->runnerClass = Config::get('streamline.runner_class');
-    }
+        #[ConfigAttribute('streamline.runner_class')]
+        /** @var class-string */
+        private readonly string $runnerClass,
+    ) {}
 
     /**
      * @param  Closure(string, string): void  $callback
      */
-    public function execute(string $versionToInstall, Closure $callback): void
+    public function execute(string $versionToInstall, string $composerPath, Closure $callback): void
     {
         $classFilePath = $this->getClassFilePath();
 
@@ -46,6 +41,7 @@ class InstantiateStreamlineUpdater
                 'PUBLIC_DIR_NAME'          => public_path(),
                 'FRONT_END_BUILD_DIR'      => config('streamline.laravel_build_dir_name'),
                 'INSTALLING_VERSION'       => $versionToInstall,
+                'COMPOSER_PATH'            => $composerPath,
                 'PROTECTED_PATHS'          => $protectedPaths,
                 'DIR_PERMISSION'           => (int) config('streamline.directory_permissions'),
                 'FILE_PERMISSION'          => (int) config('streamline.file_permissions'),

@@ -3,6 +3,7 @@
 /** @noinspection PhpUnusedParameterInspection */
 
 use Pixelated\Streamline\Pipes\BackupCurrentInstallation;
+use Pixelated\Streamline\Pipes\CheckComposer;
 use Pixelated\Streamline\Pipes\CheckLaravelBasePathWritable;
 use Pixelated\Streamline\Pipes\DownloadRelease;
 use Pixelated\Streamline\Pipes\GetNextAvailableReleaseVersion;
@@ -312,6 +313,7 @@ return [
 
     'pipeline-update' => [
         CheckLaravelBasePathWritable::class,
+        CheckComposer::class,
         GetNextAvailableReleaseVersion::class,
         VerifyVersion::class,
         MakeTempDir::class,

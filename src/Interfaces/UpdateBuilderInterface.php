@@ -8,6 +8,10 @@ interface UpdateBuilderInterface
 
     public function getBasePath(): string;
 
+    public function setComposerPath(string $path): UpdateBuilderInterface;
+
+    public function getComposerPath(): string;
+
     public function setCurrentlyInstalledVersion(string $version): UpdateBuilderInterface;
 
     public function getCurrentlyInstalledVersion(): ?string;

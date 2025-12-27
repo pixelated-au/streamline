@@ -22,6 +22,7 @@ class RunCompleteGitHubVersionRelease
         private readonly string $publicDirName,
         private readonly string $frontendBuildDir,
         private readonly string $installingVersion,
+        private readonly string $composerPath,
         private readonly array $protectedPaths,
         private readonly int $dirPermission,
         private readonly int $filePermission,
@@ -40,6 +41,7 @@ class RunCompleteGitHubVersionRelease
         $this->copyFrontEndAssetsFromOldToNewRelease();
         $this->preserveProtectedPaths();
         $this->moveNewReleaseIntoDeployment();
+        $this->runComposerUpdate();
         $this->removeOldDeployment();
         $this->setEnvVersionNumber();
         $this->optimiseNewRelease();
@@ -92,6 +94,13 @@ class RunCompleteGitHubVersionRelease
         rename($this->laravelBasePath, $this->laravelTempBackupDir);
         $this->output("Moving $this->tempDirName to $this->laravelBasePath");
         rename($this->tempDirName, $this->laravelBasePath);
+    }
+
+    protected function runComposerUpdate(): void
+    {
+        $this->output("Running composer update with path: $this->composerPath");
+
+        $this->runCommand("$this->composerPath update");
     }
 
     protected function removeOldDeployment(): void
