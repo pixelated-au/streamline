@@ -100,7 +100,7 @@ class RunCompleteGitHubVersionRelease
     {
         $this->output("Running composer update with path: $this->composerPath");
 
-        $this->runCommand("$this->composerPath update");
+        $this->runCommand("$this->composerPath install");
     }
 
     protected function removeOldDeployment(): void
