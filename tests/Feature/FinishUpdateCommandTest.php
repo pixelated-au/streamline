@@ -4,6 +4,9 @@ use Mockery\MockInterface;
 use Pixelated\Streamline\Actions\UncachedEnvironment;
 use Pixelated\Streamline\Enums\CacheKeysEnum;
 use Pixelated\Streamline\Events\InstalledVersionSet;
+use Pixelated\Streamline\Tests\Feature\Traits\CheckComposerPath;
+
+pest()->uses(CheckComposerPath::class);
 
 it('sets the installed version and dispatches an event', function() {
     Event::fake();

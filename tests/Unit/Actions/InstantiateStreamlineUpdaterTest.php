@@ -15,12 +15,12 @@ it('should throw a RuntimeException when given an invalid class', function() {
     $this->expectExceptionMessage("Error instantiating updater class '$filename': Class \"$filename\" does not exist");
 
     // TODO remove this after upgrading to Laravel 11
-    Config::set('streamline.runner_class', $filename);
+    //    Config::set('streamline.runner_class', $filename);
 
     // TODO restore this after upgrading to Laravel 11
-    //        (new InstantiateStreamlineUpdater($process, $nonExistentClassName))
-    (new InstantiateStreamlineUpdater($process))
-        ->execute('1.0.0', fn() => null);
+    (new InstantiateStreamlineUpdater($process, $filename))
+//    (new InstantiateStreamlineUpdater($process))
+        ->execute('1.0.0', '', fn() => null);
 });
 
 it('should return the file path when a valid class is passed in', function() {
@@ -33,8 +33,7 @@ it('should return the file path when a valid class is passed in', function() {
     $process = Mockery::mock(ProcessFactory::class);
 
     /** @noinspection PhpUndefinedClassInspection */
-    Config::set('streamline.runner_class', ValidTestClass::class);
-    $updater = new InstantiateStreamlineUpdater($process);
+    $updater = new InstantiateStreamlineUpdater($process, ValidTestClass::class);
 
     $pathInvokable = Closure::bind(fn() => $this->getClassFilePath(), $updater, $updater);
     $this->assertSame(Storage::path($filename), $pathInvokable());
@@ -44,8 +43,7 @@ it('can properly parse an array and string values', function() {
     $process = Mockery::mock(ProcessFactory::class);
 
     /** @noinspection PhpUndefinedClassInspection */
-    Config::set('streamline.runner_class', ValidTestClass::class);
-    $updater    = new InstantiateStreamlineUpdater($process);
+    $updater    = new InstantiateStreamlineUpdater($process, ValidTestClass::class);
     $arrayValue = Closure::bind(fn() => $this->parseArray(['one', 'two']), $updater, $updater);
     $this->assertSame('["one","two"]', $arrayValue());
 
@@ -61,7 +59,6 @@ it('should run the process and set all required environment variables correctly'
     $runnerClass      = 'TestRunnerClass';
     $classPath        = "/path/to/$runnerClass.php";
 
-    Config::set('streamline.runner_class', $runnerClass);
     Config::set('streamline.laravel_build_dir_name', 'build_dir_value');
     Config::set('streamline.work_temp_dir', 'temp_dir_value');
     Config::set('streamline.backup_dir', 'backup_dir_value');
@@ -78,6 +75,7 @@ it('should run the process and set all required environment variables correctly'
         'PUBLIC_DIR_NAME'          => public_path(),
         'FRONT_END_BUILD_DIR'      => config('streamline.laravel_build_dir_name'),
         'INSTALLING_VERSION'       => $versionToInstall,
+        'COMPOSER_PATH'            => '/dev/null',
         'PROTECTED_PATHS'          => '["path1","path2"]',
         'DIR_PERMISSION'           => 0755,
         'FILE_PERMISSION'          => 0644,
@@ -88,9 +86,9 @@ it('should run the process and set all required environment variables correctly'
 
     $process        = mockProcess($expectedEnv, $callback);
     $processFactory = mockProcessFactory($classPath, $runnerClass, $process);
-    $updater        = mockUpdaterClass($processFactory, $classPath);
+    $updater        = mockUpdaterClass($processFactory, $classPath, $runnerClass);
 
-    $updater->execute($versionToInstall, $callback);
+    $updater->execute($versionToInstall, '/dev/null', $callback);
 });
 
 function mockProcessFactory(string $classPath, string $runnerClass, $process): ProcessFactory
@@ -131,9 +129,10 @@ function mockProcess(array $expectedEnv, Closure $callback): Process
 
 function mockUpdaterClass(
     ProcessFactory $processFactory,
-    string $classPath
+    string $classPath,
+    string $runnerClass
 ): InstantiateStreamlineUpdater|LegacyMockInterface {
-    $updater = Mockery::mock(InstantiateStreamlineUpdater::class, [$processFactory])
+    $updater = Mockery::mock(InstantiateStreamlineUpdater::class, [$processFactory, $runnerClass])
         ->makePartial()
         ->shouldAllowMockingProtectedMethods();
 
