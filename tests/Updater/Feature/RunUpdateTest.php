@@ -74,7 +74,7 @@ it(
             'Moving ' . $disk->path('laravel') . ' to ' . $disk->path('laravel_old'),
             'Moving ' . $tempDisk->path('unpacked') . ' to ' . $disk->path('laravel'),
             'Running composer update with path: /dev/null',
-            'Executing: /dev/null update',
+            'Executing: /dev/null install',
             'Deleting of ' . $disk->path('laravel_old') . " as it's no longer needed",
             'Setting version number in .env file to: 1.0.0',
             'Version number updated successfully in .env file',
