@@ -95,6 +95,9 @@ Please review [our security policy](../../security/policy) on how to report secu
 - [Pixelated](https://github.com/pixelated-au)
 - [All Contributors](../../contributors)
 
+## TODO
+- [ ] Detect if the GitHub token has expired. If so, output an error to the user  
+
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE) for more information.

@@ -10,6 +10,8 @@ class UpdateBuilder implements UpdateBuilderInterface
 
     private string $currentlyInstalledVersion;
 
+    private ?string $composerPath = null;
+
     private ?string $requestedVersion = null;
 
     private ?string $versionToInstall = null;
@@ -47,6 +49,21 @@ class UpdateBuilder implements UpdateBuilderInterface
     public function getCurrentlyInstalledVersion(): ?string
     {
         return $this->currentlyInstalledVersion;
+    }
+
+    public function setComposerPath(?string $path): UpdateBuilderInterface
+    {
+        if (!$path) {
+            $path = 'composer';
+        }
+        $this->composerPath = $path;
+
+        return $this;
+    }
+
+    public function getComposerPath(): string
+    {
+        return $this->composerPath;
     }
 
     public function setRequestedVersion(?string $version): UpdateBuilderInterface

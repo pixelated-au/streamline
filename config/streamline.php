@@ -2,9 +2,8 @@
 
 /** @noinspection PhpUnusedParameterInspection */
 
-use Pixelated\Streamline\Events\CommandClassCallback;
-use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 use Pixelated\Streamline\Pipes\BackupCurrentInstallation;
+use Pixelated\Streamline\Pipes\CheckComposer;
 use Pixelated\Streamline\Pipes\CheckLaravelBasePathWritable;
 use Pixelated\Streamline\Pipes\DownloadRelease;
 use Pixelated\Streamline\Pipes\GetNextAvailableReleaseVersion;
@@ -12,7 +11,6 @@ use Pixelated\Streamline\Pipes\MakeTempDir;
 use Pixelated\Streamline\Pipes\RunUpdate;
 use Pixelated\Streamline\Pipes\UnpackRelease;
 use Pixelated\Streamline\Pipes\VerifyVersion;
-use Symfony\Component\Process\PhpExecutableFinder;
 use Symfony\Component\Process\Process;
 
 return [
@@ -315,6 +313,7 @@ return [
 
     'pipeline-update' => [
         CheckLaravelBasePathWritable::class,
+        CheckComposer::class,
         GetNextAvailableReleaseVersion::class,
         VerifyVersion::class,
         MakeTempDir::class,
@@ -329,24 +328,12 @@ return [
     | Pipeline Cleanup
     |--------------------------------------------------------------------------
     |
-    | Anything in this function will be executed after all pipeline steps have
-    | completed. Even if an error occurs during the pipeline execution.
+    | Anything in this class will be executed after all pipeline steps have
+    | completed, even if an error occurs during the pipeline execution.
     |
     */
 
-    'pipeline-finish' => static function(UpdateBuilderInterface $builder) {
-        $process = resolve(\Symfony\Component\Process\Process::class, [
-            'command' => [(new PhpExecutableFinder)->find(), 'artisan', 'streamline:finish-update'],
-            'cwd'     => $builder->getBasePath(),
-        ]);
-        $process->run();
-
-        if ($process->isSuccessful()) {
-            CommandClassCallback::dispatch('info', $process->getOutput());
-        } else {
-            CommandClassCallback::dispatch('error', $process->getErrorOutput());
-        }
-    },
+    'pipeline-finish-class' => \Pixelated\Streamline\Services\FinishUpdate::class,
 
     /*
     |--------------------------------------------------------------------------

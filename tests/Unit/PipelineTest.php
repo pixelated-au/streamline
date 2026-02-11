@@ -6,9 +6,11 @@ use Pixelated\Streamline\Updater\UpdateBuilder;
 it('can process function pipes', closure: function() {
     $this->expectOutputString('Test pipe');
     $result = (new Pipeline(new UpdateBuilder))
-        ->through([function() {
-            echo 'Test pipe';
-        }])
+        ->through([
+            function() {
+                echo 'Test pipe';
+            },
+        ])
         ->then(fn() => true);
 
     $this->assertTrue($result);
@@ -17,9 +19,11 @@ it('can process function pipes', closure: function() {
 it('can handle pipe exceptions properly', closure: function() {
     $this->expectOutputString('Caught exception: Test exception');
     $result = (new Pipeline(new UpdateBuilder))
-        ->through([function() {
-            throw new RuntimeException('Test exception');
-        }])
+        ->through([
+            function() {
+                throw new RuntimeException('Test exception');
+            },
+        ])
         ->catch(function(Throwable $e) {
             echo 'Caught exception: ' . $e->getMessage();
 
@@ -35,9 +39,11 @@ it('will throw pipe exceptions properly', closure: function() {
     $this->expectException(RuntimeException::class);
     $this->expectExceptionMessage('Test throwing exception');
     (new Pipeline(new UpdateBuilder))
-        ->through([function() {
-            throw new RuntimeException('Test throwing exception');
-        }])
+        ->through([
+            function() {
+                throw new RuntimeException('Test throwing exception');
+            },
+        ])
         ->then(function() {
             return true;
         });
@@ -71,7 +77,18 @@ it('will throw "then" exceptions properly', closure: function() {
 it('will throw an exception but still run the finally function', closure: function() {
     $this->expectOutputString('Caught exception: Test finally exception');
 
-    $finallyRun = false;
+    $x = new class(false)
+    {
+        public function __construct(public bool $finallyWasCalled) {}
+
+        public function __invoke(): void
+        {
+            // This function should be called. First confirm that $finallyRun is false. Then set $finallyRun to true
+            // so that it can be confirmed that the finally function was called
+            $this->finallyWasCalled = true;
+        }
+    };
+    $this->assertFalse($x->finallyWasCalled);
 
     $result = (new Pipeline(new UpdateBuilder))
         ->through([fn() => throw new RuntimeException('Test finally exception')])
@@ -80,17 +97,12 @@ it('will throw an exception but still run the finally function', closure: functi
 
             return false;
         })
-        ->finally(function() use (&$finallyRun) {
-            // This function should be called. First confirm that $finallyRun is false. Then set $finallyRun to true
-            // so that it can be confirmed that the finally function was called
-            $this->assertFalse($finallyRun);
-            $finallyRun = true;
-        })
+        ->finally($x)
         ->then(function() {
             $this->assertTrue(false, 'This should not be reached, therefore it should fail if called');
 
             return true;
         });
-    $this->asserttrue($finallyRun);
+    $this->assertTrue($x->finallyWasCalled);
     $this->assertFalse($result);
 });

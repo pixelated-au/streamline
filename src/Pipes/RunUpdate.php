@@ -12,11 +12,12 @@ readonly class RunUpdate implements Pipe
 {
     public function __construct(private InstantiateStreamlineUpdater $runUpdate) {}
 
-    public function __invoke($builder): UpdateBuilderInterface
+    public function __invoke(UpdateBuilderInterface $builder): UpdateBuilderInterface
     {
         $this->runUpdate->execute(
-            $builder->getRequestedVersion() ?? $builder->getNextAvailableRepositoryVersion(),
-            function(string $type, string $output) {
+            versionToInstall: $builder->getRequestedVersion() ?? $builder->getNextAvailableRepositoryVersion(),
+            composerPath: $builder->getComposerPath(),
+            callback: function(string $type, string $output) {
                 if ($type === 'err') {
                     CommandClassCallback::dispatch('error', $output);
 

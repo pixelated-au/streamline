@@ -7,10 +7,11 @@ use Illuminate\Support\Facades\Process;
 use Mockery\MockInterface;
 use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Factories\ProcessFactory;
+use Pixelated\Streamline\Tests\Feature\Traits\CheckComposerPath;
 use Pixelated\Streamline\Tests\Feature\Traits\HttpMock;
 use Pixelated\Streamline\Tests\Feature\Traits\UpdateCommandCommon;
 
-pest()->uses(UpdateCommandCommon::class, HttpMock::class);
+pest()->uses(UpdateCommandCommon::class, HttpMock::class, CheckComposerPath::class);
 
 beforeEach(function() {
     $this->app->bind(
@@ -57,6 +58,7 @@ it('should run an update with no parameters', function() {
         ->mockZipArchive();
 
     $this->mockGetWebArchive();
+    $this->mockComposerPath('composer');
 
     Config::set('streamline.laravel_build_dir_name', '/path/to/build');
 
@@ -105,8 +107,9 @@ it('should run an update with a specific version', function() {
     File::shouldReceive('deleteDirectory');
     Config::set('streamline.installed_version', 'v2.8.1');
     $this->mockGetWebArchive();
+    $this->mockComposerPath('/dev/null');
 
-    $this->artisan('streamline:run-update --install-version=v2.9.0')
+    $this->artisan('streamline:run-update --install-version=v2.9.0 --composer=/dev/null')
         ->expectsOutputToContain('Changing deployment to version: v2.9.0')
         ->assertExitCode(0);
 });
@@ -114,9 +117,11 @@ it('should run an update with a specific version', function() {
 it('should run an update but notifies there are no new versions', function() {
     $this->mockCache(['v2.0.0', 'v1.0.0'], 'v2.0.0');
     $this->mockGetWebArchive();
+    $this->mockComposerPath('/dev/null');
+
     Config::set('streamline.installed_version', 'v2.0.0');
 
-    $this->artisan('streamline:run-update')
+    $this->artisan('streamline:run-update --composer=/dev/null')
         ->expectsOutputToContain('You are currently using the latest version (v2.0.0)')
         ->assertExitCode(0);
 });
@@ -125,8 +130,9 @@ it('should run an update but cannot find any available versions and return an er
     $this->mockCache([]);
     $this->mockGetWebArchive()
         ->mockHttpReleases(Http::response([]));
+    $this->mockComposerPath('/dev/null');
 
-    $this->artisan('streamline:run-update')
+    $this->artisan('streamline:run-update --composer=/dev/null')
         ->expectsOutputToContain('The next available version could not be determined.')
         ->assertExitCode(1);
 });
@@ -135,8 +141,9 @@ it('should run an update but GitHub returns a connection error', function() {
     $this->mockCache(['v2.0.0', 'v1.0.0'], 'v2.0.0');
     Config::set('streamline.installed_version', 'v1.0.0');
     Http::fake(['github.com/*' => Http::failedConnection()]);
+    $this->mockComposerPath('/dev/null');
 
-    $this->artisan('streamline:run-update')
+    $this->artisan('streamline:run-update --composer=/dev/null')
         ->expectsOutputToContain('Failed to connect to GitHub API')
         ->assertExitCode(1);
 });
@@ -147,10 +154,11 @@ it(
         $this->mockCache(['v2.0.0', 'v1.0.0'])
             ->mockGetAvailableVersions();
         $this->mockHttpReleases();
+        $this->mockComposerPath('/dev/null');
 
         Config::set('streamline.installed_version', 'v2.0.0');
 
-        $this->artisan('streamline:run-update --install-version=v1.0.0')
+        $this->artisan('streamline:run-update --install-version=v1.0.0 --composer=/dev/null')
             ->expectsOutputToContain('Version v1.0.0 is not greater than the current version (v2.0.0)')
             ->assertExitCode(1);
     }
@@ -159,8 +167,9 @@ it(
 it('should run an update requesting a pre-release version and fail', function(string $version) {
     $this->mockCache(availableVersions: [$version, 'v1.0.0']);
     $this->mockHttpReleases();
+    $this->mockComposerPath('/dev/null');
 
-    $this->artisan("streamline:run-update --install-version=$version")
+    $this->artisan("streamline:run-update --install-version=$version --composer=/dev/null")
         ->expectsOutputToContain("Version $version is a pre-release version, use --force to install it.")
         ->assertExitCode(1);
 })->with(['v1.0.1-alpha', 'v1.0.1-beta', 'v1.0.1a', 'v1.0.1b']);
@@ -172,6 +181,7 @@ it('should run an update requesting a pre-release version with --force and succe
         ->mockCache(availableVersions: [$version, 'v1.0.0'])
         ->mockGetAvailableVersions()
         ->mockZipArchive();
+    $this->mockComposerPath('/dev/null');
 
     File::shouldReceive('deleteDirectory');
 
@@ -193,24 +203,19 @@ it('should run an update requesting a pre-release version with --force and succe
             return $mock;
         }
     );
-    //    Process::fake([
-    //        '* artisan streamline:finish-update' => Process::result('test output'),
-    //    ]);
 
-    //    $this->withoutMockingConsoleOutput();
-    //    $this->artisan("streamline:run-update --install-version=$version --force");
-    $this->artisan("streamline:run-update --install-version=$version --force")
+    $this->artisan("streamline:run-update --install-version=$version --composer=/dev/null --force")
         ->expectsOutputToContain("Version: $version will be installed")
         ->expectsOutputToContain("Downloading archive for version $version")
         ->assertExitCode(0);
-    //        Process::assertRan(PHP_BINARY . ' artisan streamline:finish-update');
 })->with(['v1.0.1-alpha', 'v1.0.1-beta', 'v1.0.1a', 'v1.0.1b']);
 
 it('should run an update requesting an invalid version and return an error', function() {
     $this->mockCache();
     $this->mockHttpReleases();
+    $this->mockComposerPath('/dev/null');
 
-    $this->artisan('streamline:run-update --install-version=hello')
+    $this->artisan('streamline:run-update --install-version=hello --composer=/dev/null')
         ->expectsOutputToContain('Version hello is not a valid version!')
         ->assertExitCode(1);
 });
@@ -218,8 +223,9 @@ it('should run an update requesting an invalid version and return an error', fun
 it('should run a "forced" update requesting an invalid version and return an error', function() {
     $this->mockCache();
     $this->mockHttpReleases();
+    $this->mockComposerPath('/dev/null');
 
-    $this->artisan('streamline:run-update --install-version=hello --force')
+    $this->artisan('streamline:run-update --install-version=hello --composer=/dev/null --force')
         ->expectsOutputToContain('Version hello is not a valid version!')
         ->assertExitCode(1);
 });
@@ -229,11 +235,13 @@ it('should run a "forced" update on an existing version', function() {
         ->mockCache(['v2.0.0', 'v1.0.0'])
         ->mockGetAvailableVersions()
         ->mockZipArchive();
+    $this->mockComposerPath('/dev/null');
+
     File::shouldReceive('deleteDirectory');
     Config::set('streamline.installed_version', 'v2.0.0');
 
     $this->mockGetWebArchive();
-    $this->artisan('streamline:run-update --force --install-version=v1.0.0')
+    $this->artisan('streamline:run-update --force --install-version=v1.0.0 --composer=/dev/null')
         ->expectsOutputToContain('Version v1.0.0 is not greater than the current version (v2.0.0) (Forced update)')
         ->assertExitCode(0);
 });
@@ -243,12 +251,38 @@ it('should run a "forced" update on the most recent', function() {
         ->mockCache(['v2.0.0', 'v1.0.0'], 'v2.0.0')
         ->mockGetAvailableVersions()
         ->mockZipArchive();
+    $this->mockComposerPath('/dev/null');
     File::shouldReceive('deleteDirectory');
 
     Config::set('streamline.installed_version', 'v2.0.0');
 
     $this->mockGetWebArchive();
-    $this->artisan('streamline:run-update --force')
+    $this->artisan('streamline:run-update --composer=/dev/null --force')
         ->expectsOutputToContain('You are currently using the latest version (v2.0.0) (Forced update)')
         ->assertExitCode(0);
+});
+
+it('can run with a globally installed composer', function() {
+    $this->mockFile()
+        ->mockCache(['v2.0.0', 'v1.0.0'])
+        ->mockGetAvailableVersions()
+        ->mockZipArchive();
+    $this->mockComposerPath('composer');
+
+    File::shouldReceive('deleteDirectory');
+    Config::set('streamline.installed_version', 'v2.0.0');
+
+    $this->mockGetWebArchive();
+    $this->artisan('streamline:run-update')
+        ->assertExitCode(0);
+});
+
+it('throws a runtime exception when the composer path is incorrect', function() {
+    Process::fake([
+        '/dev/null -V' => Process::result(exitCode: 1),
+    ]);
+
+    $this->artisan('streamline:run-update --composer=/dev/null')
+        ->expectsOutputToContain('Error: Cannot find composer')
+        ->assertExitCode(1);
 });

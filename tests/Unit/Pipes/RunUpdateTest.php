@@ -9,12 +9,13 @@ it('should dispatch an info event when the update executes successfully', functi
     $builder = $this->mock(UpdateBuilderInterface::class);
     $builder->expects('getRequestedVersion')->andReturnNull();
     $builder->expects('getNextAvailableRepositoryVersion')->andReturn('1.0.0');
+    $builder->expects('getComposerPath')->andReturn('test/path');
 
     $this->mock(InstantiateStreamlineUpdater::class)
         ->shouldReceive('execute')
         ->once()
-        ->withArgs(['1.0.0', Mockery::type('Closure')])
-        ->andReturnUsing(function($version, $callback) {
+        ->withArgs(['1.0.0', Mockery::type('string'), Mockery::type('Closure')])
+        ->andReturnUsing(function($version, $composerPath, $callback) {
             $callback('out', 'Update successful');
         });
 
@@ -32,12 +33,13 @@ it('should dispatch an error event when the update encounters an error', functio
     $builder = $this->mock(UpdateBuilderInterface::class);
     $builder->expects('getRequestedVersion')->andReturnNull();
     $builder->expects('getNextAvailableRepositoryVersion')->andReturn('1.0.0');
+    $builder->expects('getComposerPath')->andReturn('test/path');
 
     $this->mock(InstantiateStreamlineUpdater::class)
         ->shouldReceive('execute')
         ->once()
-        ->withArgs(['1.0.0', Mockery::type('Closure')])
-        ->andReturnUsing(function($version, $callback) {
+        ->withArgs(['1.0.0', Mockery::type('string'), Mockery::type('Closure')])
+        ->andReturnUsing(function($version, $composerPath, $callback) {
             $callback('err', 'Update failed');
         });
 
@@ -59,12 +61,13 @@ it('should throw a RuntimeException with the error output when an error occurs',
     $builder = $this->mock(UpdateBuilderInterface::class);
     $builder->expects('getRequestedVersion')->andReturnNull();
     $builder->expects('getNextAvailableRepositoryVersion')->andReturn('1.0.0');
+    $builder->expects('getComposerPath')->andReturn('test/path');
 
     $this->mock(InstantiateStreamlineUpdater::class)
         ->shouldReceive('execute')
         ->once()
-        ->withArgs(['1.0.0', Mockery::type('Closure')])
-        ->andReturnUsing(function($version, $callback) {
+        ->withArgs(['1.0.0', 'test/path', Mockery::type('Closure')])
+        ->andReturnUsing(function($version, $composerPath, $callback) {
             $callback('err', 'Critical error occurred');
         });
 

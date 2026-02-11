@@ -3,11 +3,12 @@
 namespace Pixelated\Streamline\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Pixelated\Streamline\Commands\Traits\GitHubApi;
 use Pixelated\Streamline\Commands\Traits\OutputSubProcessCalls;
+use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 use Pixelated\Streamline\Pipeline\Pipeline;
-use Pixelated\Streamline\Updater\UpdateBuilder;
 use Throwable;
 
 class UpdateCommand extends Command
@@ -17,6 +18,7 @@ class UpdateCommand extends Command
 
     protected $signature = 'streamline:run-update
     {--install-version= : Specify version to install}
+    {--composer= : Set the path to composer.phar if not installed globally}
     {--force : Force update. Use for overriding the current version.}';
 
     protected $description = 'CLI update';
@@ -28,10 +30,11 @@ class UpdateCommand extends Command
     {
         $this->listenForSubProcessEvents();
 
-        $builder = (new UpdateBuilder)
+        $builder = App::make(UpdateBuilderInterface::class)
             ->setBasePath(base_path())
             ->setRequestedVersion($this->option('install-version'))
             ->setCurrentlyInstalledVersion(Config::get('streamline.installed_version'))
+            ->setComposerPath($this->option('composer'))
             ->forceUpdate($this->option('force'));
 
         return (new Pipeline($builder))
@@ -41,7 +44,7 @@ class UpdateCommand extends Command
 
                 return self::FAILURE;
             })
-            ->finally(config('streamline.pipeline-finish'))
+            ->finally(App::make(config('streamline.pipeline-finish-class')))
             ->then(fn() => self::SUCCESS);
     }
 }

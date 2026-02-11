@@ -44,7 +44,8 @@ it('can find the composer autoload file in a different directory', function() {
     $project->addChild($composerFile);
 
     setEnv([
-        'LARAVEL_BASE_PATH' => $project->url(), 'IS_TESTING' => StreamlineUpdater::TESTING_ON_AND_SKIP_REQUIRE_AUTOLOAD,
+        'LARAVEL_BASE_PATH' => $project->url(),
+        'IS_TESTING'        => StreamlineUpdater::TESTING_ON_AND_SKIP_REQUIRE_AUTOLOAD,
     ]);
     $updater = new StreamlineUpdater;
 
@@ -68,7 +69,8 @@ it('throws an error when the composer.json file is invalid', function() {
     $this->expectExceptionMessage('The file ' . $root->url() . '/composer.json file contains invalid JSON');
 
     setEnv([
-        'LARAVEL_BASE_PATH' => $root->url(), 'IS_TESTING' => StreamlineUpdater::TESTING_ON_AND_SKIP_REQUIRE_AUTOLOAD,
+        'LARAVEL_BASE_PATH' => $root->url(),
+        'IS_TESTING'        => StreamlineUpdater::TESTING_ON_AND_SKIP_REQUIRE_AUTOLOAD,
     ]);
     (new StreamlineUpdater)->autoloadFile();
 });
@@ -94,6 +96,7 @@ it('should add an error message to envIssues when JSON parsing fails twice', fun
  *     PUBLIC_DIR_NAME?: string,
  *     FRONT_END_BUILD_DIR?: string,
  *     INSTALLING_VERSION?: string,
+ *     COMPOSER_PATH?: string,
  *     PROTECTED_PATHS?: array<string>,
  *     DIR_PERMISSION?: string,
  *     FILE_PERMISSION?: string,
@@ -122,6 +125,7 @@ function getEnvVars(): array
         'PUBLIC_DIR_NAME'          => 'public',
         'FRONT_END_BUILD_DIR'      => 'build',
         'INSTALLING_VERSION'       => '1.0.0',
+        'COMPOSER_PATH'            => '/dev/null',
         'PROTECTED_PATHS'          => '["protected.txt"]',
         'DIR_PERMISSION'           => '0755',
         'FILE_PERMISSION'          => '0644',
