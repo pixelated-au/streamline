@@ -60,33 +60,28 @@ PHP script/class. For performance reasons, Laravel loads classes dynamically. If
 application may fail to load classes that have been removed/deprecated causing the update to fail, leaving a broken
 site. This project runs an update by calling an external PHP script/class, ensuring that during the update, there is an
 extremely low chance of the update failing.
-</details>
 
 #### Why is does this project assume all front-end assets will be pre-compiled?
 
 To bypass any potential compilation needs. Building a release of a project using something like CI or doing it locally
 ensures that when it's deployed, there are no post-processing requirements. For example, you don't need to have NPM or
 Node installed. You don't need to worry about the version of Node that's installed either. It simplifies updates
-</details>
 
 #### Does this need Composer installed? OR How do I run Composer to install dependencies?
 
 Yes, Composer is required to install dependencies. It happens automatically as part of the update.
-</details>
 
 #### Who is this for?
 
 It was built so that a project could be deployed on single-instance machines, not unlike upgrading a WordPress
 instance. It's designed to simplify deployment - moving the build/dependency mechanics into a centralised place such as
 CI. For example, this could be used inside a cPanel hosting environment.
-</details>
 
 #### Who's it not for?
 
 If you have a project being deployed onto virtual machines inside dedicated environments, other 'updater' projects
 may suit your needs more than this project. That said, this project was designed with extensibility in mind. As such, if
 you're keen to extend it, you can either do a pull request or extend it locally in your project.
-</details>
 
 #### Extending/Customising
 
