@@ -41,7 +41,7 @@ This library emits two events for hooking into updates:
 - `\Pixelated\Streamline\Events\InstalledVersionSet` Emits when the current, installed version has been set
 - `\Pixelated\Streamline\Events\NextAvailableVersionUpdated` Emits when the next available version has been set
 
-# Artisan Console
+## Artisan Console
 
 There are several Artisan commands that you can interact with:
 
@@ -53,40 +53,52 @@ There are several Artisan commands that you can interact with:
 
 ## Questions
 
-What is the point of this project?
-: Unlike other updater projects available (which are excellent by the way), this runs an update by calling an external
+#### What is the point of this project?
+    
+Unlike other updater projects available (which are excellent by the way), this runs an update by calling an external
 PHP script/class. For performance reasons, Laravel loads classes dynamically. If updating directly within Laravel, the
 application may fail to load classes that have been removed/deprecated causing the update to fail, leaving a broken
 site. This project runs an update by calling an external PHP script/class, ensuring that during the update, there is an
 extremely low chance of the update failing.
+</details>
 
-Why is does this project assume all front-end assets will be pre-compiled?
-: To bypass any potential compilation needs. Building a release of a project using something like CI or doing it locally
+#### Why is does this project assume all front-end assets will be pre-compiled?
+
+To bypass any potential compilation needs. Building a release of a project using something like CI or doing it locally
 ensures that when it's deployed, there are no post-processing requirements. For example, you don't need to have NPM or
 Node installed. You don't need to worry about the version of Node that's installed either. It simplifies updates
+</details>
 
-Does this need Composer installed? OR How do I run Composer to install dependencies?
-: Yes, Composer is required to install dependencies. It happens automatically as part of the update.
+#### Does this need Composer installed? OR How do I run Composer to install dependencies?
 
-Who is this for?
-: It was built so that a project could be deployed on single-instance machines, not unlike upgrading a WordPress
+Yes, Composer is required to install dependencies. It happens automatically as part of the update.
+</details>
+
+#### Who is this for?
+
+It was built so that a project could be deployed on single-instance machines, not unlike upgrading a WordPress
 instance. It's designed to simplify deployment - moving the build/dependency mechanics into a centralised place such as
 CI. For example, this could be used inside a cPanel hosting environment.
+</details>
 
-Who's it not for?
-: If you have a project being deployed onto virtual machines inside dedicated environments, other 'updater' projects
+#### Who's it not for?
+
+If you have a project being deployed onto virtual machines inside dedicated environments, other 'updater' projects
 may suit your needs more than this project. That said, this project was designed with extensibility in mind. As such, if
 you're keen to extend it, you can either do a pull request or extend it locally in your project.
+</details>
 
-Extending/Customising
-: Streamline is built upon a pipeline architecture, so you can inject your own steps into the update process. For
+#### Extending/Customising
+
+Streamline is built upon a pipeline architecture, so you can inject your own steps into the update process. For
 example, if you wish to make it build your front-end assets instead of using pre-built assets, you can create a new 
 pipeline step.
 
-: Use the config file `config/streamline.php` to customise the update process to suit your needs.
+Use the config file `config/streamline.php` to customise the update process to suit your needs.
 
-: You can also create your own implementation of `Pixelated\Streamline\Interfaces\UpdateBuilderInterface` which is the
+You can also create your own implementation of `Pixelated\Streamline\Interfaces\UpdateBuilderInterface` which is the
 tool to progressively gather information about the update process before the final update is run.
+</details>
 
 ## Changelog
 
