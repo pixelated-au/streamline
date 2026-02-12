@@ -98,7 +98,6 @@ Use the config file `config/streamline.php` to customise the update process to s
 
 You can also create your own implementation of `Pixelated\Streamline\Interfaces\UpdateBuilderInterface` which is the
 tool to progressively gather information about the update process before the final update is run.
-</details>
 
 ## Changelog
 
