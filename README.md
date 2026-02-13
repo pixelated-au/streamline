@@ -99,7 +99,7 @@ tool to progressively gather information about the update process before the fin
 Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
 
 ## TODO
-- [ ] Detect if the GitHub token has expired. If so, output an error to the user  
+- [x] Detect if the GitHub token has expired. If so, output an error to the user  
 
 ## License
 
