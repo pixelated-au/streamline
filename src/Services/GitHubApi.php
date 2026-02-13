@@ -5,10 +5,12 @@ namespace Pixelated\Streamline\Services;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Conditionable;
 use Pixelated\Streamline\Actions\ProgressMeter;
 use Pixelated\Streamline\Enums\GitHubPaginationLinkHeaderTypeEnum as LinkHeader;
@@ -86,9 +88,12 @@ class GitHubApi
             }
 
             $this->checkRateLimits($requestClient);
+            $this->checkAuth($requestClient);
+
+            $requestClient->throw();
 
             return $requestClient;
-        } catch (ConnectionException $e) {
+        } catch (ConnectionException|RequestException $e) {
             throw new RuntimeException(message: 'Error: Failed to connect to GitHub API', previous: $e);
         }
     }
@@ -247,6 +252,17 @@ class GitHubApi
             $message = "GitHub API rate limit exceeded. You have $remaining requests of $max remaining. You can make more requests at: $resetTime";
 
             throw new RuntimeException(message: $message);
+        }
+    }
+
+    public function checkAuth(Response $requestClient): void
+    {
+        if (($requestClient->getStatusCode() === 401) && Str::isJson($requestClient->body())) {
+            $message = $requestClient->json('message');
+
+            if ($message) {
+                throw new RuntimeException(message: $message);
+            }
         }
     }
 }
