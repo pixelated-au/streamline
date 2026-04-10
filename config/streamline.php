@@ -334,20 +334,4 @@ return [
     */
 
     'pipeline-finish-class' => \Pixelated\Streamline\Services\FinishUpdate::class,
-
-    /*
-    |--------------------------------------------------------------------------
-    | Logging
-    |--------------------------------------------------------------------------
-    |
-    | Configuration of logging. Primarily used for debugging the deletion of
-    | old assets during the cleanup process.
-    |
-    */
-
-    'logging' => [
-        'driver' => 'single',
-        'path'   => storage_path('logs/streamline.log'),
-        'level'  => env('LOG_LEVEL', 'debug'),
-    ],
 ];

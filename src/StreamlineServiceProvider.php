@@ -4,6 +4,7 @@ namespace Pixelated\Streamline;
 
 use Composer\InstalledVersions;
 use Illuminate\Console\OutputStyle;
+use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Console\AboutCommand;
 use Illuminate\Support\Facades\Config;
@@ -54,7 +55,7 @@ class StreamlineServiceProvider extends PackageServiceProvider
             )
         );
 
-        Config::set('logging.channels.streamline', Config::get('streamline.logging'));
+        $this->mergeConfigFromRecursive(__DIR__ . '/../config/logging.php', 'logging');
 
         if ($this->app->environment('local')) {
             // @codeCoverageIgnoreStart
@@ -86,5 +87,16 @@ class StreamlineServiceProvider extends PackageServiceProvider
         return '<fg=bright-magenta>' .
             InstalledVersions::getPrettyVersion('pixelated-au/streamline') .
             '</>';
+    }
+
+    protected function mergeConfigFromRecursive($path, $key): void
+    {
+        if (! ($this->app instanceof CachesConfiguration && $this->app->configurationIsCached())) {
+            $config = $this->app->make('config');
+
+            $config->set($key, array_merge_recursive(
+                require $path, $config->get($key, [])
+            ));
+        }
     }
 }
