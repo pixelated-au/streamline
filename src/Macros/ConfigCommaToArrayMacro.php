@@ -6,7 +6,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Config;
 
 /**
- * @mixin \Illuminate\Support\Facades\Config
+ * @mixin Config
  */
 class ConfigCommaToArrayMacro
 {

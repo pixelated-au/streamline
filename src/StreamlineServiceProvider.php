@@ -4,6 +4,7 @@ namespace Pixelated\Streamline;
 
 use Composer\InstalledVersions;
 use Illuminate\Console\OutputStyle;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Console\AboutCommand;
@@ -73,7 +74,7 @@ class StreamlineServiceProvider extends PackageServiceProvider
     }
 
     /**
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     * @throws BindingResolutionException
      */
     public function bootingPackage(): void
     {
@@ -91,11 +92,12 @@ class StreamlineServiceProvider extends PackageServiceProvider
 
     protected function mergeConfigFromRecursive($path, $key): void
     {
-        if (! ($this->app instanceof CachesConfiguration && $this->app->configurationIsCached())) {
+        if (!($this->app instanceof CachesConfiguration && $this->app->configurationIsCached())) {
             $config = $this->app->make('config');
 
             $config->set($key, array_merge_recursive(
-                require $path, $config->get($key, [])
+                require $path,
+                $config->get($key, [])
             ));
         }
     }

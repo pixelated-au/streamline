@@ -1,6 +1,7 @@
 <?php
 
 use org\bovigo\vfs\vfsStream;
+use org\bovigo\vfs\vfsStreamDirectory;
 use Pixelated\Streamline\Updater\RunCompleteGitHubVersionRelease;
 
 beforeEach(function() {
@@ -432,13 +433,13 @@ it('should successfully copy frontend assets from existing deployment to new rel
     // Setup directories
     $this->rootFs->addChild(vfsStream::newDirectory('temp/public/build/assets'));
 
-    /** @var \org\bovigo\vfs\vfsStreamDirectory $existingBuildDir */
+    /** @var vfsStreamDirectory $existingBuildDir */
     $existingBuildDir = $this->deploymentDir->getChild('public/build');
     // Not adding a manifest.json in the test because it exists on the filesystem in 'workbench/public/build'
     $existingBuildDir->addChild(vfsStream::newFile('assets/app.css')->withContent('test css content'));
     $existingBuildDir->addChild(vfsStream::newFile('assets/app.js')->withContent('test js content'));
 
-    /** @var \org\bovigo\vfs\vfsStreamDirectory $tempBuildDir */
+    /** @var vfsStreamDirectory $tempBuildDir */
     $tempBuildDir       = $this->rootFs->getChild('temp/public/build');
     $newManifestContent = '{"json": "should be the new manifest content"}';
     $tempBuildDir->addChild(vfsStream::newFile('manifest.json')->withContent($newManifestContent));

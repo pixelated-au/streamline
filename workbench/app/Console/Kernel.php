@@ -12,7 +12,7 @@ use Throwable;
 class Kernel extends ConsoleKernel
 {
     /**
-     * @throws \Throwable
+     * @throws Throwable
      */
     #[Override]
     protected function reportException(Throwable $e): void

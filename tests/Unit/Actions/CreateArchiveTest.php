@@ -1,12 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Storage;
+use League\Flysystem\FilesystemException;
 use Pixelated\Streamline\Actions\CreateArchive;
 
 it(
     'should create a .tar.gz file with correct structure and contents',
     /**
-     * @throws \League\Flysystem\FilesystemException
+     * @throws FilesystemException
      */
     function() {
         Storage::fake('local');

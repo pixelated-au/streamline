@@ -12,7 +12,7 @@ beforeEach(function() {
 it(
     'can validate that the system function is enabled',
     /**
-     * @throws \PHPUnit\Framework\MockObject\Exception
+     * @throws PHPUnit\Framework\MockObject\Exception
      */
     function() {
         PHPMockery::mock($this->ns, 'ini_get')->with('disable_functions')->andReturn('');
@@ -33,7 +33,7 @@ it(
 it(
     'can validate that the system function is not enabled because it is in disable_functions',
     /**
-     * @throws \PHPUnit\Framework\MockObject\Exception
+     * @throws PHPUnit\Framework\MockObject\Exception
      */
     function() {
         PHPMockery::mock($this->ns, 'ini_get')->with('disable_functions')->andReturn('system,exec');
@@ -58,7 +58,7 @@ it(
 it(
     'can validate that the system function is not enabled because it is not listed as a function',
     /**
-     * @throws \PHPUnit\Framework\MockObject\Exception
+     * @throws PHPUnit\Framework\MockObject\Exception
      */
     function() {
         PHPMockery::mock($this->ns, 'ini_get')->with('disable_functions')->andReturn('');
@@ -82,7 +82,7 @@ it(
 it(
     'can validate that the system function is not enabled because it cannot execute commands',
     /**
-     * @throws \PHPUnit\Framework\MockObject\Exception
+     * @throws PHPUnit\Framework\MockObject\Exception
      */
     function() {
         PHPMockery::mock($this->ns, 'ini_get')->with('disable_functions')->andReturn('');
@@ -108,7 +108,7 @@ it(
 it(
     'returns an error message when the system function is run but does not return the expected output',
     /**
-     * @throws \PHPUnit\Framework\MockObject\Exception
+     * @throws PHPUnit\Framework\MockObject\Exception
      */
     function() {
         PHPMockery::mock($this->ns, 'ini_get')->with('disable_functions')->andReturn('');

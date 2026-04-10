@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Testing\PendingCommand;
 use Pixelated\Streamline\Tests\LaravelTestCase;
 use Pixelated\Streamline\Tests\TestCase;
 use Pixelated\Streamline\Tests\Unit\Traits\Utils;
@@ -7,8 +8,8 @@ use Pixelated\Streamline\Tests\Unit\Traits\Utils;
 $_ENV['TEST_DIR'] = __DIR__;
 
 /**
- * @see \Illuminate\Testing\PendingCommand
- * @see \Pixelated\Streamline\Tests\LaravelTestCase Some setup is done in here
+ * @see PendingCommand
+ * @see LaravelTestCase Some setup is done in here
  */
 pest()
     ->extends(LaravelTestCase::class)

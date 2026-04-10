@@ -15,10 +15,10 @@ pest()->uses(UpdateCommandCommon::class, HttpMock::class, CheckComposerPath::cla
 
 beforeEach(function() {
     $this->app->bind(
-        \Symfony\Component\Process\Process::class,
+        Symfony\Component\Process\Process::class,
         function() {
             // For some reason, $this->mock(...) isn't working as expected, so I'm mocking it manually
-            $mock = Mockery::mock(\Symfony\Component\Process\Process::class);
+            $mock = Mockery::mock(Symfony\Component\Process\Process::class);
             $mock->shouldReceive('run')
                 ->andReturn(0);
             $mock->shouldReceive('isSuccessful')
@@ -69,10 +69,10 @@ it('should run an update with no parameters', function() {
 
     Event::fake(CommandClassCallback::class);
     $this->app->bind(
-        \Symfony\Component\Process\Process::class,
+        Symfony\Component\Process\Process::class,
         function() {
             // For some reason, $this->mock(...) isn't working as expected, so I'm mocking it manually
-            $mock = Mockery::mock(\Symfony\Component\Process\Process::class);
+            $mock = Mockery::mock(Symfony\Component\Process\Process::class);
             $mock->shouldReceive('run')
                 ->andReturn(0);
             $mock->shouldReceive('isSuccessful')
@@ -189,10 +189,10 @@ it('should run an update requesting a pre-release version with --force and succe
     Http::fake(['github.com/*' => Http::response([])]);
 
     $this->app->bind(
-        \Symfony\Component\Process\Process::class,
+        Symfony\Component\Process\Process::class,
         function() {
             // For some reason, $this->mock(...) isn't working as expected, so I'm mocking it manually
-            $mock = Mockery::mock(\Symfony\Component\Process\Process::class);
+            $mock = Mockery::mock(Symfony\Component\Process\Process::class);
             $mock->shouldReceive('run')
                 ->andReturn(0);
             $mock->shouldReceive('isSuccessful')

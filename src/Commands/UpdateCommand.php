@@ -24,7 +24,7 @@ class UpdateCommand extends Command
     protected $description = 'CLI update';
 
     /**
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function handle(): int
     {

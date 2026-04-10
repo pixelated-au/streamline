@@ -1,6 +1,7 @@
 <?php
 
 use org\bovigo\vfs\vfsStream;
+use org\bovigo\vfs\vfsStreamDirectory;
 
 beforeAll(fn() => putenv('IS_TESTING=' . StreamlineUpdater::TESTING_ON));
 
@@ -32,7 +33,7 @@ it('can find the composer autoload file in a different directory', function() {
     $root        = vfsStream::setup('streamline');
     $root->addChild($projectDir);
 
-    /** @var \org\bovigo\vfs\vfsStreamDirectory $project */
+    /** @var vfsStreamDirectory $project */
     $project = $root->getChild($projectPath);
 
     $vendor = vfsStream::newDirectory('vendor-directory');

@@ -11,6 +11,7 @@ use Pixelated\Streamline\Pipes\MakeTempDir;
 use Pixelated\Streamline\Pipes\RunUpdate;
 use Pixelated\Streamline\Pipes\UnpackRelease;
 use Pixelated\Streamline\Pipes\VerifyVersion;
+use Pixelated\Streamline\Services\FinishUpdate;
 use Symfony\Component\Process\Process;
 
 return [
@@ -333,5 +334,5 @@ return [
     |
     */
 
-    'pipeline-finish-class' => \Pixelated\Streamline\Services\FinishUpdate::class,
+    'pipeline-finish-class' => FinishUpdate::class,
 ];

@@ -12,10 +12,10 @@ it('outputs an info message when the cleanup process fails', function() {
     //    ]);
 
     $this->app->bind(
-        \Symfony\Component\Process\Process::class,
+        Symfony\Component\Process\Process::class,
         function() {
             // For some reason, $this->mock(...) isn't working as expected, so I'm mocking it manually
-            $mock = Mockery::mock(\Symfony\Component\Process\Process::class);
+            $mock = Mockery::mock(Symfony\Component\Process\Process::class);
             $mock->shouldReceive('run')
                 ->andReturn(0);
             $mock->shouldReceive('isSuccessful')
@@ -53,10 +53,10 @@ it('outputs an error when the cleanup process fails', function() {
     //    ]);
 
     $this->app->bind(
-        \Symfony\Component\Process\Process::class,
+        Symfony\Component\Process\Process::class,
         function() {
             // For some reason, $this->mock(...) isn't working as expected, so I'm mocking it manually
-            $mock = Mockery::mock(\Symfony\Component\Process\Process::class);
+            $mock = Mockery::mock(Symfony\Component\Process\Process::class);
             $mock->shouldReceive('run')
                 ->andReturn(1);
             $mock->shouldReceive('isSuccessful')

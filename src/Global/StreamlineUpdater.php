@@ -39,7 +39,7 @@ class StreamlineUpdater
     public const int TESTING_ON_AND_SKIP_REQUIRE_AUTOLOAD = 2;
 
     /**
-     * @throws \JsonException
+     * @throws JsonException
      */
     public function __construct()
     {

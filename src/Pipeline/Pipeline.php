@@ -8,7 +8,7 @@ use Throwable;
 
 class Pipeline
 {
-    /** @var \Pixelated\Streamline\Pipeline\Pipe[] */
+    /** @var Pipe[] */
     protected array $pipes = [];
 
     protected ?Closure $exceptionHandler = null;
@@ -21,7 +21,7 @@ class Pipeline
     public function __construct(protected UpdateBuilderInterface $builder) {}
 
     /**
-     * @param  array{Closure|\Pixelated\Streamline\Pipeline\Pipe}  $pipes
+     * @param  array{Closure|Pipe}  $pipes
      */
     public function through(array $pipes): static
     {
