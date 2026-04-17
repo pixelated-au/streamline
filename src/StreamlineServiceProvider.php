@@ -8,6 +8,7 @@ use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Console\AboutCommand;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Pixelated\Streamline\Actions\CreateArchive;
 use Pixelated\Streamline\Commands\CheckCommand;
@@ -40,7 +41,10 @@ class StreamlineServiceProvider extends PackageServiceProvider
                 InitInstalledVersionCommand::class,
                 ListCommand::class,
             )
-            ->hasInstallCommand(fn(InstallCommand $command) => $command->publishConfigFile());
+            ->hasInstallCommand(function(InstallCommand $command) {
+                $command->publishConfigFile();
+                Artisan::call('streamline:init-installed-version');
+            });
     }
 
     public function registeringPackage(): void
