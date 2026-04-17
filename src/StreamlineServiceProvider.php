@@ -42,8 +42,11 @@ class StreamlineServiceProvider extends PackageServiceProvider
                 ListCommand::class,
             )
             ->hasInstallCommand(function(InstallCommand $command) {
-                $command->publishConfigFile();
-                Artisan::call('streamline:init-installed-version');
+                $command
+                    ->publishConfigFile()
+                    ->endWith(function() {
+                        Artisan::call('streamline:init-installed-version');
+                    });
             });
     }
 
