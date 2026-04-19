@@ -264,7 +264,7 @@ class RunCompleteGitHubVersionRelease
     protected function copyFile(string $source, string $destination, bool $doOverwrite = true): string
     {
         if (!$doOverwrite && file_exists($destination)) {
-            $message = "  - Skipped: $destination. File already exists";
+            $message = "  - Skipped copying $source to $destination. File already exists";
 
             if (is_writable($destination) && chmod($destination, $this->filePermission)) {
                 $message .= " (But still set permission: $this->filePermission)";
