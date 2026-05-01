@@ -30,9 +30,52 @@ class RunCompleteGitHubVersionRelease
         private readonly bool $doRetainOldReleaseDir = true,
         private readonly bool $doOutput = false,
     ) {
-        $this->laravelTempBackupDir = "{$this->laravelBasePath}_old";
+        $this->laravelTempBackupDir = $this->getNextBackupDirName();
         $this->isTesting            = defined('IS_TESTING');
         $this->stream               = $this->isTesting ? fopen('php://output', 'wb') : STDOUT;
+    }
+
+    protected function getNextBackupDirName(): string
+    {
+        // get a directory listing of the current directory
+        $parent = dirname($this->laravelBasePath);
+
+        $matches = [];
+
+        if ($handle = opendir($parent)) {
+            try {
+                while (($file = readdir($handle)) !== false) {
+                    if ($file === '.' || $file === '..') {
+                        continue;
+                    }
+
+                    if (
+                        is_dir($parent . '/' . $file)
+                        && str_starts_with("$parent/$file", "{$this->laravelBasePath}_old")
+                    ) {
+                        $matches[] = $file;
+                    }
+                }
+            } finally {
+                closedir($handle);
+            }
+        }
+
+        if (empty($matches)) {
+            return $this->laravelBasePath . '_old.0';
+        }
+
+        // sort the matches array by value
+        usort($matches, static function($a, $b) {
+            $aNumber = (int) preg_replace('/\D+/', '', $a);
+            $bNumber = (int) preg_replace('/\D+/', '', $b);
+
+            return $aNumber - $bNumber;
+        });
+
+        $existingNumber = (int) preg_replace('/\D+/', '', $matches[count($matches) - 1]);
+
+        return $this->laravelBasePath . '_old.' . ($existingNumber + 1);
     }
 
     public function run(): void
@@ -54,7 +97,7 @@ class RunCompleteGitHubVersionRelease
         $existingReleaseBuildDir = "$this->publicDirName/$this->frontendBuildDir";
         $incomingReleaseBuildDir = $this->tempDirName . '/' . basename($this->publicDirName) . '/' . $this->frontendBuildDir;
 
-        $this->output("Copying frontend assets. From: $existingReleaseBuildDir to: $incomingReleaseBuildDir");
+        $this->output("Copying previous version frontend assets. From: $existingReleaseBuildDir to: $incomingReleaseBuildDir");
         $this->validateDirectoriesExist($existingReleaseBuildDir, $incomingReleaseBuildDir);
 
         $log = $this->recursiveCopyOldBuildFilesToNewDir($existingReleaseBuildDir, $incomingReleaseBuildDir);
@@ -100,7 +143,7 @@ class RunCompleteGitHubVersionRelease
     {
         $this->output("Running composer update with path: $this->composerPath");
 
-        $this->runCommand("$this->composerPath install --no-dev --no-interaction");
+        $this->runCommand("$this->composerPath install --no-dev --no-interaction --prefer-install=dist");
     }
 
     protected function removeOldDeployment(): void
