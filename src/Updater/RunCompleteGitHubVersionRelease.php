@@ -141,9 +141,15 @@ class RunCompleteGitHubVersionRelease
 
     protected function runComposerUpdate(): void
     {
-        $this->output("Running composer update with path: $this->composerPath");
+        $this->output("Running composer install with path: $this->composerPath");
 
-        $this->runCommand("$this->composerPath install --no-dev --no-interaction --prefer-install=dist");
+        try {
+            $this->runCommand("$this->composerPath install --no-dev --no-interaction --prefer-install=dist");
+        } catch (\Exception $exception) {
+            $this->output('Composer install failed! Please check the output above for any errors.');
+
+            throw $exception;
+        }
     }
 
     protected function removeOldDeployment(): void
@@ -227,13 +233,20 @@ class RunCompleteGitHubVersionRelease
         if ($this->isTesting) {
             return; // Do not execute commands in tests. We only want to simulate them.
         }
-        $response = system($command);
+        $output   = null;
+        $response = exec("$command 2>&1", $output);
+
+        if ($output && count($output) > 0) {
+            $this->output(implode(PHP_EOL, $output));
+        }
 
         if ($response === false) {
+            $this->output("Error executing command: $command");
+
             throw new RuntimeException("Error executing command: $command\n");
         }
 
-        $this->output('Command executed successfully.');
+        $this->output("Command ($command) executed successfully.");
         // @codeCoverageIgnoreEnd
     }
 
