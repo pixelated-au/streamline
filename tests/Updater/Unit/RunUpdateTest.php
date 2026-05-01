@@ -473,7 +473,7 @@ it('should successfully copy frontend assets from existing deployment to new rel
 
     // Verify proper logging
     $output = $this->getActualOutputForAssertion();
-    $this->assertStringContainsString('Copying frontend assets', $output);
+    $this->assertStringContainsString('Copying previous version frontend assets', $output);
     $this->assertStringContainsString('Directory created', $output);
     $this->assertStringContainsString('Copied:', $output);
 });
