@@ -61,11 +61,11 @@ it(
 
         $expectedOutput = [
             'Starting update',
-            'Copying frontend assets. From: ' . $disk->path('laravel/public/build') . ' to: ' . $tempDisk->path('unpacked/public/build'),
+            'Copying previous version frontend assets. From: ' . $disk->path('laravel/public/build') . ' to: ' . $tempDisk->path('unpacked/public/build'),
             '  - Copied: ' . $disk->path('/laravel/public/build/assets/text-file/existing_file.txt') . ' to ' . $tempDisk->path('/unpacked/public/build/assets/text-file/existing_file.txt') . ' (Permission: 420)',
             '  - Directory created: ' . $tempDisk->path('unpacked/public/build/assets') . ' (Permission: 493)',
             '  - Directory created: ' . $tempDisk->path('unpacked/public/build/assets/text-file') . ' (Permission: 493)',
-            '  - Skipped: ' . $tempDisk->path('unpacked/public/build/manifest.json') . '. File already exists (But still set permission: 420)',
+            '  - Skipped copying ' . $disk->path('laravel/public/build/manifest.json') . ' to ' . $tempDisk->path('unpacked/public/build/manifest.json') . '. File already exists (But still set permission: 420)',
             'Preserving protected paths...',
             '  - Copied: ' . $disk->path('laravel/.env') . ' to ' . $tempDisk->path('unpacked/.env') . ' (Permission: 420)',
             '  - Copied: ' . $disk->path('laravel/storage/logs/streamline.log') . ' to ' . $tempDisk->path('unpacked/storage/logs/streamline.log') . ' (Permission: 420)',
@@ -74,7 +74,7 @@ it(
             'Moving ' . $disk->path('laravel') . ' to ' . $disk->path('laravel_old'),
             'Moving ' . $tempDisk->path('unpacked') . ' to ' . $disk->path('laravel'),
             'Running composer update with path: /dev/null',
-            'Executing: /dev/null install --no-dev --no-interaction',
+            'Executing: /dev/null install --no-dev --no-interaction --prefer-install=dist',
             'Deleting of ' . $disk->path('laravel_old') . " as it's no longer needed",
             'Setting version number in .env file to: 1.0.0',
             'Version number updated successfully in .env file',
