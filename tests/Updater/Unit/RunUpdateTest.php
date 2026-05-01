@@ -15,6 +15,28 @@ beforeEach(function() {
     vfsStream::copyFromFileSystem(workbench_path(), $this->deploymentDir);
 });
 
+it('gives the first backup dir a suffix of: 0', function() {
+    $runUpdate = runUpdateClassFactory();
+    $x         = (fn() => $this->laravelTempBackupDir)->call($runUpdate);
+
+    $this->assertSame('mock_deployment_old.0', basename($x));
+});
+
+it('increments the backup directory properly', function() {
+    $oldDir = vfsStream::newDirectory('mock_deployment_old.0');
+    $this->rootFs->addChild($oldDir);
+    vfsStream::copyFromFileSystem(workbench_path(), $oldDir);
+
+    $oldDir = vfsStream::newDirectory('mock_deployment_old.1');
+    $this->rootFs->addChild($oldDir);
+    vfsStream::copyFromFileSystem(workbench_path(), $oldDir);
+
+    $runUpdate = runUpdateClassFactory();
+    $x         = (fn() => $this->laravelTempBackupDir)->call($runUpdate);
+
+    $this->assertSame('mock_deployment_old.2', basename($x));
+});
+
 it('throws an exception that the laravel base directory cannot be found', function() {
     $this->expectExceptionMessage("Error: Release directory 'non-existent-directory' does not exist! This should be the directory that contains your application deployment.");
     $this->expectException(RuntimeException::class);
