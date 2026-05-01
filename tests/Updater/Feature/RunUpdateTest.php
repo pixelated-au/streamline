@@ -73,7 +73,7 @@ it(
             'Protected paths preserved successfully.',
             'Moving ' . $disk->path('laravel') . ' to ' . $disk->path('laravel_old.0'),
             'Moving ' . $tempDisk->path('unpacked') . ' to ' . $disk->path('laravel'),
-            'Running composer update with path: /dev/null',
+            'Running composer install with path: /dev/null',
             'Executing: /dev/null install --no-dev --no-interaction --prefer-install=dist',
             'Deleting of ' . $disk->path('laravel_old.0') . " as it's no longer needed",
             'Setting version number in .env file to: 1.0.0',
