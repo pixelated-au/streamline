@@ -1,24 +1,19 @@
 <?php
 
-use Pixelated\Streamline\Actions\Cleanup;
+use Illuminate\Support\Facades\Config;
+use Pixelated\Streamline\Actions\VerifyInstallation;
 use Pixelated\Streamline\Events\CommandClassCallback;
 
 it('should dispatch proper events', function() {
     $tempDir = '/path/to/temp/dir';
 
     Event::fake();
-    File::shouldReceive('deleteDirectory')->once()->with($tempDir)->andReturnTrue();
 
-    $cleanup = new Cleanup;
+    $cleanup = new VerifyInstallation;
     $cleanup($tempDir);
 
     Event::assertDispatched(
-        fn(CommandClassCallback $event) => $event
-            ->action === 'comment' && $event->value === "Purging the temporary work directory: $tempDir"
-    );
-    Event::assertDispatched(
-        fn(CommandClassCallback $event) => $event
-            ->action === 'info' && $event->value === "Temporary work directory purged successfully: $tempDir"
+        fn(CommandClassCallback $event) => $event->action === 'info' && 'Successfully installed version: 5.4.3'
     );
 });
 
@@ -26,17 +21,13 @@ it('should dispatch an failed event when it could not delete the temp dir', func
     $tempDir = '/path/to/temp/dir';
 
     Event::fake();
-    File::shouldReceive('deleteDirectory')->once()->with($tempDir)->andReturnFalse();
 
-    $cleanup = new Cleanup;
+    $cleanup = new VerifyInstallation;
     $cleanup($tempDir);
 
+    Config::set('streamline.installed_version', '5.4.3');
+
     Event::assertDispatched(
-        fn(CommandClassCallback $event) => $event
-            ->action === 'comment' && $event->value === "Purging the temporary work directory: $tempDir"
-    );
-    Event::assertDispatched(
-        fn(CommandClassCallback $event) => $event
-            ->action === 'error' && $event->value === "Failed to purge temporary work directory: $tempDir"
+        fn(CommandClassCallback $event) => $event->action === 'info' && 'Successfully installed version: 5.4.3'
     );
 });

@@ -5,7 +5,7 @@ namespace Pixelated\Streamline\Actions;
 use Illuminate\Support\Facades\Config;
 use Pixelated\Streamline\Events\CommandClassCallback;
 
-class Cleanup
+class VerifyInstallation
 {
     public function __invoke(string $tempDir): void
     {

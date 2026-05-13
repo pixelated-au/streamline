@@ -5,7 +5,7 @@ namespace Pixelated\Streamline\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
-use Pixelated\Streamline\Actions\Cleanup;
+use Pixelated\Streamline\Actions\VerifyInstallation;
 use Pixelated\Streamline\Actions\UncachedEnvironment;
 use Pixelated\Streamline\Commands\Traits\OutputSubProcessCalls;
 use Pixelated\Streamline\Enums\CacheKeysEnum;
@@ -27,7 +27,7 @@ class FinishUpdateCommand extends Command
     {
         $this->listenForSubProcessEvents();
 
-        resolve(Cleanup::class)(Config::get('streamline.work_temp_dir'));
+        resolve(VerifyInstallation::class)(Config::get('streamline.work_temp_dir'));
 
         if ($installedVersion = $env->get('STREAMLINE_APPLICATION_VERSION_INSTALLED')) {
             $this->info("Persisting the new version number ($installedVersion) to the cache.");
