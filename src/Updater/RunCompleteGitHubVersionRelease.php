@@ -2,6 +2,7 @@
 
 namespace Pixelated\Streamline\Updater;
 
+use Exception;
 use FilesystemIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -78,6 +79,9 @@ class RunCompleteGitHubVersionRelease
         return $this->laravelBasePath . '_old.' . ($existingNumber + 1);
     }
 
+    /**
+     * @throws Exception
+     */
     public function run(): void
     {
         $this->output('Starting update');
@@ -139,13 +143,16 @@ class RunCompleteGitHubVersionRelease
         rename($this->tempDirName, $this->laravelBasePath);
     }
 
+    /**
+     * @throws Exception
+     */
     protected function runComposerUpdate(): void
     {
         $this->output("Running composer install with path: $this->composerPath");
 
         try {
             $this->runCommand("$this->composerPath install --no-dev --no-interaction --prefer-install=dist");
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $this->output('Composer install failed! Please check the output above for any errors.');
 
             throw $exception;
