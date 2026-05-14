@@ -104,6 +104,9 @@ class StreamlineUpdater
         return $val;
     }
 
+    /**
+     * @throws Exception
+     */
     public function run(): void
     {
         $updater = new RunCompleteGitHubVersionRelease(
