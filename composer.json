@@ -9,21 +9,22 @@
     "homepage": "https://github.com/pixelated-au/streamline",
     "license": "MIT",
     "require": {
-        "php": "^8.3",
+        "php": ">=8.3",
         "ext-zip": "*",
         "spatie/laravel-package-tools": "^1.16",
         "symfony/console": ">=6",
         "symfony/process": ">=6"
     },
     "require-dev": {
+        "andreapollastri/checkpoint": "^1.0",
         "composer/composer": "^2.8",
         "laravel/pint": "^1.20",
         "mikey179/vfsstream": "^1.6.12",
         "mockery/mockery": "^1.6",
         "orchestra/testbench": "^10",
-        "pestphp/pest": "^3",
-        "pestphp/pest-plugin-arch": "^3",
-        "pestphp/pest-plugin-laravel": "^3",
+        "pestphp/pest": "^4",
+        "pestphp/pest-plugin-arch": "^4",
+        "pestphp/pest-plugin-laravel": "^4",
         "php-mock/php-mock-mockery": "^1.4",
         "roave/security-advisories": "dev-latest",
         "spatie/laravel-ray": "^1.35"
