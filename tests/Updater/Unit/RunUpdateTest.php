@@ -5,13 +5,20 @@ use org\bovigo\vfs\vfsStreamDirectory;
 use Pixelated\Streamline\Updater\RunCompleteGitHubVersionRelease;
 
 beforeEach(function() {
-    $this->ns            = 'Pixelated\\Streamline\\Updater';
-    $this->rootFs        = vfsStream::setup('streamline');
-    $this->deploymentDir = vfsStream::newDirectory('mock_deployment');
+    // Note, order matters here.
+    $this->ns = 'Pixelated\\Streamline\\Updater';
+    $root     = vfsStream::setup();
 
-    $this->rootFs->addChild($this->deploymentDir);
-    $this->rootPath       = $this->rootFs->url();
+    $rootDir = vfsStream::newDirectory('streamline');
+    $root->addChild($rootDir);
+
+    $this->deploymentDir = vfsStream::newDirectory('mock_deployment');
+    $rootDir->addChild($this->deploymentDir);
+
+    $this->rootPath       = $rootDir->url();
+    $this->rootFs         = $rootDir;
     $this->deploymentPath = $this->deploymentDir->url();
+
     vfsStream::copyFromFileSystem(workbench_path(), $this->deploymentDir);
 });
 
@@ -55,7 +62,9 @@ it('throws an exception that the live/old assets directory cannot be found', fun
 });
 
 it('throws an exception that the temp assets directory cannot be found', function() {
-    $this->rootFs->chmod(0000);
+    $temp = vfsStream::newDirectory('temp');
+    $temp->chmod(0000);
+    $this->rootFs->addChild($temp);
 
     $this->expectExceptionMessage("Error: Could not create assets directory: $this->rootPath/temp/public/build");
     $this->expectException(RuntimeException::class);
@@ -102,7 +111,7 @@ it(
     function() {
         $this->rootFs->addChild(vfsStream::newDirectory('backup_test'));
         $this->rootFs->addChild(vfsStream::newFile('backup_test/archive.zip'));
-        $this->rootFs->getChild('backup_test/archive.zip')?->chmod(0400);
+        $this->rootFs->getChild('backup_test/archive.zip')?->chmod(0000);
 
         $runUpdate = runUpdateClassFactory(
             [
@@ -294,8 +303,12 @@ it('should return false for an empty relative path', function() {
 });
 
 it('should preserve protected paths', function() {
-    $this->rootFs   = vfsStream::setup();
-    $this->rootPath = vfsStream::url('root');
+    $this->rootFs = vfsStream::setup();
+    $rootDir      = vfsStream::newDirectory('streamline');
+    $this->rootFs->addChild($rootDir);
+    $this->rootFs = $rootDir;
+
+    $this->rootPath = vfsStream::url('root/streamline');
     $protectedDir   = vfsStream::newDirectory('protected_dir/sub');
 
     /** @noinspection PhpPossiblePolymorphicInvocationInspection */
@@ -364,7 +377,7 @@ it('should preserve protected paths when they exist as files', function() {
 
 it('outputs a warning when a protected path is not found', function() {
     $this->rootFs->addChild(vfsStream::newDirectory('deployment'));
-    $deploymentPath = vfsStream::url('streamline/deployment');
+    $deploymentPath = vfsStream::url('root/streamline/deployment');
 
     $runUpdate = runUpdateClassFactory([
         'laravelBasePath' => $deploymentPath,
@@ -403,7 +416,7 @@ it('throws an exception when the destination directory is not writable during di
 it('should handle large directories with many nested subdirectories', function() {
     $this->startOutputBuffer();
     $this->expectsOutput();
-    $this->rootFs = vfsStream::setup('streamline');
+    $this->rootFs = vfsStream::setup('root/streamline');
     $source       = vfsStream::newDirectory('source')->at($this->rootFs);
     $destination  = vfsStream::newDirectory('destination')->at($this->rootFs);
 
