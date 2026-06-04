@@ -51,7 +51,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer require \
+          composer require --dev \
             "laravel/framework:${{ matrix.laravel }}" \
             "orchestra/testbench:${{ matrix.testbench }}" \
             "orchestra/workbench:${{ matrix.testbench }}" \
