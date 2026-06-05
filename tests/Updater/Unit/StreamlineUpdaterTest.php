@@ -78,15 +78,18 @@ it('throws an error when the composer.json file is invalid', function() {
 
 it('can initialise the RunUpdate class', function() {
     setEnv();
+    /** @noinspection PhpUnhandledExceptionInspection */
     (new StreamlineUpdater)->run();
 })->throwsNoExceptions();
 
 it('should add an error message to envIssues when JSON parsing fails twice', function() {
+    /** @noinspection PhpParamsInspection */
     setEnv(
         ['PROTECTED_PATHS' => 'invalid json']
     );
     $this->expectException(InvalidArgumentException::class);
     $this->expectExceptionMessageMatches('/Environment variable PROTECTED_PATHS=invalid json cannot be converted to an array. Pass in a JSON compatible array string!/');
+    /** @noinspection PhpUnhandledExceptionInspection */
     (new StreamlineUpdater)->run();
 });
 
