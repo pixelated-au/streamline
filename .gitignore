@@ -27,7 +27,6 @@ _ide_helper_models.php
 /tests/code-coverage/
 /.env
 /tests/.pest/
-/workbench/composer.*
 /workbench/storage/app/
 /workbench/storage/logs/
 /workbench/storage/framework/
