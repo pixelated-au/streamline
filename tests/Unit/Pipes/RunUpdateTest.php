@@ -10,12 +10,13 @@ it('should dispatch an info event when the update executes successfully', functi
     $builder->expects('getRequestedVersion')->andReturnNull();
     $builder->expects('getNextAvailableRepositoryVersion')->andReturn('1.0.0');
     $builder->expects('getComposerPath')->andReturn('test/path');
+    $builder->expects('getBackupArchivePath')->andReturn('/path/to/backup.zip');
 
     $this->mock(InstantiateStreamlineUpdater::class)
         ->shouldReceive('execute')
         ->once()
-        ->withArgs(['1.0.0', Mockery::type('string'), Mockery::type('Closure')])
-        ->andReturnUsing(function($version, $composerPath, $callback) {
+        ->withArgs(['1.0.0', Mockery::type('string'), Mockery::type('Closure'), '/path/to/backup.zip'])
+        ->andReturnUsing(function($version, $composerPath, $callback, $backupArchivePath) {
             $callback('out', 'Update successful');
         });
 
@@ -34,12 +35,13 @@ it('should dispatch an error event when the update encounters an error', functio
     $builder->expects('getRequestedVersion')->andReturnNull();
     $builder->expects('getNextAvailableRepositoryVersion')->andReturn('1.0.0');
     $builder->expects('getComposerPath')->andReturn('test/path');
+    $builder->expects('getBackupArchivePath')->andReturn('/path/to/backup.zip');
 
     $this->mock(InstantiateStreamlineUpdater::class)
         ->shouldReceive('execute')
         ->once()
-        ->withArgs(['1.0.0', Mockery::type('string'), Mockery::type('Closure')])
-        ->andReturnUsing(function($version, $composerPath, $callback) {
+        ->withArgs(['1.0.0', Mockery::type('string'), Mockery::type('Closure'), '/path/to/backup.zip'])
+        ->andReturnUsing(function($version, $composerPath, $callback, $backupArchivePath) {
             $callback('err', 'Update failed');
         });
 
@@ -62,12 +64,13 @@ it('should throw a RuntimeException with the error output when an error occurs',
     $builder->expects('getRequestedVersion')->andReturnNull();
     $builder->expects('getNextAvailableRepositoryVersion')->andReturn('1.0.0');
     $builder->expects('getComposerPath')->andReturn('test/path');
+    $builder->expects('getBackupArchivePath')->andReturn('/path/to/backup.zip');
 
     $this->mock(InstantiateStreamlineUpdater::class)
         ->shouldReceive('execute')
         ->once()
-        ->withArgs(['1.0.0', 'test/path', Mockery::type('Closure')])
-        ->andReturnUsing(function($version, $composerPath, $callback) {
+        ->withArgs(['1.0.0', 'test/path', Mockery::type('Closure'), '/path/to/backup.zip'])
+        ->andReturnUsing(function($version, $composerPath, $callback, $backupArchivePath) {
             $callback('err', 'Critical error occurred');
         });
 

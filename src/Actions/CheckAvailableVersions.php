@@ -25,11 +25,17 @@ class CheckAvailableVersions
             Artisan::call('streamline:list');
         }
 
-        $availableVersions = collect(Cache::get(CacheKeysEnum::AVAILABLE_VERSIONS->value));
+        /** @var iterable<int, string>|null $cachedVersions */
+        $cachedVersions    = Cache::get(CacheKeysEnum::AVAILABLE_VERSIONS->value);
+        $availableVersions = collect($cachedVersions);
         $nextVersion       = $this->getNextVersion($availableVersions, $ignorePreReleases);
 
         if (!$nextVersion) {
-            throw new RuntimeException('The next available version could not be determined.');
+            throw new RuntimeException(
+                $ignorePreReleases && $availableVersions->isNotEmpty()
+                    ? 'The next available version could not be determined. Every available version is a pre-release; use --pre-releases to include them.'
+                    : 'The next available version could not be determined.'
+            );
         }
         Cache::forever(CacheKeysEnum::NEXT_AVAILABLE_VERSION->value, $nextVersion);
 
@@ -39,23 +45,25 @@ class CheckAvailableVersions
         return $nextVersion;
     }
 
+    /**
+     * @param  Collection<int, string>  $availableVersions
+     */
     protected function getNextVersion(Collection $availableVersions, bool $ignorePreReleases): ?string
     {
         $nextVersion = $availableVersions[0] ?? null;
 
-        if ($ignorePreReleases && $this->isPreReleaseVersion->execute($nextVersion)) {
-            // iterate $availableVersions until we find a non-prerelease version
-            foreach ($availableVersions as $version) {
-                if ($this->isPreReleaseVersion->execute($version)) {
-                    continue;
-                }
-                //                if (!Str::endsWith($version, ['a', 'b', 'alpha', 'beta'])) {
-                $nextVersion = $version;
+        if (!$ignorePreReleases || !$this->isPreReleaseVersion->execute($nextVersion)) {
+            return $nextVersion;
+        }
 
-                break;
+        // Return the first stable version, or null when every available version is a pre-release.
+        // Keeping the pre-release here would install one despite having been asked not to.
+        foreach ($availableVersions as $version) {
+            if (!$this->isPreReleaseVersion->execute($version)) {
+                return $version;
             }
         }
 
-        return $nextVersion;
+        return null;
     }
 }

@@ -111,6 +111,20 @@ it('should add an error message to envIssues when JSON parsing fails twice', fun
  *     IS_TESTING?: int,
  * }  $overrides
  */
+it('treats the string "0" as a present environment variable', function() {
+    // '0' is falsy but perfectly present. Reading it as missing aborted the update with
+    // "needs to be set!" whenever a boolean setting was turned off - which is exactly what
+    // STREAMLINE_RETAIN_OLD_RELEASES=false produces.
+    setEnv([
+        'DO_RETAIN_OLD_RELEASE' => '0',
+        'IS_TESTING'            => StreamlineUpdater::TESTING_ON_AND_SKIP_REQUIRE_AUTOLOAD - StreamlineUpdater::TESTING_ON,
+    ]);
+
+    $updater = new StreamlineUpdater;
+
+    expect($updater->doRetainOldRelease)->toBeFalse();
+});
+
 function setEnv(array $overrides = []): void
 {
     if (isset($overrides['IS_TESTING'])) {
@@ -126,17 +140,19 @@ function setEnv(array $overrides = []): void
 function getEnvVars(): array
 {
     return [
-        'TEMP_DIR'                 => '/path/to/temp',
-        'LARAVEL_BASE_PATH'        => './workbench',
-        'PUBLIC_DIR_NAME'          => 'public',
-        'FRONT_END_BUILD_DIR'      => 'build',
-        'INSTALLING_VERSION'       => '1.0.0',
-        'COMPOSER_PATH'            => '/dev/null',
-        'PROTECTED_PATHS'          => '["protected.txt"]',
-        'DIR_PERMISSION'           => '0755',
-        'FILE_PERMISSION'          => '0644',
-        'OLD_RELEASE_ARCHIVE_PATH' => '/path/to/old/release.zip',
-        'DO_RETAIN_OLD_RELEASE'    => 'true',
-        'IS_TESTING'               => StreamlineUpdater::TESTING_ON,
+        'TEMP_DIR'                  => '/path/to/temp',
+        'LARAVEL_BASE_PATH'         => './workbench',
+        'PUBLIC_DIR_NAME'           => 'public',
+        'FRONT_END_BUILD_DIR'       => 'build',
+        'INSTALLING_VERSION'        => '1.0.0',
+        'COMPOSER_PATH'             => '/dev/null',
+        'PROTECTED_PATHS'           => '["protected.txt"]',
+        'CARRY_FORWARD_PATHS'       => '[]',
+        'DIR_PERMISSION'            => '0755',
+        'FILE_PERMISSION'           => '0644',
+        'PROTECTED_FILE_PERMISSION' => '0600',
+        'OLD_RELEASE_ARCHIVE_PATH'  => '/path/to/old/release.zip',
+        'DO_RETAIN_OLD_RELEASE'     => 'true',
+        'IS_TESTING'                => StreamlineUpdater::TESTING_ON,
     ];
 }

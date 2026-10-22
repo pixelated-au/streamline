@@ -10,7 +10,7 @@ readonly class CommandClassCallback
     use Dispatchable;
 
     /**
-     * @param  'comment'|'info'|'warn'|'error'|'call'  $action
+     * @param  'comment'|'info'|'warn'|'error'|'call'|'line'  $action
      */
     public function __construct(
         public string $action,

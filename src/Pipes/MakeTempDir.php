@@ -17,7 +17,9 @@ class MakeTempDir implements Pipe
         CommandClassCallback::dispatch('comment', "Creating temporary directory $tempDir");
 
         if (!File::exists($tempDir)
-            && !File::makeDirectory(path: $tempDir, recursive: true)
+            // 0700: the unpacked release passes through here before going live, so other local
+            // users have no business reading or writing it.
+            && !File::makeDirectory(path: $tempDir, mode: 0700, recursive: true)
             && !File::isDirectory($tempDir)) {
             throw new RuntimeException("Working directory '$tempDir' could not be created");
         }

@@ -4,9 +4,10 @@ namespace Pixelated\Streamline\Pipes;
 
 use Illuminate\Support\Facades\File;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
+use Pixelated\Streamline\Pipeline\Pipe;
 use RuntimeException;
 
-class CheckLaravelBasePathWritable
+class CheckLaravelBasePathWritable implements Pipe
 {
     public function __invoke(UpdateBuilderInterface $builder): UpdateBuilderInterface
     {

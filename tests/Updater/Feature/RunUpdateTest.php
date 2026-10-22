@@ -1,4 +1,6 @@
-<?php /** @noinspection PhpUnhandledExceptionInspection */
+<?php
+
+/** @noinspection PhpUnhandledExceptionInspection */
 
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Foundation\Application;
@@ -30,7 +32,7 @@ it(
             fn(Application $app) => new CreateArchive(
                 sourceFolder: $disk->path(''),
                 destinationPath: config('streamline.backup_dir'),
-                filename: 'backup-' . date('Ymd_His') . '.tgz',
+                filename: 'backup-' . date('Ymd_His') . '.zip',
             )
         );
 
@@ -53,6 +55,7 @@ it(
             protectedPaths: ['.env', 'storage/logs/streamline.log', 'missing-file.txt'],
             dirPermission: 0755,
             filePermission: 0644,
+            protectedFilePermission: 0600,
             oldReleaseArchivePath: $tempDisk->path('/old_releases/oldArchive.tgz'),
             doRetainOldReleaseDir: false,
             doOutput: true,
@@ -67,15 +70,14 @@ it(
             '  - Directory created: ' . $tempDisk->path('unpacked/public/build/assets/text-file') . ' (Permission: 493)',
             '  - Skipped copying ' . $disk->path('laravel/public/build/manifest.json') . ' to ' . $tempDisk->path('unpacked/public/build/manifest.json') . '. File already exists (But still set permission: 420)',
             'Preserving protected paths...',
-            '  - Copied: ' . $disk->path('laravel/.env') . ' to ' . $tempDisk->path('unpacked/.env') . ' (Permission: 420)',
-            '  - Copied: ' . $disk->path('laravel/storage/logs/streamline.log') . ' to ' . $tempDisk->path('unpacked/storage/logs/streamline.log') . ' (Permission: 420)',
+            '  - Copied: ' . $disk->path('laravel/.env') . ' to ' . $tempDisk->path('unpacked/.env') . ' (Permission: 384)',
+            '  - Copied: ' . $disk->path('laravel/storage/logs/streamline.log') . ' to ' . $tempDisk->path('unpacked/storage/logs/streamline.log') . ' (Permission: 384)',
             '  - Warning: Protected path not found: ' . $disk->path('laravel/missing-file.txt'),
             'Protected paths preserved successfully.',
             'Moving ' . $disk->path('laravel') . ' to ' . $disk->path('laravel_old.0'),
             'Moving ' . $tempDisk->path('unpacked') . ' to ' . $disk->path('laravel'),
             'Running composer install with path: /dev/null',
-            'Executing: /dev/null install --no-dev --no-interaction --prefer-install=dist',
-            'Deleting of ' . $disk->path('laravel_old.0') . " as it's no longer needed",
+            "Executing: '/dev/null' install --no-dev --no-interaction --prefer-install=dist",
             'Setting version number in .env file to: 1.0.0',
             'Version number updated successfully in .env file',
             'Resetting the CWD to ' . $disk->path('laravel'),
@@ -85,6 +87,9 @@ it(
             'Running database migrations...',
             'Executing: php artisan migrate --force',
             'Migrations completed.',
+            // The previous release is now only removed once the risky steps (composer, migrations)
+            // have succeeded, so that a failure before this point can still be rolled back.
+            'Deleting of ' . $disk->path('laravel_old.0') . " as it's no longer needed",
             'Deleting old release backup: oldArchive.tgz',
             "Update completed\n",
         ];

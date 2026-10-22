@@ -5,45 +5,38 @@ namespace Pixelated\Streamline\Services;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Request;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Conditionable;
 use Pixelated\Streamline\Actions\ProgressMeter;
 use Pixelated\Streamline\Enums\GitHubPaginationLinkHeaderTypeEnum as LinkHeader;
 use RuntimeException;
+use Symfony\Component\Console\Output\OutputInterface;
 
-class GitHubApi
-{
+class GitHubApi {
     use Conditionable;
 
-    public const string   GITHUB_API_URL = 'https://api.github.com/repos';
-
-    public const string   GITHUB_WEB_URL = 'https://github.com';
-
+    public const string   GITHUB_API_URL       = 'https://api.github.com/repos';
+    public const string   GITHUB_WEB_URL       = 'https://github.com';
     public const string   GITHUB_RELEASES_PATH = '/releases';
-
-    protected const array REQUEST_USER_AGENT_HEADERS = ['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'];
-
+    protected array $userAgentRequestHeaders = [
+        'Accept'               => 'application/vnd.github+json',
+        'X-GitHub-Api-Version' => '2026-03-10',
+    ];
     private ?ProgressMeter $progressMeter = null;
-
     private ?string $downloadPath = null;
-
     private string $url;
-
     private array $queryParams = [];
-
     private string $defaultProgressMessage = '';
-
     private int $page = 0;
-
     private ?int $totalPages = null;
-
     private readonly string $githubRepo;
-
     private readonly ?string $authToken;
 
     public function __construct(
@@ -53,147 +46,151 @@ class GitHubApi
         //        private readonly ?string $authToken = null
     ) {
         // TODO restore this after upgrading to Laravel 11
-        $this->githubRepo = config('streamline.github_repo');
-        $this->authToken  = config('streamline.github_auth_token');
+        $this->githubRepo                            = config( 'streamline.github_repo' );
+        $this->authToken                             = config( 'streamline.github_auth_token' );
+        $this->userAgentRequestHeaders['User-Agent'] = config( 'streamline.github_repo' );
     }
 
-    public function get(): Response
-    {
+    public function get(): Response {
         $this->checkHasUrl();
 
         try {
             $this->setProgressMessage();
 
-            $requestClient = Http::withHeaders(self::REQUEST_USER_AGENT_HEADERS)
-                ->when(
-                    value: (bool) $this->authToken,
-                    callback: fn(PendingRequest $request) => $request->withToken($this->authToken)
-                )
-                ->when(
-                    value: isset($this->progressMeter?->progressCallback),
-                    callback: function(PendingRequest $request) {
-                        $request->withOptions($request->mergeOptions([
-                            RequestOptions::PROGRESS => $this->progressMeter->progressCallback,
-                        ]));
-                    }
-                )
-                ->when(
-                    value: (bool) $this->downloadPath,
-                    callback: fn(PendingRequest $request) => $request->sink($this->downloadPath)
-                )
-                ->get($this->buildUrl());
+            $requestClient = Http::withHeaders( $this->userAgentRequestHeaders )
+                                 ->when(
+                                     value: (bool) $this->authToken,
+                                     callback: fn( PendingRequest $request ) => $request->withToken( $this->authToken )
+                                 )
+                                 ->when(
+                                     value: isset( $this->progressMeter?->progressCallback ),
+                                     callback: function ( PendingRequest $request ) {
+                                         $request->withOptions( $request->mergeOptions( [
+                                             RequestOptions::PROGRESS => $this->progressMeter->progressCallback,
+                                         ] ) );
+                                     }
+                                 )
+                                 ->when(
+                                     value: (bool) $this->downloadPath,
+                                     callback: fn( PendingRequest $request ) => $request->sink( $this->downloadPath )
+                                 )
+                                 ->when(
+                                     value: OutputInterface::VERBOSITY_VERBOSE,
+                                     callback: function ( PendingRequest $request ) {
+                                         $request->beforeSending( function ( Request $request ) {
+                                             Log::channel( 'streamline' )->debug( [
+                                                 'Making Request to ' . $request->url() . ' using:',
+                                                 'HEADERS:',
+                                                 $request->headers(),
+                                                 'BODY:',
+                                                 $request->body(),
+                                             ] );
+                                         } );
+                                     }
+                                 )
+                                 ->get( $this->buildUrl() );
 
-            if ($this->progressMeter?->hasStarted()) {
+            if ( $this->progressMeter?->hasStarted() ) {
                 $this->progressMeter->finish();
             }
 
-            $this->checkRateLimits($requestClient);
-            $this->checkAuth($requestClient);
+            $this->checkRateLimits( $requestClient );
+            $this->checkAuth( $requestClient );
 
             $requestClient->throw();
 
             return $requestClient;
-        } catch (ConnectionException|RequestException $e) {
-            throw new RuntimeException(message: 'Error: Failed to connect to GitHub API', previous: $e);
+        } catch ( ConnectionException|RequestException $e ) {
+            throw new RuntimeException( message: 'Error: Failed to connect to GitHub API', previous: $e );
         }
     }
 
-    public function paginate(): Collection
-    {
+    public function paginate(): Collection {
         $this->checkHasUrl();
         $allData          = collect();
         $this->page       = 1;
-        $perPage          = config('streamline.github_api_pagination_limit');
+        $perPage          = config( 'streamline.github_api_pagination_limit' );
         $this->totalPages = null;
 
         do {
-            $this->withQueryParams(['page' => $this->page, 'per_page' => $perPage]);
+            $this->withQueryParams( [ 'page' => $this->page, 'per_page' => $perPage ] );
 
             $response = $this->get();
             $data     = $response->collect();
-            $allData  = $allData->merge($data);
+            $allData  = $allData->merge( $data );
 
-            $linkHeader = $response->header('Link');
+            $linkHeader = $response->header( 'Link' );
 
             // Extract total pages if not already set
-            if ($this->totalPages === null) {
-                $this->totalPages = $this->extractLinkPageNumber($linkHeader, LinkHeader::LAST);
+            if ( $this->totalPages === null ) {
+                $this->totalPages = $this->extractLinkPageNumber( $linkHeader, LinkHeader::LAST );
             }
 
             // Check if there are more pages
-            $nextPage    = $this->extractLinkPageNumber($linkHeader, LinkHeader::NEXT);
+            $nextPage    = $this->extractLinkPageNumber( $linkHeader, LinkHeader::NEXT );
             $hasNextPage = $nextPage !== null && $nextPage > $this->page;
-            $this->page++;
-        } while ($hasNextPage);
+            $this->page ++;
+        } while ( $hasNextPage );
 
         $this->page = 0;
 
         return $allData;
     }
 
-    private function checkHasUrl(): void
-    {
-        if (!isset($this->url) || !$this->url) {
-            throw new RuntimeException('Error: No URL set. Set it via getWebUrl() or getApiUrl()');
+    private function checkHasUrl(): void {
+        if ( ! isset( $this->url ) || ! $this->url ) {
+            throw new RuntimeException( 'Error: No URL set. Set it via getWebUrl() or getApiUrl()' );
         }
     }
 
     /**
      * @param  null|ProgressMeter(?int $downloadTotal, ?int $downloadedBytes, ?int $uploadTotal, ?int $uploadedBytes):void  $callback
      */
-    public function withProgressCallback(?ProgressMeter $callback): static
-    {
+    public function withProgressCallback( ?ProgressMeter $callback ): static {
         $this->progressMeter = $callback;
 
         return $this;
     }
 
-    public function withDownloadPath(?string $path): static
-    {
+    public function withDownloadPath( ?string $path ): static {
         $this->downloadPath = $path;
 
         return $this;
     }
 
-    public function withApiUrl(string $path): static
-    {
-        $this->url = self::GITHUB_API_URL . '/' . $this->githubRepo . '/' . $this->normalisePath($path);
+    public function withApiUrl( string $path ): static {
+        $this->url = self::GITHUB_API_URL . '/' . $this->githubRepo . '/' . $this->normalisePath( $path );
 
         return $this;
     }
 
-    public function withWebUrl(string $path): static
-    {
-        $this->url = self::GITHUB_WEB_URL . '/' . $this->githubRepo . '/' . $this->normalisePath($path);
+    public function withWebUrl( string $path ): static {
+        $this->url = self::GITHUB_WEB_URL . '/' . $this->githubRepo . '/' . $this->normalisePath( $path );
 
         return $this;
     }
 
-    protected function normalisePath(string $path): string
-    {
-        return ltrim($path, '/');
+    protected function normalisePath( string $path ): string {
+        return ltrim( $path, '/' );
     }
 
-    public function withQueryParams(array $params): static
-    {
-        $this->queryParams = array_merge($this->queryParams, $params);
+    public function withQueryParams( array $params ): static {
+        $this->queryParams = array_merge( $this->queryParams, $params );
 
         return $this;
     }
 
-    protected function buildUrl(): string
-    {
+    protected function buildUrl(): string {
         $url = $this->url;
 
-        if (!empty($this->queryParams)) {
-            $url .= '?' . http_build_query($this->queryParams);
+        if ( ! empty( $this->queryParams ) ) {
+            $url .= '?' . http_build_query( $this->queryParams );
         }
 
         return $url;
     }
 
-    public function progressMessage(string $message): static
-    {
+    public function progressMessage( string $message ): static {
         $this->defaultProgressMessage = $message;
 
         return $this;
@@ -202,9 +199,8 @@ class GitHubApi
     /**
      * @see https://docs.github.com/en/rest/using-the-rest-api/using-pagination-in-the-rest-api
      */
-    private function extractLinkPageNumber(?string $linkHeader, LinkHeader $type): ?int
-    {
-        if (!$linkHeader) {
+    private function extractLinkPageNumber( ?string $linkHeader, LinkHeader $type ): ?int {
+        if ( ! $linkHeader ) {
             return null;
         }
 
@@ -215,53 +211,51 @@ class GitHubApi
         // page=(\d+)           : Matches 'page=' followed by one or more digits (captured)
         // .*>                  : Matches any remaining characters until the closing angle bracket
         // ; rel="$type->value" : Matches the rel attribute with the specified link type
-        if (preg_match("/<.*[&?]page=(\\d+).*>; rel=\"$type->value\"/", $linkHeader, $matches)) {
+        if ( preg_match( "/<.*[&?]page=(\\d+).*>; rel=\"$type->value\"/", $linkHeader, $matches ) ) {
             return (int) $matches[1];
         }
 
         return null;
     }
 
-    public function setProgressMessage(): void
-    {
-        if (!$this->progressMeter) {
+    public function setProgressMessage(): void {
+        if ( ! $this->progressMeter ) {
             return;
         }
         $message = $this->defaultProgressMessage;
 
-        if ($this->page > 0) {
+        if ( $this->page > 0 ) {
             $message .= " - Page $this->page";
         }
 
-        if ($this->totalPages !== null && $this->totalPages > 0) {
+        if ( $this->totalPages !== null && $this->totalPages > 0 ) {
             $message .= " of $this->totalPages";
         }
-        $this->progressMeter->setMessage($message);
+        $this->progressMeter->setMessage( $message );
     }
 
-    public function checkRateLimits(Response $requestClient): void
-    {
-        if ($requestClient->getStatusCode() === 403 || $requestClient->getStatusCode() === 429) {
-            $max       = $requestClient->getHeaderLine('X-RateLimit-Limit');
-            $remaining = $requestClient->getHeaderLine('X-RateLimit-Remaining');
-            $reset     = $requestClient->getHeaderLine('X-RateLimit-Reset');
+    public function checkRateLimits( Response $requestClient ): void {
+        if ( $requestClient->getStatusCode() === 403 || $requestClient->getStatusCode() === 429 ) {
+            $max       = $requestClient->getHeaderLine( 'X-RateLimit-Limit' );
+            $remaining = $requestClient->getHeaderLine( 'X-RateLimit-Remaining' );
+            $reset     = $requestClient->getHeaderLine( 'X-RateLimit-Reset' );
 
-            $resetTime = Carbon::createFromTimestampUTC($reset)
-                ->format('H:i:s - d M Y');
+            $resetTime = Carbon::createFromTimestampUTC( $reset )
+                               ->format( 'H:i:s - d M Y' );
 
             $message = "GitHub API rate limit exceeded. You have $remaining requests of $max remaining. You can make more requests at: $resetTime";
 
-            throw new RuntimeException(message: $message);
+            throw new RuntimeException( message: $message );
         }
     }
 
-    public function checkAuth(Response $requestClient): void
-    {
-        if (($requestClient->getStatusCode() === 401) && Str::isJson($requestClient->body())) {
-            $message = $requestClient->json('message');
+    public function checkAuth( Response $requestClient ): void {
+        if ( ( $requestClient->getStatusCode() === 401 ) && Str::isJson( $requestClient->body() ) ) {
+            $message = $requestClient->json( 'message' );
 
-            if ($message) {
-                throw new RuntimeException(message: $message);
+            if ( $message ) {
+                Log::channel( 'streamline' )->critical( $requestClient->body() );
+                throw new RuntimeException( message: $message );
             }
         }
     }

@@ -5,6 +5,7 @@
 namespace Pixelated\Streamline\Factories;
 
 use Illuminate\Support\Facades\Config;
+use RuntimeException;
 use Symfony\Component\Process\PhpExecutableFinder;
 use Symfony\Component\Process\Process;
 
@@ -27,6 +28,13 @@ class ProcessFactory
     {
         // TODO THIS CLASS IS ONLY NEEDED UNTIL THE UPDATE TO LARAVEL 11
         $php = (new PhpExecutableFinder)->find();
+
+        if (!class_exists($this->processClass) || !is_a($this->processClass, Process::class, true)) {
+            throw new RuntimeException(
+                "Error: The configured external process class '$this->processClass' does not exist or is not a " .
+                Process::class . '.'
+            );
+        }
 
         return new $this->processClass([$php, '-d', 'display_errors=1', '-d', 'error_reporting=E_ALL', '-r', $script]);
     }

@@ -522,7 +522,7 @@ it('throws an exception when the source directory exists but is not readable', f
     $destinationPath = $this->rootPath . '/destination/file.txt';
 
     $this->expectException(RuntimeException::class);
-    $this->expectExceptionMessage('Error: ' . dirname($destinationPath) . ' cannot be copied as it cannot be read from. Please check permissions.');
+    $this->expectExceptionMessage('Error: ' . dirname($sourceFile->url()) . ' cannot be copied as it cannot be read from. Please check permissions.');
 
     $runUpdate = runUpdateClassFactory();
     $closure   = fn(string $source, string $destination, bool $doOverwrite = true) => $this->copyFile(
@@ -607,23 +607,153 @@ function assertDirectoriesEqual($expected, $actual): void
  *     doOutput?: bool,
  * }  $options
  */
+it('throws and leaves the deployment untouched when the current release cannot be moved aside', function() {
+    $this->expectException(RuntimeException::class);
+    $this->expectExceptionMessage('The deployment has not been modified.');
+
+    $runUpdate = runUpdateClassFactory([
+        'laravelBasePath' => 'non-existent-directory',
+        'doOutput'        => false,
+    ]);
+    withoutRenameWarnings(fn() => (fn() => $this->moveNewReleaseIntoDeployment())->call($runUpdate));
+});
+
+it('restores the previous release when the new release cannot be moved into place', function() {
+    $runUpdate = runUpdateClassFactory([
+        'tempDirName' => "$this->rootPath/does-not-exist",
+        'doOutput'    => false,
+    ]);
+
+    $thrown = null;
+    withoutRenameWarnings(function() use ($runUpdate, &$thrown) {
+        try {
+            (fn() => $this->moveNewReleaseIntoDeployment())->call($runUpdate);
+        } catch (RuntimeException $e) {
+            $thrown = $e;
+        }
+    });
+
+    $this->assertNotNull($thrown, 'Expected a RuntimeException to be thrown');
+    $this->assertStringContainsString('The previous release has been restored.', $thrown->getMessage());
+
+    $this->assertDirectoryExists($this->deploymentPath);
+    $this->assertDirectoryDoesNotExist("$this->rootPath/mock_deployment_old.0");
+});
+
+it('rolls back to the previous release after a successful swap', function() {
+    $this->rootFs->addChild(vfsStream::newDirectory('temp_release'));
+
+    $runUpdate = runUpdateClassFactory([
+        'tempDirName' => "$this->rootPath/temp_release",
+        'doOutput'    => false,
+    ]);
+
+    (fn() => $this->moveNewReleaseIntoDeployment())->call($runUpdate);
+
+    // The new release is now live and the previous one is parked in the backup directory.
+    $this->assertDirectoryExists("$this->rootPath/mock_deployment_old.0");
+    $this->assertDirectoryDoesNotExist("$this->rootPath/temp_release");
+
+    (fn() => $this->rollBackDeployment())->call($runUpdate);
+
+    $this->assertDirectoryExists($this->deploymentPath);
+    $this->assertDirectoryExists("$this->rootPath/temp_release");
+    $this->assertDirectoryDoesNotExist("$this->rootPath/mock_deployment_old.0");
+});
+
+it('does not roll back when the release was never swapped', function() {
+    $runUpdate = runUpdateClassFactory(['doOutput' => false]);
+
+    (fn() => $this->rollBackDeployment())->call($runUpdate);
+
+    $this->assertDirectoryExists($this->deploymentPath);
+    $this->assertDirectoryDoesNotExist("$this->rootPath/mock_deployment_old.0");
+});
+
+it('carries forward configured paths without overwriting the incoming release', function() {
+    // The old release has an uploads directory the archive does not ship, plus a file that the
+    // new release *does* ship - the new one has to win.
+    // Built in one create() call each: an addChild() with a nested path replaces the whole
+    // top-level subtree, so adding the files one at a time would discard the earlier ones.
+    vfsStream::create(
+        ['public' => ['uploads' => ['photo.jpg' => 'old photo', 'shipped.txt' => 'old version']]],
+        $this->deploymentDir
+    );
+    vfsStream::create(
+        ['temp' => ['public' => ['uploads' => ['shipped.txt' => 'new version']]]],
+        $this->rootFs
+    );
+
+    $runUpdate = runUpdateClassFactory([
+        'tempDirName'       => "$this->rootPath/temp",
+        'carryForwardPaths' => ['public/uploads'],
+        'doOutput'          => false,
+    ]);
+
+    (fn() => $this->carryForwardRetainedPaths())->call($runUpdate);
+
+    expect(file_get_contents("$this->rootPath/temp/public/uploads/photo.jpg"))->toBe('old photo')
+        ->and(file_get_contents("$this->rootPath/temp/public/uploads/shipped.txt"))->toBe('new version');
+});
+
+it('warns about a carried forward path that does not exist', function() {
+    $runUpdate = runUpdateClassFactory([
+        'tempDirName'       => "$this->rootPath/temp",
+        'carryForwardPaths' => ['public/nope'],
+    ]);
+
+    (fn() => $this->carryForwardRetainedPaths())->call($runUpdate);
+
+    $this->assertStringContainsString(
+        "Warning: Carried forward path not found: $this->deploymentPath/public/nope",
+        $this->getActualOutputForAssertion()
+    );
+});
+
+it('does nothing when no paths are configured to be carried forward', function() {
+    $runUpdate = runUpdateClassFactory(['carryForwardPaths' => []]);
+
+    (fn() => $this->carryForwardRetainedPaths())->call($runUpdate);
+
+    expect($this->getActualOutputForAssertion())->toBe('');
+});
+
+/**
+ * A failing rename() raises a warning — from PHP on a real filesystem, and from vfsStream via
+ * trigger_error() on a virtual one. The updater deliberately suppresses these with @ and reacts to
+ * the boolean return value instead, but PHPUnit's error handler reports them regardless of the @
+ * operator, so they are swallowed here for the tests that exercise a deliberate rename failure.
+ */
+function withoutRenameWarnings(Closure $callback): mixed
+{
+    set_error_handler(static fn() => true, E_WARNING | E_USER_WARNING);
+
+    try {
+        return $callback();
+    } finally {
+        restore_error_handler();
+    }
+}
+
 function runUpdateClassFactory(array $options = []): RunCompleteGitHubVersionRelease
 {
     $options = array_merge(
         [
-            'tempDirName'           => 'temp',
-            'laravelBasePath'       => laravel_path(),
-            'publicDirName'         => 'public',
-            'frontendBuildDir'      => 'build',
-            'installingVersion'     => '1.0.0',
-            'composerPath'          => '/dev/null',
-            'protectedPaths'        => ['.env'],
-            'dirPermission'         => 0755,
-            'filePermission'        => 0644,
-            'oldReleaseArchivePath' => laravel_path('archive.zip'),
-            'doRetainOldReleaseDir' => false,
-            'downloadedArchivePath' => laravel_path('archive.zip'),
-            'doOutput'              => true,
+            'tempDirName'             => 'temp',
+            'laravelBasePath'         => laravel_path(),
+            'publicDirName'           => 'public',
+            'frontendBuildDir'        => 'build',
+            'installingVersion'       => '1.0.0',
+            'composerPath'            => '/dev/null',
+            'protectedPaths'          => ['.env'],
+            'dirPermission'           => 0755,
+            'filePermission'          => 0644,
+            'protectedFilePermission' => 0600,
+            'carryForwardPaths'       => [],
+            'oldReleaseArchivePath'   => laravel_path('archive.zip'),
+            'doRetainOldReleaseDir'   => false,
+            'downloadedArchivePath'   => laravel_path('archive.zip'),
+            'doOutput'                => true,
         ],
         $options
     );
@@ -638,6 +768,8 @@ function runUpdateClassFactory(array $options = []): RunCompleteGitHubVersionRel
         protectedPaths: $options['protectedPaths'],
         dirPermission: $options['dirPermission'],
         filePermission: $options['filePermission'],
+        protectedFilePermission: $options['protectedFilePermission'],
+        carryForwardPaths: $options['carryForwardPaths'],
         oldReleaseArchivePath: $options['oldReleaseArchivePath'],
         doRetainOldReleaseDir: $options['doRetainOldReleaseDir'],
         doOutput: $options['doOutput'],

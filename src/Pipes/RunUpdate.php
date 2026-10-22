@@ -17,6 +17,7 @@ readonly class RunUpdate implements Pipe
         $this->runUpdate->execute(
             versionToInstall: $builder->getRequestedVersion() ?? $builder->getNextAvailableRepositoryVersion(),
             composerPath: $builder->getComposerPath(),
+            backupArchivePath: $builder->getBackupArchivePath(),
             callback: function(string $type, string $output) {
                 if ($type === 'err') {
                     CommandClassCallback::dispatch('error', $output);

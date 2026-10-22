@@ -6,6 +6,8 @@ use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 
 class UpdateBuilder implements UpdateBuilderInterface
 {
+    public const string NO_VERSION_INSTALLED = 'v0.0.0';
+
     private string $basePath;
 
     private string $currentlyInstalledVersion;
@@ -21,6 +23,10 @@ class UpdateBuilder implements UpdateBuilderInterface
     private string $workTempDir;
 
     private string $downloadedArchivePath;
+
+    private ?string $backupArchivePath = null;
+
+    private ?string $verifiedChecksum = null;
 
     public function __construct()
     {
@@ -41,12 +47,14 @@ class UpdateBuilder implements UpdateBuilderInterface
 
     public function setCurrentlyInstalledVersion(?string $version): UpdateBuilderInterface
     {
-        $this->currentlyInstalledVersion = $version;
+        // An absent installed version means nothing has been deployed by Streamline yet. Coercing
+        // it here keeps the property (and every version_compare() downstream) a plain string.
+        $this->currentlyInstalledVersion = $version ?: self::NO_VERSION_INSTALLED;
 
         return $this;
     }
 
-    public function getCurrentlyInstalledVersion(): ?string
+    public function getCurrentlyInstalledVersion(): string
     {
         return $this->currentlyInstalledVersion;
     }
@@ -107,6 +115,18 @@ class UpdateBuilder implements UpdateBuilderInterface
         return $this->workTempDir;
     }
 
+    public function setBackupArchivePath(?string $path): UpdateBuilderInterface
+    {
+        $this->backupArchivePath = $path;
+
+        return $this;
+    }
+
+    public function getBackupArchivePath(): ?string
+    {
+        return $this->backupArchivePath;
+    }
+
     public function setDownloadedArchivePath(string $path): self
     {
         $this->downloadedArchivePath = $path;
@@ -117,5 +137,17 @@ class UpdateBuilder implements UpdateBuilderInterface
     public function getDownloadedArchivePath(): string
     {
         return $this->downloadedArchivePath;
+    }
+
+    public function setVerifiedChecksum(?string $checksum): UpdateBuilderInterface
+    {
+        $this->verifiedChecksum = $checksum;
+
+        return $this;
+    }
+
+    public function getVerifiedChecksum(): ?string
+    {
+        return $this->verifiedChecksum;
     }
 }

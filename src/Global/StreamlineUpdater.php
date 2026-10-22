@@ -20,16 +20,23 @@ class StreamlineUpdater
 
     public string $oldReleaseArchivePath;
 
+    /** @var string[] */
     public array $protectedPaths;
+
+    /** @var string[] */
+    public array $carryForwardPaths;
 
     public int $dirPermission;
 
     public int $filePermission;
 
+    public int $protectedFilePermission;
+
     public bool $doRetainOldRelease;
 
     public int $isTesting = self::TESTING_OFF;
 
+    /** @var string[] */
     private array $envIssues = [];
 
     public const int TESTING_OFF = 0;
@@ -43,16 +50,20 @@ class StreamlineUpdater
      */
     public function __construct()
     {
-        $this->tempDir               = $this->env('TEMP_DIR');
-        $this->laravelBasePath       = $this->env('LARAVEL_BASE_PATH');
-        $this->publicDirName         = $this->env('PUBLIC_DIR_NAME');
-        $this->frontEndBuildDir      = $this->env('FRONT_END_BUILD_DIR');
-        $this->installingVersion     = $this->env('INSTALLING_VERSION');
-        $this->composerPath          = $this->env('COMPOSER_PATH');
-        $this->protectedPaths        = $this->jsonEnv('PROTECTED_PATHS');
-        $this->dirPermission         = (int) $this->env('DIR_PERMISSION');
-        $this->filePermission        = (int) $this->env('FILE_PERMISSION');
-        $this->oldReleaseArchivePath = $this->env('OLD_RELEASE_ARCHIVE_PATH');
+        $this->tempDir                 = $this->env('TEMP_DIR');
+        $this->laravelBasePath         = $this->env('LARAVEL_BASE_PATH');
+        $this->publicDirName           = $this->env('PUBLIC_DIR_NAME');
+        $this->frontEndBuildDir        = $this->env('FRONT_END_BUILD_DIR');
+        $this->installingVersion       = $this->env('INSTALLING_VERSION');
+        $this->composerPath            = $this->env('COMPOSER_PATH');
+        $this->protectedPaths          = $this->jsonEnv('PROTECTED_PATHS');
+        $this->carryForwardPaths       = $this->jsonEnv('CARRY_FORWARD_PATHS');
+        $this->dirPermission           = (int) $this->env('DIR_PERMISSION');
+        $this->filePermission          = (int) $this->env('FILE_PERMISSION');
+        $this->protectedFilePermission = (int) $this->env('PROTECTED_FILE_PERMISSION');
+        // Optional: a custom pipeline may not include the backup step, in which case there is no
+        // archive to clean up afterwards.
+        $this->oldReleaseArchivePath = (string) getenv('OLD_RELEASE_ARCHIVE_PATH', true);
         $this->doRetainOldRelease    = (bool) $this->env('DO_RETAIN_OLD_RELEASE');
         $this->isTesting             = (int) getenv('IS_TESTING') ?: self::TESTING_OFF;
 
@@ -77,14 +88,22 @@ class StreamlineUpdater
     {
         $val = getenv($name, true);
 
-        if (!$val) {
+        // Compared against false and '' rather than tested for falsiness: a boolean setting arrives
+        // as the string '0', which is falsy but perfectly present.
+        if ($val === false || $val === '') {
             $this->envIssues[] = "Environment variable $name needs to be set!";
+
+            return '';
         }
 
-        return (string) $val;
+        return $val;
     }
 
-    /** @noinspection PhpSameParameterValueInspection */
+    /**
+     * @noinspection PhpSameParameterValueInspection
+     *
+     * @return string[]
+     */
     private function jsonEnv(string $name): array
     {
         $env = $this->env($name);
@@ -117,8 +136,10 @@ class StreamlineUpdater
             installingVersion: $this->installingVersion,
             composerPath: $this->composerPath,
             protectedPaths: $this->protectedPaths,
+            carryForwardPaths: $this->carryForwardPaths,
             dirPermission: $this->dirPermission,
             filePermission: $this->filePermission,
+            protectedFilePermission: $this->protectedFilePermission,
             oldReleaseArchivePath: $this->oldReleaseArchivePath,
             doRetainOldReleaseDir: $this->doRetainOldRelease,
             doOutput: true,

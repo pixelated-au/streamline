@@ -9,124 +9,115 @@ beforeEach(function() {
     $this->ns = 'Pixelated\\Streamline\\Install';
 });
 
-it(
-    'can validate that the system function is enabled',
-    /**
-     * @throws PHPUnit\Framework\MockObject\Exception
-     */
-    function() {
-        PHPMockery::mock($this->ns, 'ini_get')->with('disable_functions')->andReturn('');
-        PHPMockery::mock($this->ns, 'function_exists')->with('system')->andReturnTrue();
-        PHPMockery::mock($this->ns, 'system')->with('echo test')->andReturn('test');
+/**
+ * The check covers every function in REQUIRED_FUNCTIONS, so all of them have to be stubbed even
+ * when a test is only interested in one. A single mock handles every argument, because php-mock
+ * permits only one mock per function per namespace.
+ */
+function mockFunctionsExist(string $ns, array $overrides = []): void
+{
+    PHPMockery::mock($ns, 'function_exists')
+        ->andReturnUsing(fn(string $function) => $overrides[$function] ?? true);
+}
 
-        $composerEvent = $this->createStub(Event::class);
+function composerEventWithIoSpy(): array
+{
+    $event = test()->createStub(Event::class);
+    $ioSpy = test()->spy(IOInterface::class);
+    $event->method('getIO')->willReturn($ioSpy);
 
-        $ioSpy = $this->spy(IOInterface::class);
-        $composerEvent->method('getIO')->willReturn($ioSpy);
+    return [$event, $ioSpy];
+}
 
-        $result = RequiredFunctionsCheck::run($composerEvent);
-        $ioSpy->shouldNotHaveReceived('warning');
-        $this->assertTrue($result);
-    }
-);
+it('can validate that the required functions are enabled', function() {
+    PHPMockery::mock($this->ns, 'ini_get')->with('disable_functions')->andReturn('');
+    mockFunctionsExist($this->ns);
+    PHPMockery::mock($this->ns, 'exec')->with('echo test')->andReturn('test');
 
-it(
-    'can validate that the system function is not enabled because it is in disable_functions',
-    /**
-     * @throws PHPUnit\Framework\MockObject\Exception
-     */
-    function() {
-        PHPMockery::mock($this->ns, 'ini_get')->with('disable_functions')->andReturn('system,exec');
-        PHPMockery::mock($this->ns, 'function_exists')->with('system')->andReturnTrue();
-        PHPMockery::mock($this->ns, 'system')->with('echo test')->andReturn('test');
+    [$composerEvent, $ioSpy] = composerEventWithIoSpy();
 
-        $composerEvent = $this->createStub(Event::class);
+    $result = RequiredFunctionsCheck::run($composerEvent);
+    $ioSpy->shouldNotHaveReceived('warning');
+    $this->assertTrue($result);
+});
 
-        $ioSpy = $this->spy(IOInterface::class);
-        $composerEvent->method('getIO')->willReturn($ioSpy);
+it('reports exec() when it is listed in disable_functions', function() {
+    PHPMockery::mock($this->ns, 'ini_get')->with('disable_functions')->andReturn('exec,proc_open');
+    mockFunctionsExist($this->ns);
+    PHPMockery::mock($this->ns, 'exec')->with('echo test')->andReturn('test');
 
-        $result = RequiredFunctionsCheck::run($composerEvent);
-        $ioSpy->shouldHaveReceived(
-            'warning',
-            fn(string $args) => str_starts_with($args, 'The PHP system()')
-                && str_ends_with($args, "function is listed in PHP's disable_functions() check. This means someone has deliberately disabled it, possibly a system administrator.")
-        );
-        $this->assertFalse($result);
-    }
-);
+    [$composerEvent, $ioSpy] = composerEventWithIoSpy();
 
-it(
-    'can validate that the system function is not enabled because it is not listed as a function',
-    /**
-     * @throws PHPUnit\Framework\MockObject\Exception
-     */
-    function() {
-        PHPMockery::mock($this->ns, 'ini_get')->with('disable_functions')->andReturn('');
-        PHPMockery::mock($this->ns, 'function_exists')->with('system')->andReturnFalse();
-        PHPMockery::mock($this->ns, 'system')->with('echo test')->andReturn('test');
+    $result = RequiredFunctionsCheck::run($composerEvent);
+    $ioSpy->shouldHaveReceived(
+        'warning',
+        fn(string $args) => str_contains($args, "exec() is listed in PHP's disable_functions() check")
+    );
+    $this->assertFalse($result);
+});
 
-        $composerEvent = $this->createStub(Event::class);
+it('reports proc_open() when only that one is disabled', function() {
+    // The previous implementation checked system() instead, so a configuration that disabled
+    // proc_open() while leaving system() enabled was reported as healthy.
+    PHPMockery::mock($this->ns, 'ini_get')->with('disable_functions')->andReturn('proc_open');
+    mockFunctionsExist($this->ns);
+    PHPMockery::mock($this->ns, 'exec')->with('echo test')->andReturn('test');
 
-        $ioSpy = $this->spy(IOInterface::class);
-        $composerEvent->method('getIO')->willReturn($ioSpy);
+    [$composerEvent, $ioSpy] = composerEventWithIoSpy();
 
-        $result = RequiredFunctionsCheck::run($composerEvent);
-        $ioSpy->shouldHaveReceived(
-            'warning',
-            fn(string $args) => str_ends_with($args, 'The function_exists("system") check returns false')
-        );
-        $this->assertFalse($result);
-    }
-);
+    $result = RequiredFunctionsCheck::run($composerEvent);
+    $ioSpy->shouldHaveReceived(
+        'warning',
+        fn(string $args) => str_contains($args, "proc_open() is listed in PHP's disable_functions() check")
+    );
+    $this->assertFalse($result);
+});
 
-it(
-    'can validate that the system function is not enabled because it cannot execute commands',
-    /**
-     * @throws PHPUnit\Framework\MockObject\Exception
-     */
-    function() {
-        PHPMockery::mock($this->ns, 'ini_get')->with('disable_functions')->andReturn('');
-        PHPMockery::mock($this->ns, 'function_exists')->with('system')->andReturnTrue();
-        PHPMockery::mock($this->ns, 'system')
-            ->with('echo test')
-            ->andThrow(new Exception('Whoopsy daisy!'));
+it('reports a required function that does not exist', function() {
+    PHPMockery::mock($this->ns, 'ini_get')->with('disable_functions')->andReturn('');
+    mockFunctionsExist($this->ns, ['exec' => false]);
+    PHPMockery::mock($this->ns, 'exec')->with('echo test')->andReturn('test');
 
-        $composerEvent = $this->createStub(Event::class);
+    [$composerEvent, $ioSpy] = composerEventWithIoSpy();
 
-        $ioSpy = $this->spy(IOInterface::class);
-        $composerEvent->method('getIO')->willReturn($ioSpy);
+    $result = RequiredFunctionsCheck::run($composerEvent);
+    $ioSpy->shouldHaveReceived(
+        'warning',
+        fn(string $args) => str_ends_with($args, 'The function_exists("exec") check returns false')
+    );
+    $this->assertFalse($result);
+});
 
-        $result = RequiredFunctionsCheck::run($composerEvent);
-        $ioSpy->shouldHaveReceived(
-            'warning',
-            fn(string $args) => str_ends_with($args, 'Whoopsy daisy!')
-        );
-        $this->assertFalse($result);
-    }
-);
+it('reports when commands cannot be executed due to an exception', function() {
+    PHPMockery::mock($this->ns, 'ini_get')->with('disable_functions')->andReturn('');
+    mockFunctionsExist($this->ns);
+    PHPMockery::mock($this->ns, 'exec')
+        ->with('echo test')
+        ->andThrow(new Exception('Whoopsy daisy!'));
 
-it(
-    'returns an error message when the system function is run but does not return the expected output',
-    /**
-     * @throws PHPUnit\Framework\MockObject\Exception
-     */
-    function() {
-        PHPMockery::mock($this->ns, 'ini_get')->with('disable_functions')->andReturn('');
-        PHPMockery::mock($this->ns, 'function_exists')->with('system')->andReturnTrue();
-        PHPMockery::mock($this->ns, 'system')
-            ->with('echo test')
-            ->andReturn('Not the expected output');
+    [$composerEvent, $ioSpy] = composerEventWithIoSpy();
 
-        $composerEvent = $this->createStub(Event::class);
+    $result = RequiredFunctionsCheck::run($composerEvent);
+    $ioSpy->shouldHaveReceived(
+        'warning',
+        fn(string $args) => str_ends_with($args, 'Whoopsy daisy!')
+    );
+    $this->assertFalse($result);
+});
 
-        $ioSpy = $this->spy(IOInterface::class);
-        $composerEvent->method('getIO')->willReturn($ioSpy);
+it('returns an error message when exec runs but does not return the expected output', function() {
+    PHPMockery::mock($this->ns, 'ini_get')->with('disable_functions')->andReturn('');
+    mockFunctionsExist($this->ns);
+    PHPMockery::mock($this->ns, 'exec')
+        ->with('echo test')
+        ->andReturn('Not the expected output');
 
-        $result = RequiredFunctionsCheck::run($composerEvent);
-        $ioSpy->shouldHaveReceived(
-            'warning',
-            fn(string $args) => str_contains($args, 'Unable to run the system() function')
-        );
-        $this->assertFalse($result);
-    }
-);
+    [$composerEvent, $ioSpy] = composerEventWithIoSpy();
+
+    $result = RequiredFunctionsCheck::run($composerEvent);
+    $ioSpy->shouldHaveReceived(
+        'warning',
+        fn(string $args) => str_contains($args, 'Unable to run the exec() function')
+    );
+    $this->assertFalse($result);
+});

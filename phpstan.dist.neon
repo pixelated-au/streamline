@@ -15,13 +15,11 @@ parameters:
     excludePaths:
         - */workbench/*
         - */tests/*
-    ignoreErrors:
-        -
-            message: "#^Call to an undefined method PHPUnit\\\\Framework\\\\TestCase::travel(To|Back)\\(\\)\\.$#"
-            path: tests/*
-        - '#^Call to method \w+\(\) on an unknown class Spatie\\(YiiRay|WordPressRay|CraftRay|RayBundle)\\Ray\.$#'
-        - '#^Call to an undefined static method [\w\\]\\Facades\[\w\\]\\:\\:.*\\(\\)$#'
-        - '#^Call to an undefined static method Illuminate\\\\Support\\\\Facades\\\\Storage\\:\\:fake\\(\\)\\.$#'
+    # No ignoreErrors entries: the four that used to live here matched nothing, and PHPStan
+    # reports an unmatched ignore pattern as an error, so the run failed regardless of the code.
+    # Three of them targeted tests/, which excludePaths above removes from the analysis entirely,
+    # and the fourth tried to silence the GitHubApi facade - now handled properly by @method
+    # annotations on the facade itself. Add entries back if the errors they described reappear.
 
 #    scanFiles:
 #        - vendor/_laravel_idea/_ide_helper_facades.php

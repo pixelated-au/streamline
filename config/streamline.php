@@ -10,7 +10,10 @@ use Pixelated\Streamline\Pipes\GetNextAvailableReleaseVersion;
 use Pixelated\Streamline\Pipes\MakeTempDir;
 use Pixelated\Streamline\Pipes\RunUpdate;
 use Pixelated\Streamline\Pipes\UnpackRelease;
+use Pixelated\Streamline\Pipes\VerifyReleaseChecksum;
+use Pixelated\Streamline\Pipes\VerifyReleaseSignature;
 use Pixelated\Streamline\Pipes\VerifyVersion;
+use Pixelated\Streamline\Pipes\WarnUnverifiedRelease;
 use Pixelated\Streamline\Services\FinishUpdate;
 use Symfony\Component\Process\Process;
 
@@ -24,7 +27,7 @@ return [
     |
     */
 
-    'installed_version' => env('STREAMLINE_APPLICATION_VERSION_INSTALLED'),
+    'installed_version' => env('STREAMLINE_APPLICATION_VERSION_INSTALLED', 'v0.0.0'),
 
     /*
     |--------------------------------------------------------------------------
@@ -43,6 +46,35 @@ return [
     */
 
     'protected_files' => env('STREAMLINE_PROTECTED_PATHS', ['.env', 'storage/logs/streamline.log']),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Carried Forward Paths
+    |--------------------------------------------------------------------------
+    |
+    | Paths (either an array or a comma separated list) copied out of the old
+    | release into the new one, relative to your root installation directory.
+    | Use this for content the application itself writes and the release archive
+    | does not ship - user uploads, generated images, and so on.
+    |
+    | Unlike `protected_files`, a file already present in the new release is
+    | never overwritten: the incoming release always wins. That makes this safe
+    | for directories the release also contains, and it is why `public/build`
+    | (which is carried forward automatically) works the way it does.
+    |
+    | Files carried across are given `file_permissions`, not the tighter
+    | `protected_file_permissions`, because they are usually served publicly.
+    |
+    | Example:
+    |   STREAMLINE_CARRY_FORWARD_PATHS=public/uploads,public/images,storage/app/public
+    |
+    | NOTE: do not list `public` itself. The new release ships its own index.php
+    | and build assets, and while they would not be overwritten, every stale
+    | asset from the old release would be dragged forward for ever.
+    |
+    */
+
+    'carry_forward_paths' => env('STREAMLINE_CARRY_FORWARD_PATHS', []),
 
     /*
     |--------------------------------------------------------------------------
@@ -93,6 +125,103 @@ return [
     */
 
     'release_archive_file_name' => env('STREAMLINE_GITHUB_RELEASE_ARCHIVE_FILENAME', 'release.zip'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Release Archive Checksum Algorithm
+    |--------------------------------------------------------------------------
+    |
+    | Before the downloaded archive is unpacked over your installation, it is
+    | checked against a checksum file published alongside it in the same
+    | release. For an archive named "release.zip" and the default sha256
+    | algorithm, that file is "release.zip.sha256". It may contain either a
+    | bare digest or the standard `shasum` output format.
+    |
+    | NOTE: a checksum published in the same release only proves the download
+    | arrived intact. It does *not* prove the release is genuine - anyone able
+    | to replace the archive can replace the checksum alongside it. Proving
+    | authenticity requires a signature verified against a key you hold.
+    |
+    */
+
+    'release_checksum_algorithm' => env('STREAMLINE_RELEASE_CHECKSUM_ALGORITHM', 'sha256'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Require A Release Checksum
+    |--------------------------------------------------------------------------
+    |
+    | When true, an update is aborted if the checksum file cannot be retrieved.
+    | When false, a warning is emitted and the update continues unverified.
+    |
+    | This defaults to false so that existing releases which do not publish a
+    | checksum file keep working. Set it to true once your release process
+    | publishes one - a mismatched archive always aborts the update either way.
+    |
+    */
+
+    'require_release_checksum' => env('STREAMLINE_REQUIRE_RELEASE_CHECKSUM', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Release Public Key
+    |--------------------------------------------------------------------------
+    |
+    | The PEM-encoded public key used to prove a release is genuine, given
+    | either as the PEM itself or as a path to a file holding it. This is the
+    | trust anchor: unlike the checksum above, it lives on *this* machine and
+    | not in the release, so an attacker able to publish a release still cannot
+    | produce a signature that satisfies it.
+    |
+    | What gets signed is the checksum file, not the archive. The key vouches
+    | for the digest and the digest vouches for the archive, which keeps the
+    | guarantee intact without ever loading the whole archive into memory.
+    |
+    | Generate a key pair with:
+    |   openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 \
+    |       -out streamline_release.key
+    |   openssl pkey -in streamline_release.key -pubout -out streamline_release.pub
+    |
+    | Use an RSA or EC key. Ed25519 keys are rejected by PHP's openssl_verify()
+    | no matter how the signature was produced.
+    |
+    | Leave this empty to skip signature verification entirely.
+    |
+    */
+
+    'release_public_key' => env('STREAMLINE_RELEASE_PUBLIC_KEY'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Require A Release Signature
+    |--------------------------------------------------------------------------
+    |
+    | When true, an update is aborted unless the release publishes a signature
+    | that verifies against the public key above. When false, a missing
+    | signature only produces a warning and the update continues.
+    |
+    | An *invalid* signature always aborts the update, whichever way this is
+    | set. What this controls is whether an unsigned release is acceptable.
+    |
+    | This defaults to false so that installations upgrading to this version of
+    | Streamline keep working. While it is off, every update prints a banner
+    | saying so - see docs/verifying-releases.md.
+    |
+    */
+
+    'require_release_signature' => env('STREAMLINE_REQUIRE_RELEASE_SIGNATURE', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Release Signature File Extension
+    |--------------------------------------------------------------------------
+    |
+    | The signature is looked for next to the checksum file, under its name plus
+    | this extension. With the defaults that is "release.zip.sha256.sig".
+    |
+    */
+
+    'release_signature_file_extension' => env('STREAMLINE_RELEASE_SIGNATURE_FILE_EXTENSION', 'sig'),
 
     /*
     |--------------------------------------------------------------------------
@@ -176,11 +305,12 @@ return [
     |--------------------------------------------------------------------------
     |
     | After running the updater script, the permissions of the directory will
-    | be set to this value.
+    | be set to this value. Values are octal, and may be given in the .env file
+    | in the usual form, eg STREAMLINE_DIRECTORY_PERMISSIONS=0755
     |
     */
 
-    'directory_permissions' => (int) env('STREAMLINE_DIRECTORY_PERMISSIONS', 0755),
+    'directory_permissions' => env('STREAMLINE_DIRECTORY_PERMISSIONS', 0755),
 
     /*
     |--------------------------------------------------------------------------
@@ -188,11 +318,32 @@ return [
     |--------------------------------------------------------------------------
     |
     | After running the updater script, the permissions of the files will be
-    | set to this value.
+    | set to this value. Values are octal, and may be given in the .env file in
+    | the usual form, eg STREAMLINE_FILE_PERMISSIONS=0644
     |
     */
 
-    'file_permissions' => (int) env('STREAMLINE_FILE_PERMISSIONS', 0644),
+    'file_permissions' => env('STREAMLINE_FILE_PERMISSIONS', 0644),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Protected File Permissions
+    |--------------------------------------------------------------------------
+    |
+    | The permissions applied to the files listed in `protected_files` when they
+    | are carried across into the new release. These are kept separate from
+    | `file_permissions` because protected files are typically secrets - the
+    | .env file holds your APP_KEY, database credentials and API tokens - and
+    | should not be readable by other users on the machine.
+    |
+    | NOTE: 0600 means only the owner can read the file. If your web server runs
+    | as a different user to the one that runs the update, it will not be able
+    | to read the .env file and your site will break. In that situation, set
+    | this to 0640 and make the file group-readable by the web server instead.
+    |
+    */
+
+    'protected_file_permissions' => env('STREAMLINE_PROTECTED_FILE_PERMISSIONS', 0600),
 
     /*
     |--------------------------------------------------------------------------
@@ -313,12 +464,15 @@ return [
     */
 
     'pipeline-update' => [
+        WarnUnverifiedRelease::class,
         CheckLaravelBasePathWritable::class,
         CheckComposer::class,
         GetNextAvailableReleaseVersion::class,
         VerifyVersion::class,
         MakeTempDir::class,
         DownloadRelease::class,
+        VerifyReleaseSignature::class,
+        VerifyReleaseChecksum::class,
         UnpackRelease::class,
         BackupCurrentInstallation::class,
         RunUpdate::class,
