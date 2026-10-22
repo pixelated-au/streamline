@@ -90,7 +90,7 @@ class VerifyReleaseSignature implements Pipe
         $key = trim($key);
 
         if (str_contains($key, '-----BEGIN')) {
-            return str_replace('\n', "\n", $key);
+            return $this->assertIsNotPrivateKey(str_replace('\n', "\n", $key));
         }
 
         $path = str_starts_with($key, 'file://') ? substr($key, 7) : $key;
@@ -102,7 +102,23 @@ class VerifyReleaseSignature implements Pipe
             );
         }
 
-        return (string) file_get_contents($path);
+        return $this->assertIsNotPrivateKey((string) file_get_contents($path));
+    }
+
+    /**
+     * A private key in this setting would work with some OpenSSL builds, and would leave the signing
+     * key sitting on the deployment that is meant to trust only the public half.
+     */
+    protected function assertIsNotPrivateKey(string $pem): string
+    {
+        if (preg_match('/-----BEGIN [A-Z ]*PRIVATE KEY-----/', $pem)) {
+            throw new RuntimeException(
+                'Error: STREAMLINE_RELEASE_PUBLIC_KEY is a PRIVATE key. Refusing to use it. Remove it from this ' .
+                'deployment and the environment, treat it as compromised, and configure the matching public key instead.'
+            );
+        }
+
+        return $pem;
     }
 
     protected function handleMissingPublicKey(): void
@@ -160,6 +176,16 @@ class VerifyReleaseSignature implements Pipe
             );
         }
 
+        // openssl_verify() warns, and returns false, for a digest PHP can compute but OpenSSL cannot
+        // (crc32, for one). That is a configuration problem, not evidence about the release.
+        if (!in_array($algorithm, openssl_get_md_methods(true), true)) {
+            throw new RuntimeException(
+                "Error: '$algorithm' is not a digest OpenSSL can verify signatures with, so the release signature " .
+                'could not be checked. Set STREAMLINE_RELEASE_CHECKSUM_ALGORITHM to sha256 or sha512. ' .
+                'The archive has been left in place because it was not shown to be invalid.'
+            );
+        }
+
         $sawOpenSslError = false;
 
         foreach ($this->candidateSignatures($signature) as $candidate) {
@@ -169,17 +195,20 @@ class VerifyReleaseSignature implements Pipe
                 return;
             }
 
+            // Anything other than 1 (valid) or 0 (mismatch) - including false - is an error.
+
             // -1 is OpenSSL refusing to perform the check at all, which is a different problem from
             // a signature that simply does not match - most often an Ed25519 key, which PHP's
             // openssl_verify() cannot use however valid the signature is.
-            $sawOpenSslError = $sawOpenSslError || $result === -1;
+            $sawOpenSslError = $sawOpenSslError || $result !== 0;
         }
 
         if ($sawOpenSslError) {
             throw new RuntimeException(
-                "Error: OpenSSL could not check the release signature using '$algorithm'. If your signing key is " .
-                'Ed25519, PHP cannot verify it - re-sign your releases with an RSA or EC (P-256) key. The archive ' .
-                'has been left in place because it was not shown to be invalid.'
+                "Error: OpenSSL could not check the release signature using '$algorithm'. Either the signature file " .
+                'is malformed or truncated, or - if your signing key is Ed25519 - PHP cannot verify it: re-sign your ' .
+                'releases with an RSA or EC (P-256) key. This is a verification error, not evidence of tampering; the ' .
+                'archive has been left in place because it was not shown to be invalid.'
             );
         }
 

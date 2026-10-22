@@ -36,7 +36,17 @@ beforeEach(function() {
         ->andReturnSelf();
     $process->shouldReceive('setEnv')
         ->andReturnSelf();
-    $process->shouldReceive('run');
+    // The stand-in updater process: prints a line, then exits with $this->updaterExitCode.
+    $this->updaterExitCode = 0;
+    $process->shouldReceive('run')->andReturnUsing(function(callable $callback) {
+        $callback('out', 'Stand-in updater output');
+
+        if ($this->updaterExitCode !== 0) {
+            $callback('out', 'Fatal error: stand-in failure');
+        }
+
+        return $this->updaterExitCode;
+    });
 
     $this->mock(
         ProcessFactory::class,
@@ -111,6 +121,7 @@ it('should run an update with a specific version', function() {
 
     $this->artisan('streamline:run-update --install-version=v2.9.0 --composer=/dev/null')
         ->expectsOutputToContain('Changing deployment to version: v2.9.0')
+        ->expectsOutputToContain('Stand-in updater output')
         ->assertExitCode(0);
 });
 
@@ -284,5 +295,21 @@ it('throws a runtime exception when the composer path is incorrect', function() 
 
     $this->artisan('streamline:run-update --composer=/dev/null')
         ->expectsOutputToContain('Error: Cannot find composer')
+        ->assertExitCode(1);
+});
+
+it('fails the command when the updater process exits with a non-zero code', function() {
+    $this->mockFile()
+        ->mockCache(['v2.9.0', 'v2.8.1', 'v2.0.0', 'v1.0.0'], 'v2.0.0')
+        ->mockGetAvailableVersions()
+        ->mockZipArchive();
+    File::shouldReceive('deleteDirectory');
+    Config::set('streamline.installed_version', 'v2.8.1');
+    $this->mockGetWebArchive();
+    $this->mockComposerPath('/dev/null');
+    $this->updaterExitCode = 255;
+
+    $this->artisan('streamline:run-update --install-version=v2.9.0 --composer=/dev/null')
+        ->expectsOutputToContain('failed with exit code 255')
         ->assertExitCode(1);
 });

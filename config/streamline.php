@@ -43,6 +43,9 @@ return [
     |  - Good: .env
     |  - Bad: /.env
     |
+    | A JSON array is also accepted from the environment. Empty entries are
+    | ignored; '.', absolute paths and '..' segments are rejected.
+    |
     */
 
     'protected_files' => env('STREAMLINE_PROTECTED_PATHS', ['.env', 'storage/logs/streamline.log']),
@@ -231,6 +234,7 @@ return [
     | The temporary directory used to extract and process the release archive
     | It will be located from your root installation directory. Eg:
     | app_root/.streamline_tmp
+    | It must be outside the installation directory (it is rejected otherwise).
     |
     */
 
@@ -243,6 +247,7 @@ return [
     |
     | This is the directory where backups of the previous release will be
     | stored. If backups are not retained, the backup will be removed.
+    | It must be outside the installation directory (it is rejected otherwise).
     |
     */
 
@@ -317,9 +322,12 @@ return [
     | Default File Permissions
     |--------------------------------------------------------------------------
     |
-    | After running the updater script, the permissions of the files will be
-    | set to this value. Values are octal, and may be given in the .env file in
-    | the usual form, eg STREAMLINE_FILE_PERMISSIONS=0644
+    | The permissions given to the files the updater itself copies into the new
+    | release: the previous front-end build assets and anything in
+    | `carry_forward_paths`. Files that ship in the release archive keep the
+    | permissions they were extracted with, and `protected_files` use
+    | `protected_file_permissions` instead. Values are octal, and may be given in
+    | the .env file in the usual form, eg STREAMLINE_FILE_PERMISSIONS=0644
     |
     */
 

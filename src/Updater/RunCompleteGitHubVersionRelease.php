@@ -164,11 +164,13 @@ class RunCompleteGitHubVersionRelease
 
         $log = [];
 
-        foreach ($this->carryForwardPaths as $carriedPath) {
-            $sourcePath      = $this->laravelBasePath . '/' . ltrim($carriedPath, '/');
-            $destinationPath = $this->tempDirName . '/' . ltrim($carriedPath, '/');
+        foreach ($this->expandPaths($this->carryForwardPaths, $log) as $carriedPath) {
+            $sourcePath      = $this->laravelBasePath . '/' . $carriedPath;
+            $destinationPath = $this->tempDirName . '/' . $carriedPath;
 
-            if (is_dir($sourcePath)) {
+            if (is_link($sourcePath)) {
+                $log[] = $this->copySymlink($sourcePath, $destinationPath, false);
+            } elseif (is_dir($sourcePath)) {
                 $log[] = $this->makeDir($destinationPath);
                 $log   = [...$log, ...$this->recursiveCopyOldBuildFilesToNewDir($sourcePath, $destinationPath)];
             } elseif (file_exists($sourcePath)) {
@@ -195,10 +197,14 @@ class RunCompleteGitHubVersionRelease
 
         /** @var \SplFileInfo $item */
         foreach ($iterator as $item) {
-            $sourcePath = $item->isLink() ? $item->getLinkTarget() : $item->getPathname();
+            $sourcePath = $item->getPathname();
             $destPath   = $destination . DIRECTORY_SEPARATOR . $item->getFilename();
 
-            if ($item->isDir()) {
+            if ($item->isLink()) {
+                // Recreated as a link, never followed: a linked directory is not copied as a real one
+                // and a link loop cannot recurse.
+                $log[] = $this->copySymlink($sourcePath, $destPath, false);
+            } elseif ($item->isDir()) {
                 $log[] = $this->makeDir($destPath);
                 $log   = [...$log, ...$this->recursiveCopyOldBuildFilesToNewDir($sourcePath, $destPath)];
             } else {
@@ -286,7 +292,14 @@ class RunCompleteGitHubVersionRelease
         try {
             // The path is escaped because runCommand() builds a shell string; an unquoted path
             // containing shell metacharacters would otherwise be interpreted rather than executed.
-            $this->runCommand(escapeshellarg($this->composerPath) . ' install --no-dev --no-interaction --prefer-install=dist');
+            // --working-dir is explicit as well as the chdir in runCommand(): the process started in the
+            // directory that has since been renamed to the backup name, so relying on the inherited
+            // working directory would install the dependencies into the release being discarded.
+            $this->runCommand(
+                escapeshellarg($this->composerPath) .
+                ' install --no-dev --no-interaction --prefer-install=dist --working-dir=' .
+                escapeshellarg($this->laravelBasePath)
+            );
         } catch (Exception $exception) {
             $this->output('Composer install failed! Please check the output above for any errors.');
 
@@ -346,13 +359,31 @@ class RunCompleteGitHubVersionRelease
         }
 
         $contents = file_get_contents($envFilePath);
-        $contents = preg_replace(
-            pattern: '/STREAMLINE_APPLICATION_VERSION_INSTALLED=\S+/',
-            replacement: 'STREAMLINE_APPLICATION_VERSION_INSTALLED=' . $this->installingVersion,
-            subject: $contents
+
+        if ($contents === false) {
+            throw new RuntimeException("Error: Failed to read Laravel's .env file ($envFilePath)");
+        }
+
+        $key         = 'STREAMLINE_APPLICATION_VERSION_INSTALLED';
+        $replacement = "$key=$this->installingVersion";
+        $count       = 0;
+        $updated     = preg_replace_callback(
+            pattern: '/^' . $key . '=[^\r\n]*/m',
+            callback: static fn() => $replacement,
+            subject: $contents,
+            count: $count
         );
 
-        if (!file_put_contents($envFilePath, $contents)) {
+        if ($updated === null) {
+            throw new RuntimeException("Error: Failed to update version number in Laravel's .env file");
+        }
+
+        if ($count === 0) {
+            // The key is missing: add it rather than silently leaving the old version recorded.
+            $updated = $contents . ($contents === '' || str_ends_with($contents, "\n") ? '' : "\n") . "$replacement\n";
+        }
+
+        if (file_put_contents($envFilePath, $updated) === false) {
             throw new RuntimeException("Error: Failed to update version number in Laravel's .env file");
         }
 
@@ -371,29 +402,64 @@ class RunCompleteGitHubVersionRelease
         $this->output('Migrations completed.');
     }
 
-    private function runCommand(string $command): void
+    /**
+     * Runs a command inside the new release. A non-zero exit code fails the step.
+     *
+     * @throws RuntimeException
+     */
+    protected function runCommand(string $command): void
     {
         $this->output("Executing: $command");
 
-        // @codeCoverageIgnoreStart
-        if ($this->isTesting) {
+        if ($this->shouldSimulateCommands()) {
             return; // Do not execute commands in tests. We only want to simulate them.
         }
-        $output   = null;
-        $response = exec("$command 2>&1", $output);
+
+        // The process was started in the directory that is now parked as the backup, so commands
+        // must be pointed at the live (new) release explicitly.
+        if (!@chdir($this->laravelBasePath)) {
+            throw new RuntimeException("Error: Could not change into $this->laravelBasePath to run: $command\n");
+        }
+
+        [$exitCode, $output] = $this->executeCommand($command);
 
         if ($output) {
             $this->output(implode(PHP_EOL, $output));
         }
 
-        if ($response === false) {
-            $this->output("Error executing command: $command");
+        if ($exitCode !== 0) {
+            $this->output("Error executing command: $command (exit code $exitCode)");
 
-            throw new RuntimeException("Error executing command: $command\n");
+            throw new RuntimeException("Error executing command: $command (exit code $exitCode)\n");
         }
 
         $this->output("Command ($command) executed successfully.");
-        // @codeCoverageIgnoreEnd
+    }
+
+    /**
+     * Test seam: when true, commands are only logged, not run.
+     */
+    protected function shouldSimulateCommands(): bool
+    {
+        return $this->isTesting;
+    }
+
+    /**
+     * Test seam: the only place a process is started.
+     *
+     * @return array{0: int, 1: string[]} The exit code and the combined output lines. A command that
+     *                                    could not be started is reported as exit code 127.
+     */
+    protected function executeCommand(string $command): array
+    {
+        $output   = [];
+        $exitCode = 0;
+
+        if (exec("$command 2>&1", $output, $exitCode) === false) {
+            return [127, $output];
+        }
+
+        return [$exitCode, $output];
     }
 
     protected function output(string $message): void
@@ -422,11 +488,13 @@ class RunCompleteGitHubVersionRelease
 
         $log = [];
 
-        foreach ($this->protectedPaths as $protectedPath) {
-            $sourcePath      = $this->laravelBasePath . '/' . ltrim($protectedPath, '/');
-            $destinationPath = $this->tempDirName . '/' . ltrim($protectedPath, '/');
+        foreach ($this->expandPaths($this->protectedPaths, $log) as $protectedPath) {
+            $sourcePath      = $this->laravelBasePath . '/' . $protectedPath;
+            $destinationPath = $this->tempDirName . '/' . $protectedPath;
 
-            if (is_dir($sourcePath)) {
+            if (is_link($sourcePath)) {
+                $log[] = $this->copySymlink($sourcePath, $destinationPath, true);
+            } elseif (is_dir($sourcePath)) {
                 $log = [...$log, ...$this->copyDirectory($sourcePath, $destinationPath, $this->protectedFilePermission)];
             } elseif (file_exists($sourcePath)) {
                 // Protected files are the ones most likely to hold secrets (.env above all), so
@@ -456,9 +524,12 @@ class RunCompleteGitHubVersionRelease
         $log = [];
 
         foreach ($iterator as $item) {
-            $targetPath = str_replace($source, $destination, $item->getPathname());
+            $targetPath = $destination . substr($item->getPathname(), strlen($source));
 
-            if ($item->isDir()) {
+            if ($item->isLink()) {
+                // RecursiveDirectoryIterator does not descend into links, so this is only the link itself.
+                $log[] = $this->copySymlink($item->getPathname(), $targetPath, true);
+            } elseif ($item->isDir()) {
                 $log[] = $this->makeDir($targetPath);
             } else {
                 $log[] = $this->copyFile($item->getPathname(), $targetPath, permission: $permission);
@@ -508,6 +579,14 @@ class RunCompleteGitHubVersionRelease
 
         if (!@copy($source, $destination)) {
             throw new RuntimeException("Failed to copy file: $source to $destination");
+        }
+
+        // Keep the original mtime so carried-forward assets don't look newer than the current build
+        // (the asset cleanup ranks revisions by mtime).
+        $mtime = @filemtime($source);
+
+        if ($mtime !== false) {
+            @touch($destination, $mtime);
         }
 
         $chmodSuccess = @chmod($destination, $permission)
@@ -572,16 +651,149 @@ class RunCompleteGitHubVersionRelease
 
     protected function isProtectedWildcardPath(string $relativePath): bool
     {
-        foreach ($this->protectedPaths as $protectedPath) {
-            if (str_ends_with($protectedPath, '*')) {
-                $wildcardPath = rtrim($protectedPath, '*');
+        return $this->matchesWildcard($relativePath, $this->protectedPaths);
+    }
 
-                if (str_starts_with($relativePath, $wildcardPath)) {
-                    return true;
-                }
+    /**
+     * @param  string[]  $patterns
+     */
+    protected function matchesWildcard(string $relativePath, array $patterns): bool
+    {
+        if ($relativePath === '') {
+            return false;
+        }
+
+        foreach ($patterns as $pattern) {
+            if ($this->isWildcard($pattern) && fnmatch($pattern, $relativePath)) {
+                return true;
             }
         }
 
         return false;
+    }
+
+    protected function isWildcard(string $path): bool
+    {
+        return strpbrk($path, '*?[') !== false;
+    }
+
+    /**
+     * Normalises configured paths to clean, base-relative paths and expands wildcard patterns
+     * against the OLD release. Empty entries and '.' (which would select the whole installation)
+     * are ignored, as is anything that could step outside the base path.
+     *
+     * Wildcards are resolved one path segment at a time with scandir()/fnmatch() rather than glob(),
+     * so they work on any stream wrapper and never scan more than the pattern names.
+     *
+     * @param  string[]  $paths
+     * @param  string[]  $log
+     * @return string[]
+     */
+    protected function expandPaths(array $paths, array &$log): array
+    {
+        $expanded = [];
+
+        foreach ($paths as $path) {
+            $segments = array_values(array_filter(
+                explode('/', str_replace('\\', '/', trim($path))),
+                static fn(string $segment) => $segment !== '' && $segment !== '.'
+            ));
+
+            if (!$segments) {
+                continue; // '', '.', './' - never "the whole installation"
+            }
+
+            if (in_array('..', $segments, true)) {
+                $log[] = "  - Warning: Ignoring path outside the installation: $path";
+
+                continue;
+            }
+
+            if (!$this->isWildcard(implode('/', $segments))) {
+                $expanded[] = implode('/', $segments);
+
+                continue;
+            }
+
+            $matches = $this->expandWildcardSegments($this->laravelBasePath, $segments);
+
+            if (!$matches) {
+                $log[] = "  - Warning: No paths match the pattern: $path";
+            }
+
+            array_push($expanded, ...$matches);
+        }
+
+        return array_values(array_unique($expanded));
+    }
+
+    /**
+     * @param  string[]  $segments
+     * @return string[]
+     */
+    private function expandWildcardSegments(string $directory, array $segments, string $relative = ''): array
+    {
+        $segment = array_shift($segments);
+        $matches = [];
+
+        if (!$this->isWildcard($segment)) {
+            $names = file_exists("$directory/$segment") || is_link("$directory/$segment") ? [$segment] : [];
+        } else {
+            $entries = is_dir($directory) && !is_link($directory) ? (scandir($directory) ?: []) : [];
+            $names   = array_filter(
+                $entries,
+                static fn(string $name) => $name !== '.' && $name !== '..'
+                                                         && (str_starts_with($segment, '.') || !str_starts_with($name, '.'))
+                                                         && fnmatch($segment, $name)
+            );
+        }
+
+        foreach ($names as $name) {
+            $path = $relative === '' ? $name : "$relative/$name";
+
+            if ($segments) {
+                array_push($matches, ...$this->expandWildcardSegments("$directory/$name", $segments, $path));
+            } else {
+                $matches[] = $path;
+            }
+        }
+
+        return $matches;
+    }
+
+    /**
+     * Recreates a symbolic link, preserving its target verbatim (relative targets stay relative).
+     */
+    protected function copySymlink(string $source, string $destination, bool $doOverwrite): string
+    {
+        $target = readlink($source);
+
+        if ($target === false) {
+            throw new RuntimeException("Error: Could not read the symbolic link: $source");
+        }
+
+        if (is_link($destination) || file_exists($destination)) {
+            if (!$doOverwrite) {
+                return "  - Skipped linking $source to $destination. Path already exists";
+            }
+
+            if (is_dir($destination) && !is_link($destination)) {
+                throw new RuntimeException("Error: Cannot replace the directory $destination with a symbolic link");
+            }
+
+            @unlink($destination);
+        }
+
+        $parentDir = dirname($destination);
+
+        if (!is_dir($parentDir)) {
+            $this->makeDir($parentDir);
+        }
+
+        if (!@symlink($target, $destination)) {
+            throw new RuntimeException("Failed to create symbolic link: $destination -> $target");
+        }
+
+        return "  - Linked: $destination -> $target";
     }
 }

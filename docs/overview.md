@@ -185,5 +185,4 @@ and the three extension points —
 ## Status
 
 The README describes the package as **beta** (`composer require pixelated-au/streamline:dev-main`).
-A few `// TODO restore this after upgrading to Laravel 11` comments remain where constructor
-`#[Config]` attribute injection is commented out in favour of `config()` calls.
+Constructor `#[Config]` attribute injection is used, so Laravel 11+ is required.

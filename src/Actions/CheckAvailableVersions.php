@@ -28,7 +28,10 @@ class CheckAvailableVersions
         /** @var iterable<int, string>|null $cachedVersions */
         $cachedVersions    = Cache::get(CacheKeysEnum::AVAILABLE_VERSIONS->value);
         $availableVersions = collect($cachedVersions);
-        $nextVersion       = $this->getNextVersion($availableVersions, $ignorePreReleases);
+
+        /** @var iterable<int, string>|null $flaggedVersions */
+        $flaggedVersions = Cache::get(CacheKeysEnum::PRE_RELEASE_VERSIONS->value);
+        $nextVersion     = $this->getNextVersion($availableVersions, $ignorePreReleases, collect($flaggedVersions));
 
         if (!$nextVersion) {
             throw new RuntimeException(
@@ -47,19 +50,22 @@ class CheckAvailableVersions
 
     /**
      * @param  Collection<int, string>  $availableVersions
+     * @param  Collection<int, string>  $flaggedVersions  versions GitHub flags as a pre-release
      */
-    protected function getNextVersion(Collection $availableVersions, bool $ignorePreReleases): ?string
+    protected function getNextVersion(Collection $availableVersions, bool $ignorePreReleases, Collection $flaggedVersions): ?string
     {
-        $nextVersion = $availableVersions[0] ?? null;
+        $nextVersion  = $availableVersions[0] ?? null;
+        $isPreRelease = fn(string $version): bool => $flaggedVersions->contains($version)
+            || $this->isPreReleaseVersion->execute($version);
 
-        if ($nextVersion === null || !$ignorePreReleases || !$this->isPreReleaseVersion->execute($nextVersion)) {
+        if ($nextVersion === null || !$ignorePreReleases || !$isPreRelease($nextVersion)) {
             return $nextVersion;
         }
 
         // Return the first stable version, or null when every available version is a pre-release.
         // Keeping the pre-release here would install one despite having been asked not to.
         foreach ($availableVersions as $version) {
-            if (!$this->isPreReleaseVersion->execute($version)) {
+            if (!$isPreRelease($version)) {
                 return $version;
             }
         }

@@ -60,6 +60,7 @@ function fakeReleaseAssets(array $files): void
 
         $response = Mockery::mock(Response::class);
         $response->shouldReceive('body')->andReturn($files[$requested->file]);
+        $response->shouldReceive('header')->with('Content-Length')->andReturn('');
 
         return $response;
     });
@@ -291,4 +292,199 @@ it('explains itself rather than crying tamper when OpenSSL refuses the key type'
         ->toThrow(RuntimeException::class, 're-sign your releases with an RSA or EC (P-256) key');
 
     expect(file_exists($this->archivePath))->toBeTrue();
+});
+
+it('aborts and deletes the archive when a signature over a different checksum is served', function() {
+    Event::fake();
+    $signedChecksum = hash('sha256', 'checksum A') . "  release.zip\n";
+
+    fakeReleaseAssets([
+        CHECKSUM_FILE  => $this->checksum,
+        SIGNATURE_FILE => signWith($this->privateKey, $signedChecksum),
+    ]);
+
+    expect(fn() => (new VerifyReleaseSignature)(signatureBuilder($this->archivePath)))
+        ->toThrow(RuntimeException::class, 'signature is not valid');
+
+    expect(file_exists($this->archivePath))->toBeFalse();
+});
+
+it('rejects a signature made over the archive bytes instead of the checksum file', function() {
+    Event::fake();
+
+    fakeReleaseAssets([
+        CHECKSUM_FILE  => $this->checksum,
+        SIGNATURE_FILE => signWith($this->privateKey, SIGNED_ARCHIVE_CONTENTS),
+    ]);
+
+    expect(fn() => (new VerifyReleaseSignature)(signatureBuilder($this->archivePath)))
+        ->toThrow(RuntimeException::class, 'signature is not valid');
+});
+
+it('rejects a sha256 signature when the configured algorithm is sha512', function() {
+    Event::fake();
+    Config::set('streamline.release_checksum_algorithm', 'sha512');
+    $checksum = hash('sha512', SIGNED_ARCHIVE_CONTENTS) . "  release.zip\n";
+
+    fakeReleaseAssets([
+        'release.zip.sha512'     => $checksum,
+        'release.zip.sha512.sig' => signWith($this->privateKey, $checksum),
+    ]);
+
+    expect(fn() => (new VerifyReleaseSignature)(signatureBuilder($this->archivePath)))
+        ->toThrow(RuntimeException::class, 'signature is not valid');
+});
+
+it('verifies with an RSA key', function() {
+    Event::fake();
+    $rsa = openssl_pkey_new(['private_key_type' => OPENSSL_KEYTYPE_RSA, 'private_key_bits' => 2048]);
+    Config::set('streamline.release_public_key', openssl_pkey_get_details($rsa)['key']);
+
+    fakeReleaseAssets([
+        CHECKSUM_FILE  => $this->checksum,
+        SIGNATURE_FILE => signWith($rsa, $this->checksum),
+    ]);
+
+    $builder = signatureBuilder($this->archivePath);
+
+    expect((new VerifyReleaseSignature)($builder))->toBe($builder);
+});
+
+it('verifies with a file:// key path', function() {
+    Event::fake();
+    $path = tempnam(sys_get_temp_dir(), 'pub');
+    file_put_contents($path, $this->publicKey);
+    Config::set('streamline.release_public_key', "file://$path");
+
+    fakeReleaseAssets([
+        CHECKSUM_FILE  => $this->checksum,
+        SIGNATURE_FILE => signWith($this->privateKey, $this->checksum),
+    ]);
+
+    $builder = signatureBuilder($this->archivePath);
+
+    try {
+        expect((new VerifyReleaseSignature)($builder))->toBe($builder);
+    } finally {
+        unlink($path);
+    }
+});
+
+it('treats an empty signature file as missing', function() {
+    Event::fake();
+    fakeReleaseAssets([CHECKSUM_FILE => $this->checksum, SIGNATURE_FILE => '']);
+
+    $builder = signatureBuilder($this->archivePath);
+
+    expect((new VerifyReleaseSignature)($builder))->toBe($builder);
+
+    Event::assertDispatched(
+        CommandClassCallback::class,
+        fn(CommandClassCallback $event) => $event->action === 'warn'
+    );
+});
+
+it('does not describe a garbage signature as tampering', function(string $garbage) {
+    Event::fake();
+    fakeReleaseAssets([CHECKSUM_FILE => $this->checksum, SIGNATURE_FILE => $garbage]);
+
+    expect(fn() => (new VerifyReleaseSignature)(signatureBuilder($this->archivePath)))
+        ->toThrow(RuntimeException::class);
+})->with(['non-base64 text' => ['!!! not a signature !!!'], 'short bytes' => ["\x01\x02\x03"]]);
+
+it('aborts on an invalid signature even when signatures are not required', function() {
+    Event::fake();
+    Config::set('streamline.require_release_signature', false);
+    [$otherKey] = releaseKeyPair();
+
+    fakeReleaseAssets([
+        CHECKSUM_FILE  => $this->checksum,
+        SIGNATURE_FILE => signWith($otherKey, $this->checksum),
+    ]);
+
+    expect(fn() => (new VerifyReleaseSignature)(signatureBuilder($this->archivePath)))
+        ->toThrow(RuntimeException::class, 'signature is not valid');
+});
+
+it('warns when the signature is published but the checksum file is not', function() {
+    Event::fake();
+    fakeReleaseAssets([SIGNATURE_FILE => 'whatever']);
+
+    $builder = signatureBuilder($this->archivePath);
+
+    expect((new VerifyReleaseSignature)($builder))->toBe($builder);
+
+    Event::assertDispatched(
+        CommandClassCallback::class,
+        fn(CommandClassCallback $event) => $event->action === 'warn'
+    );
+});
+
+// i15b: a private key pasted into the public key setting must not be used, or quietly leaked
+// onto the deployment as if it were configuration.
+it('rejects a private key supplied as the public key', function() {
+    Event::fake();
+    $rsa = openssl_pkey_new(['private_key_type' => OPENSSL_KEYTYPE_RSA, 'private_key_bits' => 2048]);
+    openssl_pkey_export($rsa, $privatePem);
+    Config::set('streamline.release_public_key', $privatePem);
+
+    fakeReleaseAssets([CHECKSUM_FILE => $this->checksum, SIGNATURE_FILE => signWith($rsa, $this->checksum)]);
+
+    expect(fn() => (new VerifyReleaseSignature)(signatureBuilder($this->archivePath)))
+        ->toThrow(RuntimeException::class, 'is a PRIVATE key');
+});
+
+it('rejects a private key supplied as a file path', function() {
+    Event::fake();
+    $rsa = openssl_pkey_new(['private_key_type' => OPENSSL_KEYTYPE_RSA, 'private_key_bits' => 2048]);
+    openssl_pkey_export($rsa, $privatePem);
+    $path = tempnam(sys_get_temp_dir(), 'priv');
+    file_put_contents($path, $privatePem);
+    Config::set('streamline.release_public_key', $path);
+
+    try {
+        expect(fn() => (new VerifyReleaseSignature)(signatureBuilder($this->archivePath)))
+            ->toThrow(RuntimeException::class, 'is a PRIVATE key');
+    } finally {
+        unlink($path);
+    }
+});
+
+// i15a: a digest PHP hashes but OpenSSL does not know is an error, not a mismatch.
+it('reports a digest OpenSSL does not support as an error rather than tampering', function() {
+    Event::fake();
+    Config::set('streamline.release_checksum_algorithm', 'crc32');
+    $checksum = hash('crc32', SIGNED_ARCHIVE_CONTENTS) . "  release.zip\n";
+    // 8 hex chars is below the digest parser's minimum, so the signed content is irrelevant:
+    // the algorithm is rejected before anything is compared.
+    fakeReleaseAssets(['release.zip.crc32' => $checksum, 'release.zip.crc32.sig' => 'sig']);
+
+    $thrown = null;
+
+    try {
+        (new VerifyReleaseSignature)(signatureBuilder($this->archivePath));
+    } catch (RuntimeException $e) {
+        $thrown = $e;
+    }
+
+    expect($thrown)->toBeInstanceOf(RuntimeException::class)
+        ->and($thrown->getMessage())->toContain("'crc32'")
+        ->not->toContain('tampered')
+        ->not->toContain('not valid for the configured public key');
+});
+
+it('does not call a verification error tampering when OpenSSL fails', function() {
+    Event::fake();
+    // sha3-256 is known to OpenSSL but a bogus signature yields -1 (error), not 0 (mismatch).
+    fakeReleaseAssets([CHECKSUM_FILE => $this->checksum, SIGNATURE_FILE => "\x01\x02\x03"]);
+
+    $thrown = null;
+
+    try {
+        (new VerifyReleaseSignature)(signatureBuilder($this->archivePath));
+    } catch (RuntimeException $e) {
+        $thrown = $e;
+    }
+
+    expect($thrown?->getMessage())->not->toContain('tampered');
 });

@@ -18,7 +18,26 @@ class ConfigCommaToArrayMacro
                 $result = $this->get($key, $default);
 
                 if (is_string($result)) {
-                    return Arr::map(explode(',', $result), static fn($value) => trim($value));
+                    $items = explode(',', $result);
+
+                    // A JSON array in the environment, e.g. STREAMLINE_PROTECTED_PATHS='[".env"]'.
+                    if (str_starts_with(trim($result), '[')) {
+                        $decoded = json_decode($result, true);
+
+                        if (is_array($decoded)) {
+                            throw_if(
+                                !array_is_list($decoded) || count(array_filter($decoded, 'is_string')) !== count($decoded),
+                                exception: "Invalid JSON list for $key. Expected an array of strings."
+                            );
+                            $items = $decoded;
+                        }
+                    }
+
+                    // Empty entries (a trailing comma, ",,") are dropped rather than returned as ''.
+                    return array_values(array_filter(
+                        Arr::map($items, static fn($value) => trim($value)),
+                        static fn($value) => $value !== ''
+                    ));
                 }
 
                 throw_if(!is_array($result), exception: 'Invalid value (' . var_export($result, true) . ") for $key. Expected a comma-separated list or an array.");

@@ -45,4 +45,12 @@ interface UpdateBuilderInterface
      * and that the digest itself came from a trusted source.
      */
     public function getVerifiedChecksum(): ?string;
+
+    /**
+     * Records that the updater process ran to a successful finish. Stays false for an aborted
+     * pipeline, which is the only way to tell that apart from a same-version forced reinstall.
+     */
+    public function markUpdateCompleted(): UpdateBuilderInterface;
+
+    public function isUpdateCompleted(): bool;
 }

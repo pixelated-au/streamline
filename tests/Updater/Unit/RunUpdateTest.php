@@ -775,3 +775,338 @@ function runUpdateClassFactory(array $options = []): RunCompleteGitHubVersionRel
         doOutput: $options['doOutput'],
     );
 }
+
+/*
+ * run(), swap, rollback and command execution. These use a real filesystem under the system temp
+ * dir and a subclass that replaces the process-starting seam, so no real composer/artisan runs.
+ */
+
+class RecordingReleaseUpdater extends RunCompleteGitHubVersionRelease
+{
+    /** @var string[] */
+    public array $commands = [];
+
+    /** @var array<string, string|false> */
+    public array $cwds = [];
+
+    /** @var array<string, int> Exit code per command fragment. */
+    public array $exitCodes = [];
+
+    public bool $failEnv = false;
+
+    public bool $simulate = false;
+
+    protected function shouldSimulateCommands(): bool
+    {
+        return $this->simulate;
+    }
+
+    protected function executeCommand(string $command): array
+    {
+        $this->commands[]     = $command;
+        $this->cwds[$command] = getcwd();
+
+        foreach ($this->exitCodes as $fragment => $code) {
+            if (str_contains($command, $fragment)) {
+                return [$code, ["simulated failure of $fragment"]];
+            }
+        }
+
+        return [0, []];
+    }
+
+    protected function setEnvVersionNumber(): void
+    {
+        if ($this->failEnv) {
+            throw new RuntimeException('simulated .env failure');
+        }
+
+        parent::setEnvVersionNumber();
+    }
+}
+
+function makeRealDeployment(): array
+{
+    $root = sys_get_temp_dir() . '/streamline-run-' . bin2hex(random_bytes(6));
+    $base = "$root/app";
+    $new  = "$root/work/release";
+
+    foreach (["$base/public/build", "$new/public/build"] as $dir) {
+        mkdir($dir, 0755, true);
+    }
+    file_put_contents("$base/marker.txt", 'OLD');
+    file_put_contents("$base/.env", "APP=1\nSTREAMLINE_APPLICATION_VERSION_INSTALLED=0.9.0\n");
+    file_put_contents("$new/marker.txt", 'NEW');
+
+    return [$root, $base, $new];
+}
+
+function recordingUpdater(string $base, string $new, array $overrides = []): RecordingReleaseUpdater
+{
+    return new RecordingReleaseUpdater(...array_merge([
+        'tempDirName'             => $new,
+        'laravelBasePath'         => $base,
+        'publicDirName'           => "$base/public",
+        'frontendBuildDir'        => 'build',
+        'installingVersion'       => '2.0.0',
+        'composerPath'            => '/usr/local/bin/composer',
+        'protectedPaths'          => ['.env'],
+        'dirPermission'           => 0755,
+        'filePermission'          => 0644,
+        'protectedFilePermission' => 0600,
+        'oldReleaseArchivePath'   => '',
+        'doRetainOldReleaseDir'   => false,
+        'doOutput'                => true,
+    ], $overrides));
+}
+
+function rmrf(string $path): void
+{
+    exec('rm -rf ' . escapeshellarg($path));
+}
+
+it('runs composer with the new release as working directory (i2)', function() {
+    [$root, $base, $new] = makeRealDeployment();
+    $original            = getcwd();
+    chdir($base); // like the real updater: started in the release that is about to be renamed away
+
+    try {
+        $updater = recordingUpdater($base, $new);
+        ob_start();
+        $updater->run();
+        ob_end_clean();
+    } finally {
+        chdir($original);
+    }
+
+    $composer = $updater->commands[0];
+    expect($composer)->toContain('install --no-dev')
+        ->and($composer)->toContain('--working-dir=' . escapeshellarg($base))
+        ->and($updater->cwds[$composer])->toBe(realpath($base));
+
+    foreach ($updater->commands as $command) {
+        expect($updater->cwds[$command])->toBe(realpath($base), "cwd for: $command");
+    }
+
+    expect(file_get_contents("$base/marker.txt"))->toBe('NEW')
+        ->and(is_dir("{$base}_old.0"))->toBeFalse();
+
+    rmrf($root);
+});
+
+it('rolls back when composer exits non-zero (i1)', function() {
+    [$root, $base, $new] = makeRealDeployment();
+
+    $updater            = recordingUpdater($base, $new);
+    $updater->exitCodes = ['install --no-dev' => 2];
+
+    ob_start();
+
+    try {
+        expect(fn() => $updater->run())->toThrow(RuntimeException::class, 'exit code 2');
+    } finally {
+        $output = ob_get_clean();
+    }
+
+    // Previous release restored and intact, backup name free again, failed release parked for inspection.
+    expect(file_get_contents("$base/marker.txt"))->toBe('OLD')
+        ->and(is_dir("{$base}_old.0"))->toBeFalse()
+        ->and(file_get_contents("$new/marker.txt"))->toBe('NEW')
+        ->and($output)->toContain('Rolled back to the previous release')
+        ->and($updater->commands)->toHaveCount(1); // never got as far as artisan
+
+    rmrf($root);
+});
+
+it('rolls back when the .env version cannot be set', function() {
+    [$root, $base, $new] = makeRealDeployment();
+
+    $updater          = recordingUpdater($base, $new);
+    $updater->failEnv = true;
+
+    ob_start();
+
+    try {
+        expect(fn() => $updater->run())->toThrow(RuntimeException::class, 'simulated .env failure');
+    } finally {
+        ob_get_clean();
+    }
+
+    expect(file_get_contents("$base/marker.txt"))->toBe('OLD')
+        ->and(is_dir("{$base}_old.0"))->toBeFalse();
+
+    rmrf($root);
+});
+
+it('rolls back when the new release has no .env file to update', function() {
+    [$root, $base, $new] = makeRealDeployment();
+
+    $updater = recordingUpdater($base, $new, ['protectedPaths' => []]);
+
+    ob_start();
+
+    try {
+        expect(fn() => $updater->run())->toThrow(RuntimeException::class, 'does not exist in the release directory');
+    } finally {
+        ob_get_clean();
+    }
+
+    expect(file_get_contents("$base/marker.txt"))->toBe('OLD');
+
+    rmrf($root);
+});
+
+it('reports a failed migration, keeps the previous release and does not roll back (i1)', function() {
+    [$root, $base, $new] = makeRealDeployment();
+
+    $updater            = recordingUpdater($base, $new);
+    $updater->exitCodes = ['migrate' => 1];
+
+    ob_start();
+
+    try {
+        expect(fn() => $updater->run())->toThrow(RuntimeException::class, 'exit code 1');
+    } finally {
+        $output = ob_get_clean();
+    }
+
+    expect(file_get_contents("$base/marker.txt"))->toBe('NEW')           // new release stays live
+        ->and(file_get_contents("{$base}_old.0/marker.txt"))->toBe('OLD') // _old.0 kept
+        ->and($output)->toContain('It has NOT been restored automatically')
+        ->and($output)->toContain("{$base}_old.0")
+        ->and($output)->not->toContain('Update completed');
+
+    rmrf($root);
+});
+
+it('fails the step when optimize:clear exits non-zero and keeps the previous release', function() {
+    [$root, $base, $new] = makeRealDeployment();
+
+    $updater            = recordingUpdater($base, $new);
+    $updater->exitCodes = ['optimize:clear' => 1];
+
+    ob_start();
+
+    try {
+        expect(fn() => $updater->run())->toThrow(RuntimeException::class);
+    } finally {
+        ob_get_clean();
+    }
+
+    expect(is_dir("{$base}_old.0"))->toBeTrue()
+        ->and($updater->commands)->toHaveCount(2); // composer, optimize:clear - migrate never ran
+
+    rmrf($root);
+});
+
+it('treats a real process exit code as the outcome of the step (i1)', function() {
+    [$root, $base, $new] = makeRealDeployment();
+    $original            = getcwd();
+
+    $updater = recordingUpdater($base, $new);
+
+    try {
+        // The base class implementation, with the simulation switched off.
+        $real = new class(...['tempDirName' => $new, 'laravelBasePath' => $base, 'publicDirName' => "$base/public", 'frontendBuildDir' => 'build', 'installingVersion' => '2.0.0', 'composerPath' => 'composer', 'protectedPaths' => [], 'dirPermission' => 0755, 'filePermission' => 0644, 'protectedFilePermission' => 0600, 'oldReleaseArchivePath' => '']) extends RunCompleteGitHubVersionRelease
+        {
+            protected function shouldSimulateCommands(): bool
+            {
+                return false;
+            }
+        };
+
+        $run = fn(string $command) => (fn() => $this->runCommand($command))->call($real);
+
+        expect(fn() => $run("sh -c 'exit 3'"))->toThrow(RuntimeException::class, 'exit code 3');
+        expect(fn() => $run('sh -c "exit 0"'))->not->toThrow(RuntimeException::class);
+        expect(fn() => $run('sh -c "pwd -P > cwd.txt"'))->not->toThrow(RuntimeException::class);
+        expect(trim(file_get_contents("$base/cwd.txt")))->toBe(realpath($base));
+    } finally {
+        chdir($original);
+        rmrf($root);
+    }
+});
+
+it('rollback reports when the failed release cannot be moved out of the way', function() {
+    [$root, $base, $new] = makeRealDeployment();
+
+    $updater = recordingUpdater($base, $new, ['tempDirName' => "$root/no/such/parent/release"]);
+    // The properties are private to the parent class, so bind with that scope.
+    Closure::bind(function() {
+        $this->hasSwappedRelease = true;
+    }, $updater, RunCompleteGitHubVersionRelease::class)();
+
+    ob_start();
+    withoutRenameWarnings(fn() => (fn() => $this->rollBackDeployment())->call($updater));
+    $output = ob_get_clean();
+
+    expect($output)->toContain('Could not move the failed release out of')
+        ->and(file_get_contents("$base/marker.txt"))->toBe('OLD');
+
+    rmrf($root);
+});
+
+it('rollback reports when the previous release cannot be restored', function() {
+    [$root, $base, $new] = makeRealDeployment();
+
+    rmrf($new); // so the failed release can be parked there; only the restore step then fails
+    $updater = recordingUpdater($base, $new);
+    Closure::bind(function() use ($root) {
+        $this->hasSwappedRelease    = true;
+        $this->laravelTempBackupDir = "$root/missing_backup";
+    }, $updater, RunCompleteGitHubVersionRelease::class)();
+
+    ob_start();
+    withoutRenameWarnings(fn() => (fn() => $this->rollBackDeployment())->call($updater));
+    $output = ob_get_clean();
+
+    expect($output)->toContain('Could not restore the previous release')
+        ->and($output)->toContain('the site is currently down');
+
+    rmrf($root);
+});
+
+it('adds the version key to .env when it is missing and replaces an empty one', function() {
+    [$root, $base, $new] = makeRealDeployment();
+    $set                 = fn() => (fn() => $this->setEnvVersionNumber())->call(recordingUpdater($base, $new));
+
+    file_put_contents("$base/.env", 'APP=1');
+    ob_start();
+    $set();
+    expect(file_get_contents("$base/.env"))->toBe("APP=1\nSTREAMLINE_APPLICATION_VERSION_INSTALLED=2.0.0\n");
+
+    file_put_contents("$base/.env", "A=1\nSTREAMLINE_APPLICATION_VERSION_INSTALLED=\nB=2\n");
+    $set();
+    ob_end_clean();
+    expect(file_get_contents("$base/.env"))->toBe("A=1\nSTREAMLINE_APPLICATION_VERSION_INSTALLED=2.0.0\nB=2\n");
+
+    rmrf($root);
+});
+
+it('fails loudly when the .env file cannot be written', function() {
+    [$root, $base, $new] = makeRealDeployment();
+    $updater             = recordingUpdater($base, $new);
+
+    // A directory in place of .env: it exists, but cannot be read or written as a file.
+    unlink("$base/.env");
+    mkdir("$base/.env");
+
+    ob_start();
+
+    try {
+        expect(fn() => withoutRenameWarnings(fn() => (fn() => $this->setEnvVersionNumber())->call($updater)))
+            ->toThrow(RuntimeException::class);
+    } finally {
+        ob_end_clean();
+    }
+
+    rmrf($root);
+});
+
+it('says there is nothing to clean up when no backup archive was recorded', function() {
+    $runUpdate = runUpdateClassFactory(['oldReleaseArchivePath' => '', 'doOutput' => true]);
+    (fn() => $this->terminateBackupArchive())->call($runUpdate);
+
+    expect($this->getActualOutputForAssertion())
+        ->toContain('No backup archive was recorded for this update, so there is nothing to clean up.');
+});

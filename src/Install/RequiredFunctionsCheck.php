@@ -5,7 +5,7 @@
 namespace Pixelated\Streamline\Install;
 
 use Composer\Script\Event;
-use Exception;
+use Throwable;
 
 class RequiredFunctionsCheck
 {
@@ -62,12 +62,14 @@ class RequiredFunctionsCheck
 
     private static function canExecuteCommands(): ?string
     {
-        // Additional check to verify command execution actually works
+        // Additional check to verify command execution actually works. exec() reports failure by
+        // returning false/warning rather than throwing an Exception, but a sandbox or an extension
+        // that wraps it can throw an Error, so any Throwable means the check has failed.
         try {
             if (@exec('echo test') !== 'test') {
                 return 'Unable to run the exec() function. It does not output as expected. This might be due to permissions or restrictions.';
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             return 'Unable to execute system commands due to an exception: ' . $e->getMessage();
         }
 

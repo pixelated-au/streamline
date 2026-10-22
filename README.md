@@ -88,6 +88,12 @@ These files are given `STREAMLINE_PROTECTED_FILE_PERMISSIONS` (default `0600`) r
 general file permission, because they usually hold secrets - your `.env` contains `APP_KEY` and your
 database credentials, and on a shared host `0644` means every other user on the machine can read it.
 
+Wildcards are supported (`*`, `?` and `[...]`, matched one path segment at a time against the old
+release), e.g. `STREAMLINE_PROTECTED_PATHS=.env,storage/app/*`. Patterns that match nothing are logged
+and skipped. Empty entries and `.` are ignored, and paths that step outside the installation (`..`)
+are never copied. Symbolic links inside these paths are recreated as links with the same target; they
+are not followed.
+
 > **If your web server runs as a different user to the one that runs the update**, `0600` will make
 > the `.env` unreadable and your site will break. Set `STREAMLINE_PROTECTED_FILE_PERMISSIONS=0640`
 > and make the file group-readable by the web server instead.

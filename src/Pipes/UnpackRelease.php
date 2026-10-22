@@ -41,6 +41,12 @@ readonly class UnpackRelease implements Pipe
             $this->zip->close();
         }
 
+        // The archive was downloaded into the working directory, which is moved into place as the
+        // new release. Left there it would be deployed into the live site (and the backup).
+        if (is_file($downloadedArchivePath) && !@unlink($downloadedArchivePath)) {
+            throw new RuntimeException("Error: Could not remove the downloaded archive $downloadedArchivePath after unpacking it");
+        }
+
         return $builder;
     }
 
@@ -50,7 +56,9 @@ readonly class UnpackRelease implements Pipe
             $name = $this->zip->getNameIndex($index);
 
             if ($name === false) {
-                continue;
+                throw new RuntimeException(
+                    "Error: The name of entry #$index in the release archive could not be read. The archive has been refused."
+                );
             }
 
             if ($this->isSymlink($index)) {
@@ -98,6 +106,12 @@ readonly class UnpackRelease implements Pipe
 
     protected function isContainedWithin(string $baseDir, string $entryName): bool
     {
+        // Absolute and drive-qualified names are never legitimate in a release. extractTo() would
+        // neutralise them on this platform, but refusing them keeps the check platform independent.
+        if (preg_match('#^([/\\\\]|[A-Za-z]:)#', $entryName) === 1 || str_contains($entryName, "\0")) {
+            return false;
+        }
+
         $base   = $this->normalisePath($baseDir);
         $target = $this->normalisePath($baseDir . '/' . $entryName);
 

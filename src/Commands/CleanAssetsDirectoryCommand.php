@@ -23,8 +23,8 @@ class CleanAssetsDirectoryCommand extends Command
 
         $this->listenForSubProcessEvents();
 
-        // the (string)(int) cast is used to ensure the input is a valid integer, even if it's a string representation of an integer
-        if ($revisions && (!is_numeric($revisions) || (string) (int) $revisions !== $revisions)) {
+        // Only a plain positive integer (>= 1) is accepted. Zero would delete every revision, including the live build.
+        if ($revisions !== null && !preg_match('/^[1-9]\d*$/', $revisions)) {
             $this->error('Invalid number of revisions. Please provide a positive integer.');
 
             return self::FAILURE;
@@ -44,11 +44,11 @@ class CleanAssetsDirectoryCommand extends Command
 
         $this->info('Cleaning up the front-end build assets directory...');
 
-        if ($revisions) {
+        if ($revisions !== null) {
             $this->info("Retaining $revisions revisions");
         }
 
-        $cleanUpAssets->run(is_string($revisions) && is_numeric($revisions) ? (int) $revisions : null);
+        $cleanUpAssets->run(is_string($revisions) ? (int) $revisions : null);
 
         return self::SUCCESS;
     }

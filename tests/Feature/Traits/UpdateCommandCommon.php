@@ -42,6 +42,9 @@ trait UpdateCommandCommon
         File::shouldReceive('isWritable')->andReturnTrue();
         File::shouldReceive('isReadable')->andReturnTrue();
         File::shouldReceive('put');
+        // MakeTempDir empties the work directory before use.
+        File::shouldReceive('cleanDirectory')->andReturnTrue();
+        File::shouldReceive('makeDirectory')->andReturnTrue();
         File::shouldReceive('dirname')->andReturnUsing(fn(string $value) => dirname($value));
         File::shouldReceive('name')->andReturnUsing(fn(string $value) => pathinfo($value, PATHINFO_FILENAME));
 
@@ -55,6 +58,8 @@ trait UpdateCommandCommon
         $cache->shouldReceive('get')->withSomeOfArgs(CacheKeysEnum::NEXT_AVAILABLE_VERSION->value)->andReturn($cachedVersionToInstall);
         $cache->shouldReceive('forever')->withSomeOfArgs(CacheKeysEnum::AVAILABLE_VERSIONS->value);
         $cache->shouldReceive('put')->withSomeOfArgs(CacheKeysEnum::INSTALLED_VERSION->value);
+        $cache->shouldReceive('forever')->withSomeOfArgs(CacheKeysEnum::PRE_RELEASE_VERSIONS->value);
+        $cache->shouldReceive('get')->withSomeOfArgs(CacheKeysEnum::PRE_RELEASE_VERSIONS->value)->andReturn([]);
 
         $cache->shouldReceive('get')
             ->withSomeOfArgs(CacheKeysEnum::AVAILABLE_VERSIONS->value)

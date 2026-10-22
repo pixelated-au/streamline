@@ -12,6 +12,9 @@ use Throwable;
  */
 trait VerifiesReleaseAssets
 {
+    /** Upper bound for a checksum or signature file. */
+    protected const int MAX_ASSET_BYTES = 65536;
+
     /**
      * Fetches a small file published alongside the archive in the same release. Returns null when
      * it is absent or unreadable, which the caller reports according to its own enforcement flag.
@@ -21,16 +24,27 @@ trait VerifiesReleaseAssets
         $path = "releases/download/$version/$fileName";
 
         try {
-            $body = GitHubApi::withWebUrl($path)
+            $response = GitHubApi::withWebUrl($path)
                 // The facade caches its instance, so the download path and progress bar left over
                 // from DownloadRelease must be cleared or this request would overwrite the archive
                 // it is supposed to be verifying.
                 ->withDownloadPath(null)
                 ->withProgressCallback(null)
-                ->get()
-                ->body();
+                ->get();
+            $body     = $response->body();
+            $declared = (int) $response->header('Content-Length');
         } catch (Throwable) {
             return null;
+        }
+
+        // Checksum and signature files are a few hundred bytes. The HTTP client has already
+        // buffered the body by now, so this cannot prevent the download, but it stops an oversized
+        // response from being parsed or handed to OpenSSL, and says why the update stopped.
+        if ($declared > self::MAX_ASSET_BYTES || strlen($body) > self::MAX_ASSET_BYTES) {
+            throw new RuntimeException(
+                "Error: $fileName is larger than the " . self::MAX_ASSET_BYTES . ' byte limit for a checksum or ' .
+                'signature file, so it was not used. Check the release for a wrong or malicious asset.'
+            );
         }
 
         return $body === '' ? null : $body;

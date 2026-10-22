@@ -77,7 +77,7 @@ it(
             'Moving ' . $disk->path('laravel') . ' to ' . $disk->path('laravel_old.0'),
             'Moving ' . $tempDisk->path('unpacked') . ' to ' . $disk->path('laravel'),
             'Running composer install with path: /dev/null',
-            "Executing: '/dev/null' install --no-dev --no-interaction --prefer-install=dist",
+            "Executing: '/dev/null' install --no-dev --no-interaction --prefer-install=dist --working-dir='" . $disk->path('laravel') . "'",
             'Setting version number in .env file to: 1.0.0',
             'Version number updated successfully in .env file',
             'Resetting the CWD to ' . $disk->path('laravel'),
@@ -111,6 +111,10 @@ it(
             'Old Manifest',
             'The old deployment manifest must not overwrite the new manifest'
         );
+
+        clearstatcache();
+        $this->assertSame(0600, fileperms($disk->path('laravel/.env')) & 0777, 'The protected .env must not be world readable');
+        $this->assertSame(0600, fileperms($disk->path('laravel/storage/logs/streamline.log')) & 0777);
 
         $this->assertSame(
             expected: "Prefix...\nSTREAMLINE_APPLICATION_VERSION_INSTALLED=1.0.0\nSuffix...",

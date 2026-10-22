@@ -2,6 +2,7 @@
 
 namespace Pixelated\Streamline\Pipes;
 
+use Pixelated\Streamline\Actions\ValidateVerificationPipeline;
 use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 use Pixelated\Streamline\Pipeline\Pipe;
@@ -23,6 +24,8 @@ class WarnUnverifiedRelease implements Pipe
 
     public function __invoke(UpdateBuilderInterface $builder): UpdateBuilderInterface
     {
+        (new ValidateVerificationPipeline)();
+
         foreach ($this->bannerLines() as $line) {
             CommandClassCallback::dispatch('warn', $line);
         }
@@ -37,8 +40,13 @@ class WarnUnverifiedRelease implements Pipe
      */
     public function bannerLines(): array
     {
-        $checksumOff  = !config('streamline.require_release_checksum');
-        $signatureOff = !config('streamline.require_release_signature') || !config('streamline.release_public_key');
+        $validator = new ValidateVerificationPipeline;
+
+        // A flag only counts if the pipe that honours it will actually run before anything is unpacked.
+        $checksumOff  = !config('streamline.require_release_checksum') || !$validator->isPipedBeforeUnpack(VerifyReleaseChecksum::class);
+        $signatureOff = !config('streamline.require_release_signature')
+            || !config('streamline.release_public_key')
+            || !$validator->isPipedBeforeUnpack(VerifyReleaseSignature::class);
 
         if (!$checksumOff && !$signatureOff) {
             return [];

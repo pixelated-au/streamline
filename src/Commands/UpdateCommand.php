@@ -5,10 +5,12 @@ namespace Pixelated\Streamline\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
+use Pixelated\Streamline\Actions\ValidateVerificationPipeline;
 use Pixelated\Streamline\Commands\Traits\GitHubApi;
 use Pixelated\Streamline\Commands\Traits\OutputSubProcessCalls;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
 use Pixelated\Streamline\Pipeline\Pipeline;
+use RuntimeException;
 use Throwable;
 
 class UpdateCommand extends Command
@@ -29,6 +31,16 @@ class UpdateCommand extends Command
     public function handle(): int
     {
         $this->listenForSubProcessEvents();
+
+        // Before the pipeline (and so before any download): WarnUnverifiedRelease enforces the same
+        // rule, but it can be removed from the pipeline config.
+        try {
+            resolve(ValidateVerificationPipeline::class)();
+        } catch (RuntimeException $e) {
+            $this->error($e->getMessage());
+
+            return self::FAILURE;
+        }
 
         $builder = App::make(UpdateBuilderInterface::class)
             ->setBasePath(base_path())

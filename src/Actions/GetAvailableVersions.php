@@ -16,13 +16,21 @@ class GetAvailableVersions
 
     public function execute(): string
     {
-        $versions = Facades\GitHubApi::withApiUrl(GitHubApi::GITHUB_RELEASES_PATH)
+        $releases = Facades\GitHubApi::withApiUrl(GitHubApi::GITHUB_RELEASES_PATH)
             ->withProgressCallback($this->meter)
             ->progressMessage('Retrieving versions...')
-            ->paginate()
-            ->pluck('tag_name');
+            ->paginate();
+
+        $versions = $releases->pluck('tag_name');
 
         Cache::forever(CacheKeysEnum::AVAILABLE_VERSIONS->value, $versions);
+        // Releases flagged as "pre-release" on GitHub are never auto-installed, whatever their tag looks like
+        Cache::forever(
+            CacheKeysEnum::PRE_RELEASE_VERSIONS->value,
+            $releases->filter(fn($release) => is_array($release) && ($release['prerelease'] ?? false) === true)
+                ->pluck('tag_name')
+                ->values()
+        );
         // Dispatch the AvailableVersionsUpdated event
         AvailableVersionsUpdated::dispatch($versions);
 

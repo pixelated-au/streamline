@@ -52,6 +52,7 @@ function fakeChecksumResponse(?string $body): void
 
     $response = Mockery::mock(Response::class);
     $response->shouldReceive('body')->andReturn($body);
+    $response->shouldReceive('header')->with('Content-Length')->andReturn('');
     GitHubApi::shouldReceive('get')->andReturn($response);
 }
 

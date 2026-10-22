@@ -2,6 +2,10 @@
 
 use Pixelated\Streamline\Events\CommandClassCallback;
 use Pixelated\Streamline\Interfaces\UpdateBuilderInterface;
+use Pixelated\Streamline\Pipes\DownloadRelease;
+use Pixelated\Streamline\Pipes\UnpackRelease;
+use Pixelated\Streamline\Pipes\VerifyReleaseChecksum;
+use Pixelated\Streamline\Pipes\VerifyReleaseSignature;
 use Pixelated\Streamline\Pipes\WarnUnverifiedRelease;
 
 function bannerText(): string
@@ -86,4 +90,81 @@ it('dispatches every line of the banner as a warning', function() {
         fn(CommandClassCallback $event) => $event->action === 'warn'
             && str_contains($event->value, 'RELEASE VERIFICATION IS DISABLED')
     );
+});
+
+// i13: the banner and the abort must reflect what the pipeline will actually do, not just the flags.
+function setPipeline(array $pipes): void
+{
+    Config::set('streamline.pipeline-update', $pipes);
+}
+
+it('aborts before download when checksums are required but the pipe is missing', function() {
+    Event::fake();
+    setPipeline([
+        WarnUnverifiedRelease::class,
+        DownloadRelease::class,
+        VerifyReleaseSignature::class,
+        UnpackRelease::class,
+    ]);
+
+    expect(fn() => (new WarnUnverifiedRelease)(Mockery::mock(UpdateBuilderInterface::class)))
+        ->toThrow(RuntimeException::class, 'VerifyReleaseChecksum');
+});
+
+it('aborts before download when signatures are required but the pipe is missing', function() {
+    Event::fake();
+    setPipeline([
+        WarnUnverifiedRelease::class,
+        DownloadRelease::class,
+        VerifyReleaseChecksum::class,
+        UnpackRelease::class,
+    ]);
+
+    expect(fn() => (new WarnUnverifiedRelease)(Mockery::mock(UpdateBuilderInterface::class)))
+        ->toThrow(RuntimeException::class, 'VerifyReleaseSignature');
+});
+
+it('aborts when a required pipe is ordered after UnpackRelease', function() {
+    Event::fake();
+    setPipeline([
+        WarnUnverifiedRelease::class,
+        DownloadRelease::class,
+        VerifyReleaseSignature::class,
+        UnpackRelease::class,
+        VerifyReleaseChecksum::class,
+    ]);
+
+    expect(fn() => (new WarnUnverifiedRelease)(Mockery::mock(UpdateBuilderInterface::class)))
+        ->toThrow(RuntimeException::class, 'before UnpackRelease');
+});
+
+it('stays silent when both pipes are present and ordered before UnpackRelease', function() {
+    Event::fake();
+    setPipeline([
+        WarnUnverifiedRelease::class,
+        DownloadRelease::class,
+        VerifyReleaseSignature::class,
+        VerifyReleaseChecksum::class,
+        UnpackRelease::class,
+    ]);
+
+    expect((new WarnUnverifiedRelease)->bannerLines())->toBeEmpty();
+});
+
+it('lists a check as not enforced when it is not required and its pipe is missing', function() {
+    Config::set('streamline.require_release_checksum', false);
+    setPipeline([WarnUnverifiedRelease::class, VerifyReleaseSignature::class, UnpackRelease::class]);
+
+    expect(bannerText())
+        ->toContain('STREAMLINE_REQUIRE_RELEASE_CHECKSUM=true')
+        ->not->toContain('STREAMLINE_REQUIRE_RELEASE_SIGNATURE=true');
+});
+
+it('lists a check as not enforced when its pipe is after UnpackRelease', function() {
+    Config::set('streamline.require_release_signature', false);
+    setPipeline([WarnUnverifiedRelease::class, UnpackRelease::class, VerifyReleaseSignature::class, VerifyReleaseChecksum::class]);
+
+    expect(bannerText())
+        ->toContain('STREAMLINE_REQUIRE_RELEASE_SIGNATURE=true')
+        ->toContain('STREAMLINE_REQUIRE_RELEASE_CHECKSUM=true');
 });

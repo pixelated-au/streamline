@@ -9,6 +9,8 @@ trait CheckCommandCommon
 {
     protected ?string $_nextAvailableVersion = 'v2.8.7b';
 
+    protected array $_preReleaseVersions = [];
+
     protected ?array $_availableVersions = ['v2.8.7b', 'foo', 'bar'];
 
     /**
@@ -37,6 +39,7 @@ trait CheckCommandCommon
             ->andReturn($this->_nextAvailableVersion);
 
         Cache::shouldReceive('forever')->withAnyArgs();
+        Cache::shouldReceive('get')->with(CacheKeysEnum::PRE_RELEASE_VERSIONS->value)->andReturn($this->_preReleaseVersions);
 
         Cache::shouldReceive('get')
             ->with(CacheKeysEnum::AVAILABLE_VERSIONS->value)

@@ -113,7 +113,7 @@ openssl pkey -in streamline_release.key -pubout -out streamline_release.pub
 ```
 
 > **Use an RSA or EC key.** PHP's `openssl_verify()` cannot handle Ed25519 keys at all, however
-> valid the signature is. Streamline detects this case and says so rather than reporting tampering,
+> valid the signature is. Streamline detects this case (and a malformed signature file, or a digest algorithm OpenSSL does not know) and says so rather than reporting tampering,
 > but the update will still fail.
 
 `streamline_release.key` is the private key. It must never enter the repository or the release.
@@ -158,6 +158,17 @@ STREAMLINE_REQUIRE_RELEASE_SIGNATURE=true
 An **invalid** signature always aborts the update and deletes the archive, whichever way this is
 set. What this controls is whether an *unsigned* release is acceptable. Leave it off while you roll
 signing out, then turn it on.
+
+A private key supplied as `STREAMLINE_RELEASE_PUBLIC_KEY` is refused outright - treat any private key
+that has been put on a deployment as compromised.
+
+### Keeping enforcement honest
+
+If `STREAMLINE_REQUIRE_RELEASE_CHECKSUM` or `STREAMLINE_REQUIRE_RELEASE_SIGNATURE` is on but the
+matching pipe (`VerifyReleaseChecksum`, `VerifyReleaseSignature`) has been removed from
+`pipeline-update` in `config/streamline.php`, or is ordered after `UnpackRelease`, the update aborts
+before anything is downloaded. If the setting is off, the warning banner lists that check as not
+enforced.
 
 ### Rotating the key
 

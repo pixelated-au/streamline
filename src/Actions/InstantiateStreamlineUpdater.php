@@ -14,6 +14,8 @@ use RuntimeException;
 
 class InstantiateStreamlineUpdater
 {
+    private const int OUTPUT_TAIL_LENGTH = 4000;
+
     public function __construct(
         private readonly Factories\ProcessFactory $process,
         #[ConfigAttribute('streamline.runner_class')]
@@ -40,7 +42,9 @@ class InstantiateStreamlineUpdater
             ...Config::commaToArray('streamline.carry_forward_paths'),
         ]);
 
-        $this->process
+        $output = '';
+
+        $exitCode = $this->process
             ->invoke($script)
             ->setEnv($this->stringifyEnv([
                 'TEMP_DIR'                  => config('streamline.work_temp_dir'),
@@ -59,7 +63,20 @@ class InstantiateStreamlineUpdater
                 'OLD_RELEASE_ARCHIVE_PATH' => (string) $backupArchivePath,
                 'DO_RETAIN_OLD_RELEASE'    => (bool) config('streamline.retain_old_releases'),
                 'IS_TESTING'               => defined('IS_TESTING'), // Set in phpunit config XML file.
-            ]))->run($callback);
+            ]))->run(function(string $type, string $buffer) use ($callback, &$output): void {
+                // Only the tail is kept: it is what explains a failure, and the output is unbounded.
+                $output = substr($output . $buffer, -self::OUTPUT_TAIL_LENGTH);
+                $callback($type, $buffer);
+            });
+
+        // The exit code is the only reliable success signal. PHP prints fatal errors to stdout
+        // (display_errors=1) and a harmless warning can reach stderr, so neither stream decides it.
+        if ($exitCode !== 0) {
+            throw new RuntimeException(
+                "Error: The updater process failed with exit code $exitCode." .
+                (trim($output) !== '' ? "\nOutput:\n" . trim($output) : '')
+            );
+        }
     }
 
     /**
@@ -105,6 +122,14 @@ class InstantiateStreamlineUpdater
     protected function assertPathsAreContained(array $paths): void
     {
         foreach ($paths as $path) {
+            // '', '.' and './' all resolve to the installation root itself and would copy the whole
+            // old release over the new one.
+            if (preg_match('#^(\.?[\\\\/]+)*\.?$#', trim($path))) {
+                throw new RuntimeException(
+                    "Error: The protected path '$path' is empty or refers to the installation root itself."
+                );
+            }
+
             if (str_starts_with($path, '/') || str_starts_with($path, '\\') || preg_match('#(^|[\\\\/])\.\.([\\\\/]|$)#', $path)) {
                 throw new RuntimeException(
                     "Error: The protected path '$path' must be relative to the installation root and " .
@@ -124,8 +149,8 @@ class InstantiateStreamlineUpdater
             return $value;
         }
 
-        if (is_string($value) && preg_match('/^0?[0-7]{3,4}$/', trim($value))) {
-            return (int) octdec(trim($value));
+        if (is_string($value) && preg_match('/^(?:0o?)?[0-7]{3,4}$/i', trim($value))) {
+            return (int) octdec(ltrim(strtolower(trim($value)), '0o') ?: '0');
         }
 
         return $default;
