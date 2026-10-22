@@ -18,7 +18,7 @@ Key assumptions baked into the design:
   `version_compare()`.
 
 Package metadata: PHP >= 8.3, requires `ext-zip`, `symfony/console`, `symfony/process`, and
-`spatie/laravel-package-tools`. Tested with Pest 4 / Orchestra Testbench 10 against a `workbench/`
+`spatie/laravel-package-tools`. Tested with Pest 4 / Orchestra Testbench 10-11 (Laravel 12-13) against a `workbench/`
 scaffold app.
 
 ## The central design idea
@@ -185,4 +185,4 @@ and the three extension points —
 ## Status
 
 The README describes the package as **beta** (`composer require pixelated-au/streamline:dev-main`).
-Constructor `#[Config]` attribute injection is used, so Laravel 11+ is required.
+Constructor `#[Config]` attribute injection is used, so Laravel 12+ is required (`illuminate/contracts: ^12.0|^13.0`).
