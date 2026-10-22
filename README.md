@@ -185,6 +185,8 @@ tool to progressively gather information about the update process before the fin
 
 Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
 
+Upgrading from an earlier version? See [docs/upgrading.md](docs/upgrading.md) for behaviour changes.
+
 ## TODO
 - [x] Detect if the GitHub token has expired. If so, output an error to the user  
 
