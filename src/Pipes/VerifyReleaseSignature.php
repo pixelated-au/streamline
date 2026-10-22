@@ -176,6 +176,19 @@ class VerifyReleaseSignature implements Pipe
             );
         }
 
+        // Streamline verifies with a digest (sha256/sha512), which only RSA and EC keys support. How OpenSSL
+        // answers for anything else - Ed25519 in particular - varies by build: some report an error, others a
+        // plain mismatch, which would be misreported as tampering. Refuse those keys up front instead.
+        $keyType = openssl_pkey_get_details($key)['type'] ?? null;
+
+        if (!in_array($keyType, [OPENSSL_KEYTYPE_RSA, OPENSSL_KEYTYPE_EC], true)) {
+            throw new RuntimeException(
+                'Error: The configured release public key is not an RSA or EC key (Ed25519 keys, for example, are ' .
+                'not supported). Re-sign your releases with an RSA or EC (P-256) key and configure its public key. ' .
+                'The archive has been left in place because it was not shown to be invalid.'
+            );
+        }
+
         // openssl_verify() warns, and returns false, for a digest PHP can compute but OpenSSL cannot
         // (crc32, for one). That is a configuration problem, not evidence about the release.
         if (!in_array($algorithm, openssl_get_md_methods(true), true)) {
@@ -197,17 +210,15 @@ class VerifyReleaseSignature implements Pipe
 
             // Anything other than 1 (valid) or 0 (mismatch) - including false - is an error.
 
-            // -1 is OpenSSL refusing to perform the check at all, which is a different problem from
-            // a signature that simply does not match - most often an Ed25519 key, which PHP's
-            // openssl_verify() cannot use however valid the signature is.
+            // -1 is OpenSSL refusing to perform the check at all (e.g. a malformed signature), which is a
+            // different problem from a signature that simply does not match.
             $sawOpenSslError = $sawOpenSslError || $result !== 0;
         }
 
         if ($sawOpenSslError) {
             throw new RuntimeException(
                 "Error: OpenSSL could not check the release signature using '$algorithm'. Either the signature file " .
-                'is malformed or truncated, or - if your signing key is Ed25519 - PHP cannot verify it: re-sign your ' .
-                'releases with an RSA or EC (P-256) key. This is a verification error, not evidence of tampering; the ' .
+                'is malformed or truncated. This is a verification error, not evidence of tampering; the ' .
                 'archive has been left in place because it was not shown to be invalid.'
             );
         }
