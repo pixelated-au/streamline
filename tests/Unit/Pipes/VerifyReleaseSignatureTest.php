@@ -276,7 +276,13 @@ it('aborts when the release publishes no signature and one is required', functio
 // mismatch, and saying "tampered with" there would send the operator hunting for an attacker.
 it('explains itself rather than crying tamper when OpenSSL refuses the key type', function() {
     Event::fake();
-    $key = openssl_pkey_new(['private_key_type' => OPENSSL_KEYTYPE_ED25519]);
+
+    // OPENSSL_KEYTYPE_ED25519 was only added in PHP 8.4
+    if (!defined('OPENSSL_KEYTYPE_ED25519')) {
+        $this->markTestSkipped('This PHP version cannot generate Ed25519 keys.');
+    }
+
+    $key = openssl_pkey_new(['private_key_type' => constant('OPENSSL_KEYTYPE_ED25519')]);
 
     if ($key === false) {
         $this->markTestSkipped('This OpenSSL build cannot generate Ed25519 keys.');
