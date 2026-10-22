@@ -272,30 +272,20 @@ it('aborts when the release publishes no signature and one is required', functio
     expect(file_exists($this->archivePath))->toBeTrue();
 });
 
-// PHP's openssl_verify() cannot use Ed25519 keys at all - it reports an error rather than a
-// mismatch, and saying "tampered with" there would send the operator hunting for an attacker.
-it('explains itself rather than crying tamper when OpenSSL refuses the key type', function() {
+// Streamline verifies with a digest, which Ed25519 keys cannot use. Depending on the OpenSSL build that
+// surfaces as an error or as a plain mismatch - and a mismatch would be misreported as tampering - so the
+// key type is rejected before anything is verified. A fixed PEM keeps this independent of the PHP version.
+it('refuses an Ed25519 public key rather than crying tamper', function() {
     Event::fake();
 
-    // OPENSSL_KEYTYPE_ED25519 was only added in PHP 8.4
-    if (!defined('OPENSSL_KEYTYPE_ED25519')) {
-        $this->markTestSkipped('This PHP version cannot generate Ed25519 keys.');
-    }
-
-    $key = openssl_pkey_new(['private_key_type' => constant('OPENSSL_KEYTYPE_ED25519')]);
-
-    if ($key === false) {
-        $this->markTestSkipped('This OpenSSL build cannot generate Ed25519 keys.');
-    }
-
-    Config::set('streamline.release_public_key', openssl_pkey_get_details($key)['key']);
+    Config::set('streamline.release_public_key', "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAr2KAEBqN13pZ5+k4dOVdDnQGoc8Lb9MYxZnRJ2JlYd4=\n-----END PUBLIC KEY-----\n");
     fakeReleaseAssets([
         CHECKSUM_FILE  => $this->checksum,
-        SIGNATURE_FILE => 'a signature this build of PHP will not even attempt to check',
+        SIGNATURE_FILE => base64_encode('a signature that will never be checked'),
     ]);
 
     expect(fn() => (new VerifyReleaseSignature)(signatureBuilder($this->archivePath)))
-        ->toThrow(RuntimeException::class, 're-sign your releases with an RSA or EC (P-256) key');
+        ->toThrow(RuntimeException::class, 'is not an RSA or EC key');
 
     expect(file_exists($this->archivePath))->toBeTrue();
 });

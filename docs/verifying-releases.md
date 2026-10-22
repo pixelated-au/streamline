@@ -112,9 +112,11 @@ openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out streamline_r
 openssl pkey -in streamline_release.key -pubout -out streamline_release.pub
 ```
 
-> **Use an RSA or EC key.** PHP's `openssl_verify()` cannot handle Ed25519 keys at all, however
-> valid the signature is. Streamline detects this case (and a malformed signature file, or a digest algorithm OpenSSL does not know) and says so rather than reporting tampering,
-> but the update will still fail.
+> **Use an RSA or EC key.** Streamline verifies signatures with a digest (`sha256`/`sha512`), which
+> Ed25519 and other key types cannot use, so any public key that is not RSA or EC is refused with a
+> clear error before anything is verified. A malformed signature file, or a digest algorithm OpenSSL
+> does not know, is likewise reported as a verification error rather than as tampering. In every one
+> of these cases the update still fails.
 
 `streamline_release.key` is the private key. It must never enter the repository or the release.
 `streamline_release.pub` is the public key, and goes onto every deployment.
