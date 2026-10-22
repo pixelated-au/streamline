@@ -10,12 +10,14 @@ it('should dispatch an info event when the update executes successfully', functi
     $builder->expects('getRequestedVersion')->andReturnNull();
     $builder->expects('getNextAvailableRepositoryVersion')->andReturn('1.0.0');
     $builder->expects('getComposerPath')->andReturn('test/path');
+    $builder->expects('getBackupArchivePath')->andReturn('/path/to/backup.zip');
+    $builder->expects('markUpdateCompleted')->once()->andReturnSelf();
 
     $this->mock(InstantiateStreamlineUpdater::class)
         ->shouldReceive('execute')
         ->once()
-        ->withArgs(['1.0.0', Mockery::type('string'), Mockery::type('Closure')])
-        ->andReturnUsing(function($version, $composerPath, $callback) {
+        ->withArgs(['1.0.0', Mockery::type('string'), Mockery::type('Closure'), '/path/to/backup.zip'])
+        ->andReturnUsing(function($version, $composerPath, $callback, $backupArchivePath) {
             $callback('out', 'Update successful');
         });
 
@@ -29,58 +31,69 @@ it('should dispatch an info event when the update executes successfully', functi
     });
 });
 
-it('should dispatch an error event when the update encounters an error', function() {
+it('surfaces stderr output as a warning without throwing, so the updater is never interrupted', function() {
     $builder = $this->mock(UpdateBuilderInterface::class);
     $builder->expects('getRequestedVersion')->andReturnNull();
     $builder->expects('getNextAvailableRepositoryVersion')->andReturn('1.0.0');
     $builder->expects('getComposerPath')->andReturn('test/path');
+    $builder->expects('getBackupArchivePath')->andReturn('/path/to/backup.zip');
+    $builder->expects('markUpdateCompleted')->once()->andReturnSelf();
 
     $this->mock(InstantiateStreamlineUpdater::class)
         ->shouldReceive('execute')
         ->once()
-        ->withArgs(['1.0.0', Mockery::type('string'), Mockery::type('Closure')])
-        ->andReturnUsing(function($version, $composerPath, $callback) {
-            $callback('err', 'Update failed');
+        ->withArgs(['1.0.0', Mockery::type('string'), Mockery::type('Closure'), '/path/to/backup.zip'])
+        ->andReturnUsing(function($version, $composerPath, $callback, $backupArchivePath) {
+            $callback('err', 'Deprecated: something');
+            $callback('out', 'Update continued');
         });
 
     Event::fake();
 
-    $runUpdate = $this->app->make(RunUpdate::class);
+    $result = $this->app->make(RunUpdate::class)($builder);
 
-    $this->expectException(RuntimeException::class);
-    $this->expectExceptionMessage('Update failed');
-
-    $runUpdate($builder);
-
-    Event::assertDispatched(CommandClassCallback::class, function(CommandClassCallback $event) {
-        return $event->action === 'error' && $event->value === 'Update failed';
-    });
+    expect($result)->toBe($builder);
+    Event::assertDispatched(
+        CommandClassCallback::class,
+        fn(CommandClassCallback $event) => $event->action === 'warn' && $event->value === 'Deprecated: something'
+    );
+    Event::assertDispatched(
+        CommandClassCallback::class,
+        fn(CommandClassCallback $event) => $event->action === 'line' && $event->value === 'Update continued'
+    );
 });
 
-it('should throw a RuntimeException with the error output when an error occurs', function() {
+it('lets a failure raised by the updater process propagate', function() {
     $builder = $this->mock(UpdateBuilderInterface::class);
     $builder->expects('getRequestedVersion')->andReturnNull();
     $builder->expects('getNextAvailableRepositoryVersion')->andReturn('1.0.0');
     $builder->expects('getComposerPath')->andReturn('test/path');
+    $builder->expects('getBackupArchivePath')->andReturn('/path/to/backup.zip');
+    $builder->shouldNotReceive('markUpdateCompleted');
 
     $this->mock(InstantiateStreamlineUpdater::class)
         ->shouldReceive('execute')
         ->once()
-        ->withArgs(['1.0.0', 'test/path', Mockery::type('Closure')])
         ->andReturnUsing(function($version, $composerPath, $callback) {
-            $callback('err', 'Critical error occurred');
+            $callback('out', 'Starting');
+
+            throw new RuntimeException('The updater process exited with code 255');
         });
 
     Event::fake();
 
-    $runUpdate = $this->app->make(RunUpdate::class);
+    $caught = null;
 
-    $this->expectException(RuntimeException::class);
-    $this->expectExceptionMessage('Critical error occurred');
+    try {
+        $this->app->make(RunUpdate::class)($builder);
+    } catch (RuntimeException $e) {
+        $caught = $e;
+    }
 
-    $runUpdate($builder);
-
-    Event::assertDispatched(CommandClassCallback::class, function(CommandClassCallback $event) {
-        return $event->action === 'error' && $event->value === 'Critical error occurred';
-    });
+    expect($caught)->toBeInstanceOf(RuntimeException::class)
+        ->and($caught->getMessage())->toBe('The updater process exited with code 255');
+    Event::assertDispatched(
+        CommandClassCallback::class,
+        fn(CommandClassCallback $event) => $event->action === 'line' && $event->value === 'Starting'
+    );
 });

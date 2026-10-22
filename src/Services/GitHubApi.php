@@ -3,13 +3,17 @@
 namespace Pixelated\Streamline\Services;
 
 use GuzzleHttp\RequestOptions;
+use Illuminate\Console\OutputStyle;
+use Illuminate\Container\Attributes\Config;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Request;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Conditionable;
 use Pixelated\Streamline\Actions\ProgressMeter;
@@ -26,7 +30,11 @@ class GitHubApi
 
     public const string   GITHUB_RELEASES_PATH = '/releases';
 
-    protected const array REQUEST_USER_AGENT_HEADERS = ['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'];
+    /** @var array<string, string> */
+    protected array $userAgentRequestHeaders = [
+        'Accept'               => 'application/vnd.github+json',
+        'X-GitHub-Api-Version' => '2026-03-10',
+    ];
 
     private ?ProgressMeter $progressMeter = null;
 
@@ -34,6 +42,7 @@ class GitHubApi
 
     private string $url;
 
+    /** @var array<string, scalar> */
     private array $queryParams = [];
 
     private string $defaultProgressMessage = '';
@@ -42,35 +51,32 @@ class GitHubApi
 
     private ?int $totalPages = null;
 
-    private readonly string $githubRepo;
-
-    private readonly ?string $authToken;
-
     public function __construct(
-        //        #[Config('streamline.github_repo')]
-        //        private readonly string  $githubRepo,
-        //        #[Config('streamline.github_auth_token')]
-        //        private readonly ?string $authToken = null
+        #[Config('streamline.github_repo')]
+        private readonly string $githubRepo,
+        #[Config('streamline.github_auth_token')]
+        private readonly ?string $authToken = null
     ) {
-        // TODO restore this after upgrading to Laravel 11
-        $this->githubRepo = config('streamline.github_repo');
-        $this->authToken  = config('streamline.github_auth_token');
+        $this->userAgentRequestHeaders['User-Agent'] = $this->githubRepo;
     }
 
     public function get(): Response
     {
         $this->checkHasUrl();
+        $url = $this->buildUrl();
+        // Query params apply to a single request only: this instance is shared via the facade.
+        $this->queryParams = [];
 
         try {
             $this->setProgressMessage();
 
-            $requestClient = Http::withHeaders(self::REQUEST_USER_AGENT_HEADERS)
+            $requestClient = Http::withHeaders($this->userAgentRequestHeaders)
                 ->when(
                     value: (bool) $this->authToken,
                     callback: fn(PendingRequest $request) => $request->withToken($this->authToken)
                 )
                 ->when(
-                    value: isset($this->progressMeter?->progressCallback),
+                    value: isset($this->progressMeter->progressCallback),
                     callback: function(PendingRequest $request) {
                         $request->withOptions($request->mergeOptions([
                             RequestOptions::PROGRESS => $this->progressMeter->progressCallback,
@@ -81,7 +87,19 @@ class GitHubApi
                     value: (bool) $this->downloadPath,
                     callback: fn(PendingRequest $request) => $request->sink($this->downloadPath)
                 )
-                ->get($this->buildUrl());
+                ->when(
+                    value: $this->isVerbose(),
+                    callback: function(PendingRequest $request) {
+                        $request->beforeSending(function(Request $request) {
+                            Log::channel('streamline')->debug(implode("\n", [
+                                'Making Request to ' . $this->redactUrl($request->url()) . ' using:',
+                                'HEADERS:',
+                                json_encode($this->redactHeaders($request->headers()), JSON_PRETTY_PRINT),
+                            ]));
+                        });
+                    }
+                )
+                ->get($url);
 
             if ($this->progressMeter?->hasStarted()) {
                 $this->progressMeter->finish();
@@ -89,6 +107,7 @@ class GitHubApi
 
             $this->checkRateLimits($requestClient);
             $this->checkAuth($requestClient);
+            $this->checkForbidden($requestClient);
 
             $requestClient->throw();
 
@@ -98,6 +117,9 @@ class GitHubApi
         }
     }
 
+    /**
+     * @return Collection<array-key, mixed>
+     */
     public function paginate(): Collection
     {
         $this->checkHasUrl();
@@ -105,8 +127,10 @@ class GitHubApi
         $this->page       = 1;
         $perPage          = config('streamline.github_api_pagination_limit');
         $this->totalPages = null;
+        $baseParams       = $this->queryParams;
 
         do {
+            $this->queryParams = $baseParams;
             $this->withQueryParams(['page' => $this->page, 'per_page' => $perPage]);
 
             $response = $this->get();
@@ -126,7 +150,8 @@ class GitHubApi
             $this->page++;
         } while ($hasNextPage);
 
-        $this->page = 0;
+        $this->page        = 0;
+        $this->queryParams = [];
 
         return $allData;
     }
@@ -138,9 +163,6 @@ class GitHubApi
         }
     }
 
-    /**
-     * @param  null|ProgressMeter(?int $downloadTotal, ?int $downloadedBytes, ?int $uploadTotal, ?int $uploadedBytes):void  $callback
-     */
     public function withProgressCallback(?ProgressMeter $callback): static
     {
         $this->progressMeter = $callback;
@@ -174,6 +196,9 @@ class GitHubApi
         return ltrim($path, '/');
     }
 
+    /**
+     * @param  array<string, scalar>  $params
+     */
     public function withQueryParams(array $params): static
     {
         $this->queryParams = array_merge($this->queryParams, $params);
@@ -241,26 +266,95 @@ class GitHubApi
 
     public function checkRateLimits(Response $requestClient): void
     {
-        if ($requestClient->getStatusCode() === 403 || $requestClient->getStatusCode() === 429) {
-            $max       = $requestClient->getHeaderLine('X-RateLimit-Limit');
-            $remaining = $requestClient->getHeaderLine('X-RateLimit-Remaining');
-            $reset     = $requestClient->getHeaderLine('X-RateLimit-Reset');
+        $status = $requestClient->status();
 
-            $resetTime = Carbon::createFromTimestampUTC($reset)
-                ->format('H:i:s - d M Y');
-
-            $message = "GitHub API rate limit exceeded. You have $remaining requests of $max remaining. You can make more requests at: $resetTime";
-
-            throw new RuntimeException(message: $message);
+        if ($status !== 403 && $status !== 429) {
+            return;
         }
+
+        $max        = $requestClient->header('X-RateLimit-Limit');
+        $remaining  = $requestClient->header('X-RateLimit-Remaining');
+        $reset      = $requestClient->header('X-RateLimit-Reset');
+        $retryAfter = $requestClient->header('Retry-After');
+
+        // A 403 is only a rate limit when GitHub says so (primary: remaining is 0; secondary: Retry-After).
+        $isRateLimited = $status === 429 || $remaining === '0' || $retryAfter !== '';
+
+        if (!$isRateLimited) {
+            return;
+        }
+
+        $message = 'GitHub API rate limit exceeded.';
+
+        if ($remaining !== '' && $max !== '') {
+            $message .= " You have $remaining requests of $max remaining.";
+        }
+
+        if (ctype_digit($reset) && (int) $reset > 0) {
+            $resetTime = Carbon::createFromTimestampUTC((int) $reset)->format('H:i:s - d M Y');
+            $message .= " You can make more requests at: $resetTime";
+        } elseif (ctype_digit($retryAfter)) {
+            $message .= " Try again in $retryAfter seconds.";
+        } else {
+            $message .= ' Try again later.';
+        }
+
+        throw new RuntimeException(message: $message);
+    }
+
+    public function checkForbidden(Response $requestClient): void
+    {
+        if ($requestClient->status() !== 403) {
+            return;
+        }
+
+        $detail  = Str::isJson($requestClient->body()) ? $requestClient->json('message') : null;
+        $message = 'GitHub API request forbidden (403)';
+
+        if (is_string($detail) && $detail !== '') {
+            $message .= ": $detail";
+        } else {
+            $message .= '. Check that the repository is accessible and your auth token has the required permissions.';
+        }
+
+        throw new RuntimeException(message: $message);
+    }
+
+    private function isVerbose(): bool
+    {
+        $container = app();
+
+        return $container->bound(OutputStyle::class) && $container->make(OutputStyle::class)->isVerbose();
+    }
+
+    /**
+     * @param  array<string, mixed>  $headers
+     * @return array<string, mixed>
+     */
+    private function redactHeaders(array $headers): array
+    {
+        foreach ($headers as $name => $value) {
+            if (in_array(strtolower((string) $name), ['authorization', 'proxy-authorization', 'cookie', 'x-github-token'], true)) {
+                $headers[$name] = ['[REDACTED]'];
+            }
+        }
+
+        return $headers;
+    }
+
+    private function redactUrl(string $url): string
+    {
+        return (string) preg_replace('/([?&](?:access_token|token|key|secret)=)[^&#]*/i', '$1[REDACTED]', $url);
     }
 
     public function checkAuth(Response $requestClient): void
     {
-        if (($requestClient->getStatusCode() === 401) && Str::isJson($requestClient->body())) {
+        if (($requestClient->status() === 401) && Str::isJson($requestClient->body())) {
             $message = $requestClient->json('message');
 
             if ($message) {
+                Log::channel('streamline')->critical($requestClient->body());
+
                 throw new RuntimeException(message: $message);
             }
         }

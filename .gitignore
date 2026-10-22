@@ -26,7 +26,11 @@ _ide_helper_models.php
 # Misc
 /tests/code-coverage/
 /.env
-/tests/.pest/
+/tests/.pest/*
+!/tests/.pest/snapshots/
+# Recreated on demand by tests/Pest.php and by `composer build`. Not committed because it holds
+# an absolute path, which is only ever correct on the machine that created it.
+/workbench/vendor
 /workbench/storage/app/
 /workbench/storage/logs/
 /workbench/storage/framework/

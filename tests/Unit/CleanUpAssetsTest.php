@@ -97,6 +97,7 @@ it('throws exception when storage operation fails', function() {
     $mock->shouldReceive('files')->andReturn(['app.123abc.js', 'style.111aaa.css']);
     $mock->shouldReceive('lastModified')->andReturn('12345678');
     $mock->shouldReceive('allFiles')->andReturn([]);
+    $mock->shouldReceive('exists')->andReturnFalse();
 
     Storage::set('public', $mock);
 
@@ -209,6 +210,58 @@ it('files are not deleted if there are less files available than the number of r
 });
 
 /** @param  array<string, int>  $files */
+it('never deletes assets referenced by the current build manifest, even when they have the oldest mtime', function() {
+    Storage::fake();
+
+    // The current build is extracted with an old mtime while carried-forward assets get copied (new mtime)
+    storeFiles([
+        'build/assets/app.123abc.js'     => 1, // current build (oldest mtime)
+        'build/assets/app.456def.js'     => 3,
+        'build/assets/app.789ghi.js'     => 4,
+        'build/assets/app.101jkl.js'     => 5,
+        'build/assets/app.123abc.js.map' => 1,
+        'build/assets/style.111aaa.css'  => 1, // current, referenced via the css key
+        'build/assets/style.222bbb.css'  => 3,
+        'build/assets/style.333ccc.css'  => 4,
+        'build/manifest.json'            => 1,
+    ]);
+    Storage::put('build/manifest.json', json_encode([
+        'resources/js/app.js' => ['file' => 'assets/app.123abc.js', 'css' => ['assets/style.111aaa.css']],
+    ]));
+
+    Config::set('streamline.laravel_build_dir_name', 'build');
+    Config::set('streamline.laravel_asset_dir_name', 'assets');
+    Config::set('streamline.web_assets_build_num_revisions', 1);
+    Config::set('streamline.laravel_public_disk_name', '');
+
+    CleanUpAssets::run();
+
+    Storage::assertExists('build/assets/app.123abc.js');
+    Storage::assertExists('build/assets/style.111aaa.css');
+    Storage::assertMissing('build/assets/app.456def.js');
+    Storage::assertMissing('build/assets/style.222bbb.css');
+});
+
+it('never deletes assets referenced by the .vite/manifest.json', function() {
+    storeFiles([
+        'build/assets/app.123abc.js' => 1,
+        'build/assets/app.456def.js' => 3,
+    ]);
+    Storage::put('build/.vite/manifest.json', json_encode([
+        'resources/js/app.js' => ['file' => 'assets/app.123abc.js'],
+    ]));
+
+    Config::set('streamline.laravel_build_dir_name', 'build');
+    Config::set('streamline.laravel_asset_dir_name', 'assets');
+    Config::set('streamline.web_assets_build_num_revisions', 0);
+    Config::set('streamline.laravel_public_disk_name', '');
+
+    CleanUpAssets::run();
+
+    Storage::assertExists('build/assets/app.123abc.js');
+    Storage::assertMissing('build/assets/app.456def.js');
+});
+
 function storeFiles(array $files): void
 {
     Storage::fake();

@@ -27,6 +27,7 @@ it('checks for available updates with a remote request', function() {
         ->andReturn($this->_nextAvailableVersion);
 
     Cache::shouldReceive('forever')->withAnyArgs();
+    Cache::shouldReceive('get')->with(CacheKeysEnum::PRE_RELEASE_VERSIONS->value)->andReturn([]);
     Cache::shouldReceive('get')
         ->with(CacheKeysEnum::AVAILABLE_VERSIONS->value)
         ->andReturn(null, ['v2.8.7b', 'v2.8.6', 'v2.8.5']);
@@ -57,4 +58,45 @@ it('throws an exception when doing a remote request because a version is missing
     $this->artisan('streamline:check')
         ->expectsOutputToContain('The next available version could not be determined')
         ->assertExitCode(1);
+});
+
+it('only installs stable versions unless --pre-releases is used', function() {
+    $this->setDefaults(['nextAvailableVersion' => null, 'availableVersions' => ['v3.0.0-rc1', 'v2.8.7', 'v2.8.6']])
+        ->mockCache();
+
+    $this->artisan('streamline:check')
+        ->expectsOutput('Next available version: v2.8.7')
+        ->assertExitCode(0);
+
+    $this->artisan('streamline:check --pre-releases')
+        ->expectsOutput('Next available version: v3.0.0-rc1')
+        ->assertExitCode(0);
+});
+
+it('fails when every available version is a pre-release', function() {
+    $this->setDefaults(['nextAvailableVersion' => null, 'availableVersions' => ['v3.0.0-rc1', 'v2.8.7-beta.1']])
+        ->mockCache();
+
+    $this->artisan('streamline:check')
+        ->expectsOutputToContain('Every available version is a pre-release; use --pre-releases to include them.')
+        ->assertExitCode(1);
+});
+
+it('fails when GitHub returns an error while listing versions', function() {
+    Cache::flush();
+    Http::fake([self::RELEASES_URI => Http::response(['message' => 'Server Error'], 500)]);
+
+    $this->artisan('streamline:check --force')
+        ->assertExitCode(1);
+});
+
+it('warns about --gh-token exactly once', function() {
+    $this->setDefaults(['nextAvailableVersion' => null, 'availableVersions' => ['v2.8.7']])
+        ->mockCache();
+
+    $exitCode = Artisan::call('streamline:check', ['--gh-token' => 'secret']);
+
+    expect($exitCode)->toBe(0)
+        ->and(substr_count(Artisan::output(), 'a token passed with --gh-token is visible'))->toBe(1)
+        ->and(config('streamline.github_auth_token'))->toBe('secret');
 });

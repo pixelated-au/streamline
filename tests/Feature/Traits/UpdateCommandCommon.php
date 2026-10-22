@@ -42,6 +42,9 @@ trait UpdateCommandCommon
         File::shouldReceive('isWritable')->andReturnTrue();
         File::shouldReceive('isReadable')->andReturnTrue();
         File::shouldReceive('put');
+        // MakeTempDir empties the work directory before use.
+        File::shouldReceive('cleanDirectory')->andReturnTrue();
+        File::shouldReceive('makeDirectory')->andReturnTrue();
         File::shouldReceive('dirname')->andReturnUsing(fn(string $value) => dirname($value));
         File::shouldReceive('name')->andReturnUsing(fn(string $value) => pathinfo($value, PATHINFO_FILENAME));
 
@@ -55,6 +58,8 @@ trait UpdateCommandCommon
         $cache->shouldReceive('get')->withSomeOfArgs(CacheKeysEnum::NEXT_AVAILABLE_VERSION->value)->andReturn($cachedVersionToInstall);
         $cache->shouldReceive('forever')->withSomeOfArgs(CacheKeysEnum::AVAILABLE_VERSIONS->value);
         $cache->shouldReceive('put')->withSomeOfArgs(CacheKeysEnum::INSTALLED_VERSION->value);
+        $cache->shouldReceive('forever')->withSomeOfArgs(CacheKeysEnum::PRE_RELEASE_VERSIONS->value);
+        $cache->shouldReceive('get')->withSomeOfArgs(CacheKeysEnum::PRE_RELEASE_VERSIONS->value)->andReturn([]);
 
         $cache->shouldReceive('get')
             ->withSomeOfArgs(CacheKeysEnum::AVAILABLE_VERSIONS->value)
@@ -77,6 +82,8 @@ trait UpdateCommandCommon
     {
         test()->mock(ZipArchive::class, function(MockInterface $mock) {
             $mock->shouldReceive('open')->andReturn(true);
+            // An empty archive: UnpackRelease's safety checks loop over the entries, so none are needed here.
+            $mock->shouldReceive('count')->andReturn(0);
             $mock->shouldReceive('extractTo')->andReturn(true);
             $mock->shouldReceive('addFile')->andReturn(true);
             $mock->shouldReceive('close')->andReturn(true);

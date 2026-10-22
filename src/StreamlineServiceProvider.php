@@ -59,7 +59,8 @@ class StreamlineServiceProvider extends PackageServiceProvider
             fn(Application $app) => new CreateArchive(
                 sourceFolder: base_path(),
                 destinationPath: Config::get('streamline.backup_dir'),
-                filename: 'backup-' . date('Ymd_His') . '.tgz',
+                // CompressedArchiveBuilder writes a zip, so the extension must say so.
+                filename: 'backup-' . date('Ymd_His') . '.zip',
             )
         );
 
@@ -97,7 +98,7 @@ class StreamlineServiceProvider extends PackageServiceProvider
             '</>';
     }
 
-    protected function mergeConfigFromRecursive($path, $key): void
+    protected function mergeConfigFromRecursive(string $path, string $key): void
     {
         if (!($this->app instanceof CachesConfiguration && $this->app->configurationIsCached())) {
             $config = $this->app->make('config');

@@ -13,7 +13,7 @@ it('should delete without setting the number of revisions using a "Y" prompt', f
 });
 
 it('should not delete without setting the number of revisions using a "N" prompt', function() {
-    CleanUpAssets::shouldReceive('run')->with(null);
+    CleanUpAssets::shouldReceive('run')->never();
 
     $this->artisan('streamline:clean-assets')
         ->expectsConfirmation('Are you sure you want to clean the assets directory?')
@@ -41,7 +41,7 @@ it('should delete by setting the number of revisions using a "Y" prompt', functi
 });
 
 it('should not delete by setting the number of revisions using a "N" prompt', function() {
-    CleanUpAssets::shouldReceive('run')->with(null);
+    CleanUpAssets::shouldReceive('run')->never();
 
     $this->artisan('streamline:clean-assets --revisions=5')
         ->expectsConfirmation('Are you sure you want to clean the assets directory?')
@@ -60,9 +60,18 @@ it('should delete by setting the number of revisions (using force) and not recei
         ->assertExitCode(0);
 });
 
-it('ignores non-integer value for revisions', function() {
-    CleanUpAssets::shouldReceive('run')->with(3);
-    $this->artisan('streamline:clean-assets --revisions=invalid')
+it('rejects an invalid number of revisions without deleting anything', function(string $revisions) {
+    CleanUpAssets::shouldReceive('run')->never();
+
+    $this->artisan("streamline:clean-assets --force --revisions=$revisions")
         ->expectsOutputToContain('Invalid number of revisions. Please provide a positive integer.')
         ->assertExitCode(1);
+})->with(['invalid', '0', '-1', '1.5', '00', '1e2', '+3', '0x1']);
+
+it('accepts a revisions value of 1', function() {
+    CleanUpAssets::shouldReceive('run')->once()->with(1);
+
+    $this->artisan('streamline:clean-assets --force --revisions=1')
+        ->expectsOutputToContain('Retaining 1 revisions')
+        ->assertExitCode(0);
 });

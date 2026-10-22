@@ -7,7 +7,7 @@ use Dotenv\Dotenv;
 /** @codeCoverageIgnore */
 class UncachedEnvironment
 {
-    public function get($key, $default = null): string
+    public function get(string $key, ?string $default = null): ?string
     {
         $currentEnv = Dotenv::createArrayBacked(base_path())->load();
 

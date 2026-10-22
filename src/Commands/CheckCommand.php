@@ -14,14 +14,14 @@ class CheckCommand extends Command
     use OutputSubProcessCalls;
 
     public $signature = 'streamline:check
-    {--pre-releases : Include alpha and beta pre-release versions}
+    {--pre-releases : Include pre-release versions (any version with a suffix such as -rc1, -alpha.1, -beta.2, or flagged as a pre-release on GitHub)}
     {--force : Retrieve the most recent versions from GitHub}';
 
     public $description = 'Check for an available update';
 
     public function handle(CheckAvailableVersions $availableVersions): int
     {
-        $this->setGitHubAuthToken();
+        // the --gh-token option is applied once by the GitHubApi trait's execute()
         $this->listenForSubProcessEvents();
 
         try {

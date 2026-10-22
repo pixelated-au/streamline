@@ -13,26 +13,34 @@ class CreateArchive
 {
     private readonly CompressedArchiveBuilder $archiver;
 
-    private readonly string $gzipPath;
+    private readonly string $archivePath;
 
     public function __construct(
         private readonly string $sourceFolder,
         private readonly string $destinationPath,
         private readonly string $filename,
     ) {
-        $this->gzipPath = "$this->destinationPath/$this->filename";
-        $tarPath        = File::dirname($this->gzipPath) . '/' . File::name($this->gzipPath) . '.zip';
-        $this->archiver = app()->make(
+        $this->archivePath = "$this->destinationPath/$this->filename";
+        $this->archiver    = app()->make(
             abstract: CompressedArchiveBuilder::class,
-            parameters: ['zipArchivePath' => $tarPath]
+            parameters: ['zipArchivePath' => $this->archivePath]
         );
+    }
+
+    /**
+     * The full path of the archive this action writes. The filename is timestamped, so this is the
+     * only way for later steps to know which file was actually created.
+     */
+    public function getArchivePath(): string
+    {
+        return $this->archivePath;
     }
 
     public function create(): void
     {
         CommandClassCallback::dispatch(
             'info',
-            "Backing up the current installation to $this->gzipPath."
+            "Backing up the current installation to $this->archivePath."
         );
 
         // check that the source folder exists
@@ -44,19 +52,24 @@ class CreateArchive
 
         $this->archiver->init()
             ->makeArchive($this->sourceFolder);
+
+        // The archive is a complete copy of the installation, including the .env file, so it must
+        // not be left readable by other local users.
+        @chmod($this->archivePath, 0600);
     }
 
     protected function checkDestinationPath(): void
     {
-        if (
-            !File::isDirectory($this->destinationPath)
-            && !File::makeDirectory(
-                $this->destinationPath,
-                0755,
-                true
-            )
-            && !File::isDirectory($this->destinationPath)
-        ) {
+        $directoryExists = File::isDirectory($this->destinationPath);
+
+        if (!$directoryExists) {
+            // Backups contain secrets, so the directory is not world-readable. It is re-checked
+            // afterwards in case another process created it in the meantime.
+            File::makeDirectory($this->destinationPath, 0700, true);
+            $directoryExists = File::isDirectory($this->destinationPath);
+        }
+
+        if (!$directoryExists) {
             throw new RuntimeException(sprintf('Directory "%s" was not created', $this->destinationPath));
         }
 
@@ -66,8 +79,8 @@ class CreateArchive
         }
 
         // check that the filename is not already in use
-        if (File::exists($this->gzipPath)) {
-            throw new RuntimeException("Archive file '$this->gzipPath' already exists.");
+        if (File::exists($this->archivePath)) {
+            throw new RuntimeException("Archive file '$this->archivePath' already exists.");
         }
     }
 }

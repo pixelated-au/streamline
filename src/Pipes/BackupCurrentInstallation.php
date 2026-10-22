@@ -18,6 +18,10 @@ readonly class BackupCurrentInstallation implements Pipe
     {
         $this->createArchive->create();
 
+        // The filename is timestamped, so the path is handed on rather than being recalculated
+        // later from the backup directory alone.
+        $builder->setBackupArchivePath($this->createArchive->getArchivePath());
+
         return $builder;
     }
 }
