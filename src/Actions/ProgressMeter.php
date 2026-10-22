@@ -15,7 +15,7 @@ class ProgressMeter
 
     protected string $message = '';
 
-    public readonly Closure $progressCallback;
+    public Closure $progressCallback;
 
     public function __construct(private readonly ?OutputStyle $output, private readonly ?float $minSecondsBetweenRedraws = null)
     {
@@ -74,7 +74,7 @@ class ProgressMeter
         $this->hasStarted = true;
     }
 
-    public function hasStarted()
+    public function hasStarted(): bool
     {
         return $this->hasStarted;
     }

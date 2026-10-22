@@ -15,7 +15,6 @@ class ConfigCommaToArrayMacro
         Config::macro(
             name: 'commaToArray',
             macro: function(array|string $key, mixed $default = null): array {
-                // @phpstan-ignore variable.undefined
                 $result = $this->get($key, $default);
 
                 if (is_string($result)) {

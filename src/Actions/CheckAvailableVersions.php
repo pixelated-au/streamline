@@ -52,7 +52,7 @@ class CheckAvailableVersions
     {
         $nextVersion = $availableVersions[0] ?? null;
 
-        if (!$ignorePreReleases || !$this->isPreReleaseVersion->execute($nextVersion)) {
+        if ($nextVersion === null || !$ignorePreReleases || !$this->isPreReleaseVersion->execute($nextVersion)) {
             return $nextVersion;
         }
 

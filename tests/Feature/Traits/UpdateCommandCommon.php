@@ -77,6 +77,8 @@ trait UpdateCommandCommon
     {
         test()->mock(ZipArchive::class, function(MockInterface $mock) {
             $mock->shouldReceive('open')->andReturn(true);
+            // An empty archive: UnpackRelease's safety checks loop over the entries, so none are needed here.
+            $mock->shouldReceive('count')->andReturn(0);
             $mock->shouldReceive('extractTo')->andReturn(true);
             $mock->shouldReceive('addFile')->andReturn(true);
             $mock->shouldReceive('close')->andReturn(true);

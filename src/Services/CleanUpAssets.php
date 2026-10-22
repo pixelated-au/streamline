@@ -2,6 +2,7 @@
 
 namespace Pixelated\Streamline\Services;
 
+use Illuminate\Container\Attributes\Config;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -12,8 +13,6 @@ use Pixelated\Streamline\Events\CommandClassCallback;
 use RuntimeException;
 
 /**
- * @template TGroupedFiles array<string, array{filename: string, mtime: int}>
- *
  * @description Groups filenames by their root name. Eg foo.adc4953.js will be grouped by "foo"
  *
  * @note Expects the filenames to be in the format [filename].[hash].[ext]
@@ -21,23 +20,18 @@ use RuntimeException;
 class CleanUpAssets
 {
     /**
-     * @var Collection<int, string|TGroupedFiles>
+     * @var Collection<int, string>
      */
     protected Collection $filesToDelete;
-
-    private int $numRevisions;
 
     private Filesystem $filesystem;
 
     public function __construct(
-        //        #[Config('streamline.laravel_asset_dir_name')]
-        //        private readonly string $assetDir,
-        //        #[Config('streamline.web_assets_build_num_revisions')]
-        //        private int             $numRevisions
+        #[Config('streamline.laravel_asset_dir_name')]
+        string $assetDir,
+        #[Config('streamline.web_assets_build_num_revisions')]
+        private int $numRevisions
     ) {
-        // TODO restore these after upgrading to Laravel 11
-        $this->numRevisions  = config('streamline.web_assets_build_num_revisions');
-        $assetDir            = config('streamline.laravel_asset_dir_name');
         $this->filesystem    = Facades\Storage::disk(config('streamline.laravel_public_disk_name'));
         $buildDir            = config('streamline.laravel_build_dir_name');
         $this->filesToDelete = collect($this->filesystem->files("$buildDir/$assetDir"));
@@ -67,7 +61,7 @@ class CleanUpAssets
     }
 
     /**
-     * @return Collection<int, string|TGroupedFiles>
+     * @return Collection<int, string>
      */
     protected function filter(): Collection
     {

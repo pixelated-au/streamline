@@ -6,7 +6,11 @@ use FilesystemIterator;
 use RecursiveDirectoryIterator;
 use RecursiveFilterIterator;
 use RecursiveIteratorIterator;
+use SplFileInfo;
 
+/**
+ * @extends RecursiveIteratorIterator<RecursiveFilterIterator<string, SplFileInfo, RecursiveDirectoryIterator>>
+ */
 class ArchiveBuilderIterator extends RecursiveIteratorIterator
 {
     public function __construct(string $path)
@@ -16,7 +20,9 @@ class ArchiveBuilderIterator extends RecursiveIteratorIterator
             flags: FilesystemIterator::SKIP_DOTS | FilesystemIterator::UNIX_PATHS
         );
 
-        $filteredIterator = new class($iterator) extends RecursiveFilterIterator
+        $filteredIterator = new
+        /** @extends RecursiveFilterIterator<string, SplFileInfo, RecursiveDirectoryIterator> */
+        class($iterator) extends RecursiveFilterIterator
         {
             public function accept(): bool
             {

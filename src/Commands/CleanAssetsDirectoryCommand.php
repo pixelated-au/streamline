@@ -48,7 +48,7 @@ class CleanAssetsDirectoryCommand extends Command
             $this->info("Retaining $revisions revisions");
         }
 
-        $cleanUpAssets->run($revisions);
+        $cleanUpAssets->run(is_string($revisions) && is_numeric($revisions) ? (int) $revisions : null);
 
         return self::SUCCESS;
     }

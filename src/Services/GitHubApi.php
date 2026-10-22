@@ -3,6 +3,7 @@
 namespace Pixelated\Streamline\Services;
 
 use GuzzleHttp\RequestOptions;
+use Illuminate\Container\Attributes\Config;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Request;
@@ -25,6 +26,7 @@ class GitHubApi {
     public const string   GITHUB_API_URL       = 'https://api.github.com/repos';
     public const string   GITHUB_WEB_URL       = 'https://github.com';
     public const string   GITHUB_RELEASES_PATH = '/releases';
+    /** @var array<string, string> */
     protected array $userAgentRequestHeaders = [
         'Accept'               => 'application/vnd.github+json',
         'X-GitHub-Api-Version' => '2026-03-10',
@@ -32,23 +34,19 @@ class GitHubApi {
     private ?ProgressMeter $progressMeter = null;
     private ?string $downloadPath = null;
     private string $url;
+    /** @var array<string, scalar> */
     private array $queryParams = [];
     private string $defaultProgressMessage = '';
     private int $page = 0;
     private ?int $totalPages = null;
-    private readonly string $githubRepo;
-    private readonly ?string $authToken;
 
     public function __construct(
-        //        #[Config('streamline.github_repo')]
-        //        private readonly string  $githubRepo,
-        //        #[Config('streamline.github_auth_token')]
-        //        private readonly ?string $authToken = null
+        #[Config( 'streamline.github_repo' )]
+        private readonly string $githubRepo,
+        #[Config( 'streamline.github_auth_token' )]
+        private readonly ?string $authToken = null
     ) {
-        // TODO restore this after upgrading to Laravel 11
-        $this->githubRepo                            = config( 'streamline.github_repo' );
-        $this->authToken                             = config( 'streamline.github_auth_token' );
-        $this->userAgentRequestHeaders['User-Agent'] = config( 'streamline.github_repo' );
+        $this->userAgentRequestHeaders['User-Agent'] = $this->githubRepo;
     }
 
     public function get(): Response {
@@ -63,7 +61,7 @@ class GitHubApi {
                                      callback: fn( PendingRequest $request ) => $request->withToken( $this->authToken )
                                  )
                                  ->when(
-                                     value: isset( $this->progressMeter?->progressCallback ),
+                                     value: isset( $this->progressMeter->progressCallback ),
                                      callback: function ( PendingRequest $request ) {
                                          $request->withOptions( $request->mergeOptions( [
                                              RequestOptions::PROGRESS => $this->progressMeter->progressCallback,
@@ -78,13 +76,13 @@ class GitHubApi {
                                      value: OutputInterface::VERBOSITY_VERBOSE,
                                      callback: function ( PendingRequest $request ) {
                                          $request->beforeSending( function ( Request $request ) {
-                                             Log::channel( 'streamline' )->debug( [
+                                             Log::channel( 'streamline' )->debug( implode( "\n", [
                                                  'Making Request to ' . $request->url() . ' using:',
                                                  'HEADERS:',
-                                                 $request->headers(),
+                                                 json_encode( $request->headers(), JSON_PRETTY_PRINT ),
                                                  'BODY:',
                                                  $request->body(),
-                                             ] );
+                                             ] ) );
                                          } );
                                      }
                                  )
@@ -105,6 +103,9 @@ class GitHubApi {
         }
     }
 
+    /**
+     * @return Collection<array-key, mixed>
+     */
     public function paginate(): Collection {
         $this->checkHasUrl();
         $allData          = collect();
@@ -143,9 +144,6 @@ class GitHubApi {
         }
     }
 
-    /**
-     * @param  null|ProgressMeter(?int $downloadTotal, ?int $downloadedBytes, ?int $uploadTotal, ?int $uploadedBytes):void  $callback
-     */
     public function withProgressCallback( ?ProgressMeter $callback ): static {
         $this->progressMeter = $callback;
 
@@ -174,6 +172,9 @@ class GitHubApi {
         return ltrim( $path, '/' );
     }
 
+    /**
+     * @param  array<string, scalar>  $params
+     */
     public function withQueryParams( array $params ): static {
         $this->queryParams = array_merge( $this->queryParams, $params );
 
@@ -235,10 +236,10 @@ class GitHubApi {
     }
 
     public function checkRateLimits( Response $requestClient ): void {
-        if ( $requestClient->getStatusCode() === 403 || $requestClient->getStatusCode() === 429 ) {
-            $max       = $requestClient->getHeaderLine( 'X-RateLimit-Limit' );
-            $remaining = $requestClient->getHeaderLine( 'X-RateLimit-Remaining' );
-            $reset     = $requestClient->getHeaderLine( 'X-RateLimit-Reset' );
+        if ( $requestClient->status() === 403 || $requestClient->status() === 429 ) {
+            $max       = $requestClient->header( 'X-RateLimit-Limit' );
+            $remaining = $requestClient->header( 'X-RateLimit-Remaining' );
+            $reset     = $requestClient->header( 'X-RateLimit-Reset' );
 
             $resetTime = Carbon::createFromTimestampUTC( $reset )
                                ->format( 'H:i:s - d M Y' );
@@ -250,7 +251,7 @@ class GitHubApi {
     }
 
     public function checkAuth( Response $requestClient ): void {
-        if ( ( $requestClient->getStatusCode() === 401 ) && Str::isJson( $requestClient->body() ) ) {
+        if ( ( $requestClient->status() === 401 ) && Str::isJson( $requestClient->body() ) ) {
             $message = $requestClient->json( 'message' );
 
             if ( $message ) {

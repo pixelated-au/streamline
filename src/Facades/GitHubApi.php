@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static \Pixelated\Streamline\Services\GitHubApi withWebUrl(string $path)
  * @method static \Pixelated\Streamline\Services\GitHubApi withDownloadPath(?string $path)
  * @method static \Pixelated\Streamline\Services\GitHubApi withProgressCallback(?\Pixelated\Streamline\Actions\ProgressMeter $callback)
- * @method static \Pixelated\Streamline\Services\GitHubApi withQueryParams(array<string, mixed> $params)
+ * @method static \Pixelated\Streamline\Services\GitHubApi withQueryParams(array<string, scalar> $params)
  * @method static \Pixelated\Streamline\Services\GitHubApi progressMessage(string $message)
  * @method static \Illuminate\Http\Client\Response get()
  * @method static \Illuminate\Support\Collection<int, mixed> paginate()

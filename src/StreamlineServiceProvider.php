@@ -98,7 +98,7 @@ class StreamlineServiceProvider extends PackageServiceProvider
             '</>';
     }
 
-    protected function mergeConfigFromRecursive($path, $key): void
+    protected function mergeConfigFromRecursive(string $path, string $key): void
     {
         if (!($this->app instanceof CachesConfiguration && $this->app->configurationIsCached())) {
             $config = $this->app->make('config');
