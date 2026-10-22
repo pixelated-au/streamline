@@ -8,12 +8,12 @@ This release adds release verification (see [verifying-releases.md](verifying-re
 a number of bugs in the updater. Most of it needs no action, but the changes below alter existing
 behaviour. Read them before updating a live site.
 
-### Laravel 11 or later is required
+### Laravel 12 or later is required
 
-Streamline now reads its configuration through constructor `#[Config]` attributes, which Laravel
-added in 11. The package now declares `illuminate/contracts: ^11.0|^12.0|^13.0`. Composer will refuse
-to install it on Laravel 9 or 10. Stay on the previous Streamline version if you can't upgrade
-Laravel.
+Streamline reads its configuration through constructor `#[Config]` attributes (added in Laravel 11)
+and is only tested against Laravel 12 and 13. Laravel 11 no longer receives security fixes. The
+package now declares `illuminate/contracts: ^12.0|^13.0`, so Composer will refuse to install it on
+Laravel 11 or earlier. Stay on the previous Streamline version if you can't upgrade Laravel.
 
 ### Failed commands now fail the update
 
